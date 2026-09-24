@@ -1,0 +1,18 @@
+{
+  "project_name": "Bright Path Wellness - HubSpot Rebuild",
+  "standard_objects": ["Contact", "Company", "Deal", "Ticket"],
+  "custom_object_keywords": ["Membership", "Subscription", "Location"],
+  "custom_object_notes": "Also considering a 'Class Session' object in a later phase; out of scope for this build.",
+  "pipelines_required": ["Deal", "Ticket", "Membership"],
+  "regions": ["United States", "Canada"],
+  "currencies": ["USD", "CAD"],
+  "integrations": ["MyStudio", "Sakari", "Payments Provider"],
+  "other_integration_notes": "",
+  "record_volumes": {
+    "Contact": 45000,
+    "Company": 500,
+    "Deal": 12000,
+    "Membership": 8000
+  },
+  "hubs_in_scope": ["Marketing Hub", "Sales Hub", "Service Hub", "Operations Hub"]
+}

@@ -1,0 +1,254 @@
+# Best-practice rules used by the Architecture Generator (Module 1) and the
+# Portal Auditor (Module 2). This file is the single source of truth for
+# "what is correct" — edit it to tune behavior without touching code.
+
+naming_conventions:
+  custom_object_name: "Singular PascalCase, e.g. 'Membership' not 'Memberships' or 'membership'."
+  property_internal_name: "snake_case, e.g. 'membership_status'."
+  workflow_name_pattern: "'<Object> | <Purpose>', e.g. 'Contact | Sync MyStudio Membership Status'."
+  pipeline_name_pattern: "'<Object> Pipeline', e.g. 'Deal Pipeline'."
+
+base_currency:
+  always_required: true
+  note: >
+    When more than one currency is in scope, always define exactly one base
+    currency for roll-up reporting; deal/line-item currency fields should
+    default to it.
+
+standard_object_baseline_properties:
+  Contact:
+    - name: lifecyclestage
+      label: "Lifecycle Stage"
+      type: enumeration
+      field_type: select
+      required: true
+      description: "Standard HubSpot lifecycle stage; required for reporting handoffs between hubs."
+    - name: hs_lead_status
+      label: "Lead Status"
+      type: enumeration
+      field_type: select
+      required: false
+      description: "Tracks sales follow-up status independent of lifecycle stage."
+  Company:
+    - name: industry
+      label: "Industry"
+      type: enumeration
+      field_type: select
+      required: false
+      description: "Standard HubSpot industry classification."
+  Deal:
+    - name: dealstage
+      label: "Deal Stage"
+      type: enumeration
+      field_type: select
+      required: true
+      description: "Current stage within the deal pipeline."
+    - name: amount
+      label: "Amount"
+      type: number
+      field_type: number
+      required: true
+      description: "Deal value in the base currency unless overridden."
+  Ticket:
+    - name: hs_pipeline_stage
+      label: "Pipeline Stage"
+      type: enumeration
+      field_type: select
+      required: true
+      description: "Current stage within the ticket pipeline."
+
+pipeline_templates:
+  Deal:
+    - {name: "Appointment Scheduled", order: 0}
+    - {name: "Qualified To Buy", order: 1}
+    - {name: "Presentation Scheduled", order: 2}
+    - {name: "Decision Maker Bought In", order: 3}
+    - {name: "Contract Sent", order: 4}
+    - {name: "Closed Won", order: 5, is_closed: true, is_won: true}
+    - {name: "Closed Lost", order: 6, is_closed: true, is_won: false}
+  Ticket:
+    - {name: "New", order: 0}
+    - {name: "Waiting on Contact", order: 1}
+    - {name: "Waiting on Us", order: 2}
+    - {name: "Closed", order: 3, is_closed: true, is_won: true}
+  generic_custom:
+    - {name: "New", order: 0}
+    - {name: "In Progress", order: 1}
+    - {name: "Completed", order: 2, is_closed: true, is_won: true}
+    - {name: "Cancelled", order: 3, is_closed: true, is_won: false}
+
+integration_heuristics:
+  MyStudio:
+    properties:
+      - object: Contact
+        name: mystudio_member_id
+        label: "MyStudio Member ID"
+        type: string
+        field_type: text
+        description: "External ID linking this contact to their MyStudio member record."
+    workflows:
+      - name: "Contact | Sync MyStudio Membership Status"
+        object_type: Contact
+        trigger: "MyStudio member status changes (via integration)"
+        action_summary: "Update mystudio_member_status and mystudio_last_synced_at from the MyStudio integration payload."
+  Sakari:
+    properties:
+      - object: Contact
+        name: sms_opt_in
+        label: "SMS Opt-In"
+        type: bool
+        field_type: booleancheckbox
+        description: "Whether the contact has opted in to SMS via Sakari."
+      - object: Contact
+        name: sakari_last_message_at
+        label: "Sakari Last Message At"
+        type: datetime
+        field_type: date
+        description: "Timestamp of the most recent Sakari SMS interaction."
+    workflows:
+      - name: "Contact | Log Sakari SMS Reply"
+        object_type: Contact
+        trigger: "Inbound SMS reply received in Sakari"
+        action_summary: "Log a timeline event and update sakari_last_message_at."
+  payments_provider:
+    properties:
+      - object: Deal
+        name: payment_status
+        label: "Payment Status"
+        type: enumeration
+        field_type: select
+        options: ["Not Started", "Pending", "Paid", "Failed", "Refunded"]
+        description: "Status of the associated payment from the payments provider."
+      - object: Deal
+        name: payment_provider_id
+        label: "Payment Provider Transaction ID"
+        type: string
+        field_type: text
+        description: "External transaction/reference ID from the payments provider."
+    workflows:
+      - name: "Deal | Sync Payment Status"
+        object_type: Deal
+        trigger: "Payment status changes in the payments provider"
+        action_summary: "Set payment_status and payment_provider_id from the incoming payment webhook."
+  other:
+    properties:
+      - object: Contact
+        name: "{integration}_external_id"
+        label: "{Integration} External ID"
+        type: string
+        field_type: text
+        description: "External ID linking this record to {Integration}."
+    workflows: []
+
+object_model_keywords:
+  membership:
+    object_name: Membership
+    plural_label: Memberships
+    description: "Tracks an individual membership term, tied to a Contact."
+    properties:
+      - name: membership_status
+        label: "Membership Status"
+        type: enumeration
+        field_type: select
+        options: ["Active", "Paused", "Cancelled", "Expired"]
+        required: true
+        description: "Current status of the membership term."
+      - name: start_date
+        label: "Start Date"
+        type: date
+        field_type: date
+        required: true
+        description: "Membership term start date."
+      - name: end_date
+        label: "End Date"
+        type: date
+        field_type: date
+        required: false
+        description: "Membership term end date, if fixed-term."
+    associations:
+      - to_object: Contact
+        label: "Membership to Contact"
+        cardinality: many-to-one
+  subscription:
+    object_name: Subscription
+    plural_label: Subscriptions
+    description: "Tracks a recurring subscription/billing term, tied to a Contact and optionally a Deal."
+    properties:
+      - name: subscription_status
+        label: "Subscription Status"
+        type: enumeration
+        field_type: select
+        options: ["Active", "Paused", "Cancelled", "Past Due"]
+        required: true
+        description: "Current status of the subscription."
+      - name: billing_frequency
+        label: "Billing Frequency"
+        type: enumeration
+        field_type: select
+        options: ["Monthly", "Quarterly", "Annual"]
+        required: true
+        description: "How often the subscription bills."
+    associations:
+      - to_object: Contact
+        label: "Subscription to Contact"
+        cardinality: many-to-one
+      - to_object: Deal
+        label: "Subscription to Deal"
+        cardinality: one-to-one
+  location:
+    object_name: Location
+    plural_label: Locations
+    description: "Tracks a physical or service location, tied to a Company."
+    properties:
+      - name: location_status
+        label: "Location Status"
+        type: enumeration
+        field_type: select
+        options: ["Active", "Inactive"]
+        required: true
+        description: "Whether the location is currently operating."
+      - name: region
+        label: "Region"
+        type: string
+        field_type: text
+        required: false
+        description: "Free-text region/territory label for the location."
+    associations:
+      - to_object: Company
+        label: "Location to Company"
+        cardinality: many-to-one
+  event:
+    object_name: Event
+    plural_label: Events
+    description: "Tracks a bookable event/session, tied to Contacts via registration."
+    properties:
+      - name: event_date
+        label: "Event Date"
+        type: datetime
+        field_type: date
+        required: true
+        description: "Scheduled date/time of the event."
+      - name: event_status
+        label: "Event Status"
+        type: enumeration
+        field_type: select
+        options: ["Scheduled", "Completed", "Cancelled"]
+        required: false
+        description: "Current status of the event."
+    associations:
+      - to_object: Contact
+        label: "Event to Contact (Registrant)"
+        cardinality: many-to-many
+
+overwrite_risk:
+  action_keywords: ["set ", "update ", "overwrite ", "sync "]
+  safe_qualifiers: ["only if", "if blank", "if empty", "when empty", "conditional", "if not already set"]
+  description: >
+    A workflow action is flagged as an overwrite risk when it sets/updates a
+    property unconditionally (no "only if blank" / conditional qualifier) —
+    this can silently clobber manually-entered or integration-sourced data.
+
+audit_thresholds:
+  record_sample_size: 100
+  picklist_similarity_threshold: 0.85
+  unused_property_max_populated: 0
