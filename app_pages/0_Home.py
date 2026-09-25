@@ -131,6 +131,16 @@ with row4_col2:
 
 row5_col1, row5_col2 = st.columns(2)
 
+with row5_col2:
+    with st.container(border=True):
+        st.markdown("### 10. Proposal & SOW Builder")
+        st.write(
+            "Turn the Requirements Document and Joint Evaluation Plan into a SonaMation-branded proposal "
+            "and/or Statement of Work — technical approach, management approach, and cost — with a scope "
+            "that lists what is included, excluded, and available as an add-on."
+        )
+        st.page_link("app_pages/10_Proposal_SOW_Builder.py", label="Open Proposal & SOW Builder")
+
 with row5_col1:
     with st.container(border=True):
         st.markdown("### 9. Project Library")

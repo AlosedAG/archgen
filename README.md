@@ -54,6 +54,11 @@ not in the individual page files under `app_pages/`.
    writes here: a local, folder-per-project, folder-per-document-type
    archive of everything generated, each file tagged with the date it was
    generated.
+10. **Proposal & SOW Builder** — turns the Requirements Document and Joint
+    Evaluation Plan into a SonaMation-branded proposal and/or Statement of
+    Work PDF: Technical, Management, and Cost volumes, plus a "Scope at a
+    Glance" page listing what is included, excluded, available as an
+    add-on, or the client's responsibility.
 
 Modules 6-8 are pure documentation/tracking — no HubSpot API calls, no
 generated logic, no approval gating, and no dependency on any other
@@ -310,6 +315,41 @@ None of these three modules require another module's output to run, and
 none of them gate on any kind of approval/sign-off — they're documentation
 and tracking tools, not a workflow engine.
 
+## Module 10: Proposal & SOW Builder
+
+`app_pages/10_Proposal_SOW_Builder.py` (UI), `core/proposal.py` (data model,
+SonaMation defaults, pricing/scope/coverage logic, WRD/JEP import, JSON
+round-trip), `core/proposal_pdf.py` (branded PDF). Based on the Statement of
+Work short form: parties and notice contacts, effective/expiration dates,
+description of services, deliverables and milestone fee schedule, optional
+additional-services menu, payment, and expenses.
+
+Tabs follow the three areas a proposal must cover:
+
+- **Technical** — understanding of the problem, objectives, numbered
+  requirements (R-01...), proposed solution, methodology, tools & platforms,
+  techniques & procedures, glossary.
+- **Scope** — one table where every item is *In Scope*, *Out of Scope*,
+  *Optional Add-on*, or *Client Responsibility*, with a quantity limit,
+  acceptance criteria, and the requirement IDs it satisfies. Preset
+  libraries of common deliverables and add-on services, a live preview of
+  the "Scope at a Glance" page, and a requirements-coverage check that
+  flags anything not covered by an In Scope item.
+- **Management** — team & roles, governance cadence, schedule, risks,
+  targeted KPIs (primary/secondary), acceptance process.
+- **Cost** — milestone schedule with fees, add-on menu ("Add to Total" for
+  chosen add-ons; recurring fees reported separately from one-time),
+  rate card for change requests, discount, payment/expense terms.
+- **Review & Generate** — optional-section toggles, pre-send warnings,
+  PDF download, and `.json` downloads (a full editable copy, or a reusable
+  template with deal-specific content stripped) that load back in from
+  the Setup tab.
+
+Standard text (company overview, methodology, change-control, acceptance,
+payment, expenses, confidentiality) is pre-filled and editable. Imports from
+the WRD/JEP are one-off merges that fill blanks and append rows; they need
+that page to have been opened in the same session.
+
 ## Module 9: Project Library
 
 Every module above has a **Save to Project Library** button next to its
@@ -377,7 +417,8 @@ architecturescope/
 │   ├── 6_Requirements_Document.py
 │   ├── 7_Joint_Evaluation_Plan.py
 │   ├── 8_Test_Case_Document.py
-│   └── 9_Project_Library.py
+│   ├── 9_Project_Library.py
+│   └── 10_Proposal_SOW_Builder.py
 ├── core/
 │   ├── models.py           # shared dataclasses for all modules
 │   ├── hubspot_client.py   # read-only API client: pagination, 429 backoff, scope errors
@@ -389,6 +430,8 @@ architecturescope/
 │   ├── diagram.py          # Module 5: node/edge model + DOT/.drawio/.json rendering
 │   ├── exporters.py        # Section -> .docx/.xlsx/.csv/.pdf, shared by Modules 5-9
 │   ├── doc_export_ui.py    # Streamlit download-row + "Save to Project Library" button, shared by all modules
+│   ├── proposal.py         # Module 10: proposal model, defaults, scope/pricing logic, WRD/JEP import
+│   ├── proposal_pdf.py     # Module 10: SonaMation-branded proposal/SOW PDF
 │   ├── theme.py             # brand CSS + the audit .xlsx/PDF color palette (matches examples/)
 │   └── project_store.py    # Module 9's filesystem-backed save/list/delete
 ├── rules/

@@ -148,6 +148,10 @@ sections = [
     ("Appendix and Resources", clean_rows(appendix_df, required_columns=["Link / Notes"])),
 ]
 
+# Published under a plain key so the Proposal & SOW Builder can import this
+# document's content (a one-off import there, not a live link).
+st.session_state["wrd_export_snapshot"] = {"project_name": project_name, "sections": dict(sections)}
+
 render_sections_export(
     doc_title=f"Written Requirements Document — {project_name or 'Untitled Project'}",
     subtitle="Documents the customer's business objectives for this HubSpot implementation.",

@@ -208,6 +208,44 @@ def test_test_case_document_loads_requirements_from_wrd_snapshot(monkeypatch, tm
     assert any("Log SMS replies" in row["Requirement"] for row in seed)
 
 
+def test_proposal_builder_page_renders_with_no_state():
+    _run("10_Proposal_SOW_Builder.py", timeout=20)
+
+
+def test_proposal_builder_imports_wrd_and_saves_pdf_to_library(monkeypatch, tmp_path):
+    monkeypatch.setenv("PROJECT_LIBRARY_DIR", str(tmp_path))
+    wrd_snapshot = {
+        "project_name": "Acme Corp",
+        "sections": {
+            "Project Overview": [{"Field": "Purpose", "Value": "Replace spreadsheets"}],
+            "Customer Requirements": [{"Requirement": "Sync contacts nightly"}],
+        },
+    }
+    at = _run("10_Proposal_SOW_Builder.py", timeout=20, wrd_export_snapshot=wrd_snapshot)
+
+    import_buttons = [b for b in at.button if b.label == "Import Requirements Document"]
+    assert import_buttons and not import_buttons[0].disabled
+    at = import_buttons[0].click().run(timeout=20)
+    assert not at.exception, [str(e) for e in at.exception]
+
+    seed = at.session_state["prop_seed"]
+    assert seed["problem_statement"] == "Replace spreadsheets"
+    assert seed["client"]["company"] == "Acme Corp"
+    assert [r["Requirement"] for r in seed["requirements"]] == ["Sync contacts nightly"]
+
+    save_buttons = [b for b in at.button if b.label == "Save to Project Library"]
+    at = save_buttons[0].click().run(timeout=20)
+    assert not at.exception, [str(e) for e in at.exception]
+    assert {d.filename.rsplit(".", 1)[-1] for d in list_documents("Acme Corp")} == {"pdf", "json"}
+
+
+def test_wrd_page_publishes_export_snapshot_for_proposal_builder():
+    at = _run("6_Requirements_Document.py", wrd_project_name="Acme Corp")
+    snapshot = at.session_state["wrd_export_snapshot"]
+    assert snapshot["project_name"] == "Acme Corp"
+    assert "Customer Requirements" in snapshot["sections"]
+
+
 def test_property_audit_page_renders_with_no_state():
     _run("2b_Property_Audit.py")
 

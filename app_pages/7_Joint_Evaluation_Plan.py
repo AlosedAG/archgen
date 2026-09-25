@@ -138,6 +138,10 @@ sections = [
     ("Questions", clean_rows(questions_df, required_columns=["Question"])),
 ]
 
+# Published under a plain key so the Proposal & SOW Builder can import this
+# document's content (a one-off import there, not a live link).
+st.session_state["jep_export_snapshot"] = {"project_name": project_name, "sections": dict(sections)}
+
 render_sections_export(
     doc_title=f"Joint Evaluation Plan — {project_name or 'Untitled Project'}",
     subtitle="A mutually agreed set of steps for this evaluation: what needs to happen, when, and who's involved.",

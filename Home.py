@@ -44,6 +44,9 @@ requirements_document = st.Page(
 joint_evaluation_plan = st.Page(
     "app_pages/7_Joint_Evaluation_Plan.py", title="Joint Evaluation Plan", url_path="Joint_Evaluation_Plan"
 )
+proposal_builder = st.Page(
+    "app_pages/10_Proposal_SOW_Builder.py", title="Proposal & SOW Builder", url_path="Proposal_SOW_Builder"
+)
 test_case_document = st.Page(
     "app_pages/8_Test_Case_Document.py", title="Test Case Document", url_path="Test_Case_Document"
 )
@@ -56,6 +59,7 @@ pg = st.navigation(
         "Architecture & Planning": [architecture_generator, architecture_diagram],
         "Auditing": [portal_auditor, property_audit, executive_report],
         "Documentation": [documentation_generator, requirements_document, joint_evaluation_plan, test_case_document],
+        "Proposals": [proposal_builder],
         "Library": [project_library],
     }
 )
