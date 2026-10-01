@@ -16,6 +16,10 @@ Design → Propose → Deliver & test**, with the **Project Library** last
 (it's used throughout). File names under ``app_pages/`` keep their
 original module numbers; the sidebar order lives only here.
 
+Before anything else, ``core.auth.require_login`` shows the sign-in
+screen (Google and/or username + password) and stops the script until a
+user is signed in.
+
 Two things run on every page, before the page itself:
 
 - the page's own section of the user guide (``docs/user_guide.md``) is
@@ -31,7 +35,10 @@ from __future__ import annotations
 
 import streamlit as st
 
+from core.auth import require_login
 from core.guide import page_guide
+
+require_login()
 
 setup = st.Page("app_pages/0_Setup.py", title="Setup & API keys", url_path="Setup", default=True)
 user_guide = st.Page("app_pages/12_User_Guide.py", title="User guide", url_path="User_Guide")

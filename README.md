@@ -109,6 +109,21 @@ streamlit run Home.py
 
 The app opens on **Setup & API keys**, with every page listed in process order in the sidebar.
 
+### Sign-in
+
+Every page sits behind a sign-in screen (`core/auth.py`): **Sign in with
+Google** and/or **username + password**, configured in
+`.streamlit/secrets.toml` (locally) or the app's **Secrets** box on
+Streamlit Community Cloud. See `.streamlit/secrets.toml.example`:
+
+- `[auth]` enables Google sign-in (Streamlit's built-in OIDC). Only emails in
+  `[access] allowed_emails` or domains in `allowed_domains` get in.
+- `[passwords]` enables username + password. Generate a password hash with
+  `python -m core.auth`.
+
+With neither configured the app refuses to open. For local development
+without sign-in, set `AUTH_DISABLED=1` in `.env`.
+
 ## Authentication
 
 The **Setup & API keys** page (first in the sidebar, and the landing page)
