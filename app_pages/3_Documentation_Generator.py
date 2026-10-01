@@ -6,7 +6,8 @@ import streamlit as st
 
 from core.docgen import DocumentationGenerator, snapshot_to_docx, snapshot_to_markdown
 from core.doc_export_ui import save_to_library_button
-from core.hubspot_client import HubSpotAPIError, HubSpotClient, HubSpotScopeError, get_token
+from core.connections import require_hubspot_token
+from core.hubspot_client import HubSpotAPIError, HubSpotClient, HubSpotScopeError
 from core.project_store import project_name_input
 from core.theme import inject_global_css, render_page_header
 
@@ -22,16 +23,7 @@ st.info("Every call made is read-only.")
 
 project_name_input(label="Project name (for saving results to the library)")
 
-if not get_token():
-    st.text_input(
-        "HubSpot private app access token",
-        type="password",
-        key="hubspot_token",
-        help="Stored only in this session's memory — never written to disk or logged. "
-        "You can also set the HUBSPOT_TOKEN environment variable instead.",
-    )
-else:
-    st.success("HubSpot token detected.")
+require_hubspot_token()
 
 has_snapshot = "portal_snapshot" in st.session_state
 button_label = "Refresh from portal" if has_snapshot else "Pull from portal"

@@ -110,3 +110,31 @@ def test_clean_rows_converts_nan_and_none_to_empty_string():
 def test_clean_rows_keeps_row_when_any_required_column_has_content():
     df = pd.DataFrame([{"Type": "Risk", "Description": ""}])
     assert clean_rows(df, required_columns=["Type", "Description"]) == [{"Type": "Risk", "Description": ""}]
+
+
+def test_markdown_document_exports_round_trip():
+    import io as _io
+
+    from docx import Document as _Document
+    from pypdf import PdfReader
+
+    from core.exporters import markdown_to_docx, markdown_to_pdf
+
+    md = "# Discovery — Acme\n## Executive Summary\nA **dental** group → growth.\n- one\n  - nested\n1. first\n"
+    doc = _Document(markdown_to_docx(md, title="ignored, markdown has its own title"))
+    texts = [p.text for p in doc.paragraphs]
+    assert texts[0] == "Discovery — Acme"
+    assert "A dental group → growth." in texts
+    assert any(r.bold and r.text == "dental" for p in doc.paragraphs for r in p.runs)
+
+    pdf_text = PdfReader(_io.BytesIO(markdown_to_pdf(md))).pages[0].extract_text()
+    assert "Executive Summary" in pdf_text and "growth" in pdf_text
+
+
+def test_markdown_export_adds_title_when_missing():
+    from docx import Document as _Document
+
+    from core.exporters import markdown_to_docx
+
+    doc = _Document(markdown_to_docx("## Section\nBody", title="My Title"))
+    assert doc.paragraphs[0].text == "My Title"

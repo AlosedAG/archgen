@@ -1,15 +1,30 @@
 # ArchitectureScope
 
 A HubSpot architecture generator, portal auditor, documentation tool, and
-project-documentation suite for implementation specialists. Ten modules,
+project-documentation suite for implementation specialists. Eleven modules,
 one Streamlit app, loosely modeled on HubSpot's own solutions-architecture
 methodology (Written Requirements Document → ERD → Test Case Document).
 
-The sidebar groups modules by what they do, not just by number: **Architecture
-& Planning** (design a new build), **Auditing** (assess a live portal),
-**Documentation** (generate hand-off records), and **Library**. `Home.py` is
-a thin router built on `st.navigation`/`st.Page` — the sections live there,
-not in the individual page files under `app_pages/`.
+The sidebar follows the order a project actually runs in, so a new user
+can work top to bottom:
+
+| Sidebar section | Pages |
+|---|---|
+| **Start here** | Setup & API keys (landing page), User guide |
+| **Step 1 · Discover** | Discovery Call Assistant, Requirements Document, Joint Evaluation Plan |
+| **Step 2 · Assess current portal** | Portal Auditor, Property Audit, Documentation Generator, Executive Report |
+| **Step 3 · Design** | Architecture Generator, Architecture Diagram |
+| **Step 4 · Propose** | Proposal & SOW Builder |
+| **Step 5 · Deliver & test** | Test Case Document |
+| **Library** | Project Library |
+
+`Home.py` is a thin router built on `st.navigation`/`st.Page` — the order
+and sections live there, not in the page files under `app_pages/` (whose
+file names keep their original module numbers). The router also shows each
+page's own section of the in-app guide ([`docs/user_guide.md`](docs/user_guide.md))
+under **Guide for this page** in the sidebar; the **User guide** page shows
+the whole guide plus the PDF manuals as downloads. When adding a page, add a
+`## <page title>` section to the guide (`tests/test_guide.py` enforces it).
 
 1. **Architecture Generator** — turn a project's requirements into a proposed
    HubSpot architecture blueprint. No API access needed.
@@ -59,6 +74,17 @@ not in the individual page files under `app_pages/`.
     Work PDF: Technical, Management, and Cost volumes, plus a "Scope at a
     Glance" page listing what is included, excluded, available as an
     add-on, or the client's responsibility.
+11. **Discovery Call Assistant** — filled in live during a discovery call.
+    Shorthand notes under Goals / Data / Processes / Solutions Design become
+    (a) a structured business-analysis document — executive summary, current
+    state, requirements, preliminary scope signals for the SOW, and a
+    specific follow-up list for every question left blank — and (b) a
+    plain-language explainer of the HubSpot hubs the client needs. Drafted
+    by Claude (`core/discovery.py` holds the system prompt and question
+    bank); exports `.docx`, `.pdf`, and `.md`. The only module that needs an
+    Anthropic API key, and the only one that sends anything outside your
+    machine besides HubSpot reads — notes go to Anthropic only when a
+    Generate button is clicked.
 
 Modules 6-8 are pure documentation/tracking — no HubSpot API calls, no
 generated logic, no approval gating, and no dependency on any other
@@ -81,22 +107,29 @@ pip install -r requirements.txt
 streamlit run Home.py
 ```
 
-The app opens with a **Home** page and one page per module in the sidebar.
+The app opens on **Setup & API keys**, with every page listed in process order in the sidebar.
 
 ## Authentication
 
-Modules 2 and 3 need a HubSpot [private app](https://developers.hubspot.com/docs/api/private-apps)
-access token. Provide it one of two ways:
+The **Setup & API keys** page (first in the sidebar, and the landing page)
+is where both keys go:
 
-- **Environment variable** (recommended for local dev): copy `.env.example`
-  to `.env`, fill in `HUBSPOT_TOKEN`, and export it before running Streamlit
-  (or use a tool like `python-dotenv` / `direnv` to load it automatically).
-- **In the UI**: paste the token into the password-masked field on the
-  Portal Auditor or Documentation Generator page. It's held only in
-  `st.session_state` for that session — never written to disk, never
-  logged, never sent anywhere but HubSpot's API.
+- **HubSpot private app token** — Portal Auditor, Property Audit,
+  Documentation Generator. See [private apps](https://developers.hubspot.com/docs/api/private-apps)
+  and the scope table below.
+- **Anthropic API key** — Discovery Call Assistant only. Create one at
+  [console.anthropic.com](https://console.anthropic.com). The model defaults
+  to `claude-opus-5-5`; override with `ANTHROPIC_MODEL`.
 
-The Architecture Generator (Module 1) needs no token at all.
+Provide each one of two ways:
+
+- **Environment / `.env`** (recommended for regular use): copy `.env.example`
+  to `.env` and fill in `HUBSPOT_TOKEN` / `ANTHROPIC_API_KEY`; the app loads
+  `.env` at startup.
+- **In the UI**: paste into the password-masked fields on the Setup page
+  (the portal pages also offer the HubSpot field inline if no token is set).
+  Held only in `st.session_state` for that session — never written to disk,
+  never logged, never sent anywhere but HubSpot's / Anthropic's API.
 
 `.env` and `.streamlit/secrets.toml` are already in `.gitignore` — don't
 commit real tokens.
