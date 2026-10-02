@@ -1,0 +1,136 @@
+{
+ "csv": [
+  "Severity,Area,Object,Description,Recommended Fix",
+  "High,Workflows,Contact,Workflow 'Sync Lifecycle Stage' has re-enrollment enabled and sets property (lifecyclestage) with no conditional branch found — every re-enrollment will overwrite it again.,\"Add an 'only if blank' / conditional branch before the SET_PROPERTY action, or disable re-enrollment if it isn't required.\"",
+  "High,Records,Contact,Required property 'lifecyclestage' is missing on 1 of 4 sampled Contact records.,\"Add a required-field validation, a form requirement, or a backfill workflow for this property.\"",
+  "Medium,Properties,Contact,'Contact' has two properties with the same label 'Lead Source': 'lead_source' and 'lead_source_old'.,Rename or archive one of the duplicate properties to avoid confusing report/workflow builders.",
+  "Medium,Permissions,Team,Team 'Empty Team' has zero members.,\"Confirm the team is still needed; remove it if stale, or assign members if newly created.\"",
+  "Medium,Associations,Memberships,1 of 2 sampled Memberships records have no association to Contact (expected via 'Membership to Contact').,\"Backfill the missing Contact association, or confirm these records are intentionally standalone.\"",
+  "Low,Properties,Contact,Picklist 'Region' on 'Contact' has near-duplicate options 'New York' and 'new york ' (100% similar).,Merge near-duplicate picklist values and re-map existing records to the canonical option.",
+  "Low,Naming,Contact,Property 'Lead_Score' naming drift: 'Lead_Score' should be snake_case (e.g. 'membership_status').,Rename the internal property name to snake_case (labels can stay human-readable).",
+  "Low,Naming,Memberships,Custom object naming drift: 'Memberships' looks plural; custom object names should be singular.,Rename to match the naming convention (see Architecture Generator rules).",
+  "Low,Naming,Contact,Workflow 'Sync Lifecycle Stage' naming drift: 'Sync Lifecycle Stage' should follow the '<Object> | <Purpose>' naming pattern.,Rename to '<Object> | <Purpose>' for consistency and easier auditing later.",
+  "Low,Naming,Deal,Pipeline 'Deal Stages' naming drift: 'Deal Stages' should follow the '<Object> Pipeline' naming pattern.,Rename to '<Object> Pipeline' for consistency.",
+  "Low,Permissions,Owner,Owner 'Jane Doe' (jane@x.com) is not assigned to any team.,\"Assign the owner to a team, or archive the user if they're no longer active.\"",
+  "Low,Records,Contact,Property 'unused_prop' has no value set in a sample of 4 Contact records.,\"Confirm the property is still in use; archive it if dead, or check the workflow/form meant to populate it.\"",
+  "Low,Records,Contact,Property 'Lead_Score' has no value set in a sample of 4 Contact records.,\"Confirm the property is still in use; archive it if dead, or check the workflow/form meant to populate it.\"",
+  "Low,Records,Contact,Property 'lead_source' has no value set in a sample of 4 Contact records.,\"Confirm the property is still in use; archive it if dead, or check the workflow/form meant to populate it.\"",
+  "Low,Records,Contact,Property 'lead_source_old' has no value set in a sample of 4 Contact records.,\"Confirm the property is still in use; archive it if dead, or check the workflow/form meant to populate it.\"",
+  "Low,Records,Contact,Property 'region' has no value set in a sample of 4 Contact records.,\"Confirm the property is still in use; archive it if dead, or check the workflow/form meant to populate it.\""
+ ],
+ "findings": [
+  {
+   "area": "Properties",
+   "description": "'Contact' has two properties with the same label 'Lead Source': 'lead_source' and 'lead_source_old'.",
+   "object_type": "Contact",
+   "recommended_fix": "Rename or archive one of the duplicate properties to avoid confusing report/workflow builders.",
+   "severity": "Medium"
+  },
+  {
+   "area": "Properties",
+   "description": "Picklist 'Region' on 'Contact' has near-duplicate options 'New York' and 'new york ' (100% similar).",
+   "object_type": "Contact",
+   "recommended_fix": "Merge near-duplicate picklist values and re-map existing records to the canonical option.",
+   "severity": "Low"
+  },
+  {
+   "area": "Naming",
+   "description": "Property 'Lead_Score' naming drift: 'Lead_Score' should be snake_case (e.g. 'membership_status').",
+   "object_type": "Contact",
+   "recommended_fix": "Rename the internal property name to snake_case (labels can stay human-readable).",
+   "severity": "Low"
+  },
+  {
+   "area": "Naming",
+   "description": "Custom object naming drift: 'Memberships' looks plural; custom object names should be singular.",
+   "object_type": "Memberships",
+   "recommended_fix": "Rename to match the naming convention (see Architecture Generator rules).",
+   "severity": "Low"
+  },
+  {
+   "area": "Naming",
+   "description": "Workflow 'Sync Lifecycle Stage' naming drift: 'Sync Lifecycle Stage' should follow the '<Object> | <Purpose>' naming pattern.",
+   "object_type": "Contact",
+   "recommended_fix": "Rename to '<Object> | <Purpose>' for consistency and easier auditing later.",
+   "severity": "Low"
+  },
+  {
+   "area": "Naming",
+   "description": "Pipeline 'Deal Stages' naming drift: 'Deal Stages' should follow the '<Object> Pipeline' naming pattern.",
+   "object_type": "Deal",
+   "recommended_fix": "Rename to '<Object> Pipeline' for consistency.",
+   "severity": "Low"
+  },
+  {
+   "area": "Workflows",
+   "description": "Workflow 'Sync Lifecycle Stage' has re-enrollment enabled and sets property (lifecyclestage) with no conditional branch found — every re-enrollment will overwrite it again.",
+   "object_type": "Contact",
+   "recommended_fix": "Add an 'only if blank' / conditional branch before the SET_PROPERTY action, or disable re-enrollment if it isn't required.",
+   "severity": "High"
+  },
+  {
+   "area": "Permissions",
+   "description": "Owner 'Jane Doe' (jane@x.com) is not assigned to any team.",
+   "object_type": "Owner",
+   "recommended_fix": "Assign the owner to a team, or archive the user if they're no longer active.",
+   "severity": "Low"
+  },
+  {
+   "area": "Permissions",
+   "description": "Team 'Empty Team' has zero members.",
+   "object_type": "Team",
+   "recommended_fix": "Confirm the team is still needed; remove it if stale, or assign members if newly created.",
+   "severity": "Medium"
+  },
+  {
+   "area": "Records",
+   "description": "Required property 'lifecyclestage' is missing on 1 of 4 sampled Contact records.",
+   "object_type": "Contact",
+   "recommended_fix": "Add a required-field validation, a form requirement, or a backfill workflow for this property.",
+   "severity": "High"
+  },
+  {
+   "area": "Records",
+   "description": "Property 'unused_prop' has no value set in a sample of 4 Contact records.",
+   "object_type": "Contact",
+   "recommended_fix": "Confirm the property is still in use; archive it if dead, or check the workflow/form meant to populate it.",
+   "severity": "Low"
+  },
+  {
+   "area": "Records",
+   "description": "Property 'Lead_Score' has no value set in a sample of 4 Contact records.",
+   "object_type": "Contact",
+   "recommended_fix": "Confirm the property is still in use; archive it if dead, or check the workflow/form meant to populate it.",
+   "severity": "Low"
+  },
+  {
+   "area": "Records",
+   "description": "Property 'lead_source' has no value set in a sample of 4 Contact records.",
+   "object_type": "Contact",
+   "recommended_fix": "Confirm the property is still in use; archive it if dead, or check the workflow/form meant to populate it.",
+   "severity": "Low"
+  },
+  {
+   "area": "Records",
+   "description": "Property 'lead_source_old' has no value set in a sample of 4 Contact records.",
+   "object_type": "Contact",
+   "recommended_fix": "Confirm the property is still in use; archive it if dead, or check the workflow/form meant to populate it.",
+   "severity": "Low"
+  },
+  {
+   "area": "Records",
+   "description": "Property 'region' has no value set in a sample of 4 Contact records.",
+   "object_type": "Contact",
+   "recommended_fix": "Confirm the property is still in use; archive it if dead, or check the workflow/form meant to populate it.",
+   "severity": "Low"
+  },
+  {
+   "area": "Associations",
+   "description": "1 of 2 sampled Memberships records have no association to Contact (expected via 'Membership to Contact').",
+   "object_type": "Memberships",
+   "recommended_fix": "Backfill the missing Contact association, or confirm these records are intentionally standalone.",
+   "severity": "Medium"
+  }
+ ],
+ "markdown": "# Portal Audit Findings\n\n| Severity | Area | Object | Description | Recommended Fix |\n|---|---|---|---|---|\n| High | Workflows | Contact | Workflow 'Sync Lifecycle Stage' has re-enrollment enabled and sets property (lifecyclestage) with no conditional branch found — every re-enrollment will overwrite it again. | Add an 'only if blank' / conditional branch before the SET_PROPERTY action, or disable re-enrollment if it isn't required. |\n| High | Records | Contact | Required property 'lifecyclestage' is missing on 1 of 4 sampled Contact records. | Add a required-field validation, a form requirement, or a backfill workflow for this property. |\n| Medium | Properties | Contact | 'Contact' has two properties with the same label 'Lead Source': 'lead_source' and 'lead_source_old'. | Rename or archive one of the duplicate properties to avoid confusing report/workflow builders. |\n| Medium | Permissions | Team | Team 'Empty Team' has zero members. | Confirm the team is still needed; remove it if stale, or assign members if newly created. |\n| Medium | Associations | Memberships | 1 of 2 sampled Memberships records have no association to Contact (expected via 'Membership to Contact'). | Backfill the missing Contact association, or confirm these records are intentionally standalone. |\n| Low | Properties | Contact | Picklist 'Region' on 'Contact' has near-duplicate options 'New York' and 'new york ' (100% similar). | Merge near-duplicate picklist values and re-map existing records to the canonical option. |\n| Low | Naming | Contact | Property 'Lead_Score' naming drift: 'Lead_Score' should be snake_case (e.g. 'membership_status'). | Rename the internal property name to snake_case (labels can stay human-readable). |\n| Low | Naming | Memberships | Custom object naming drift: 'Memberships' looks plural; custom object names should be singular. | Rename to match the naming convention (see Architecture Generator rules). |\n| Low | Naming | Contact | Workflow 'Sync Lifecycle Stage' naming drift: 'Sync Lifecycle Stage' should follow the '<Object> | <Purpose>' naming pattern. | Rename to '<Object> | <Purpose>' for consistency and easier auditing later. |\n| Low | Naming | Deal | Pipeline 'Deal Stages' naming drift: 'Deal Stages' should follow the '<Object> Pipeline' naming pattern. | Rename to '<Object> Pipeline' for consistency. |\n| Low | Permissions | Owner | Owner 'Jane Doe' (jane@x.com) is not assigned to any team. | Assign the owner to a team, or archive the user if they're no longer active. |\n| Low | Records | Contact | Property 'unused_prop' has no value set in a sample of 4 Contact records. | Confirm the property is still in use; archive it if dead, or check the workflow/form meant to populate it. |\n| Low | Records | Contact | Property 'Lead_Score' has no value set in a sample of 4 Contact records. | Confirm the property is still in use; archive it if dead, or check the workflow/form meant to populate it. |\n| Low | Records | Contact | Property 'lead_source' has no value set in a sample of 4 Contact records. | Confirm the property is still in use; archive it if dead, or check the workflow/form meant to populate it. |\n| Low | Records | Contact | Property 'lead_source_old' has no value set in a sample of 4 Contact records. | Confirm the property is still in use; archive it if dead, or check the workflow/form meant to populate it. |\n| Low | Records | Contact | Property 'region' has no value set in a sample of 4 Contact records. | Confirm the property is still in use; archive it if dead, or check the workflow/form meant to populate it. |"
+}

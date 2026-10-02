@@ -1,0 +1,301 @@
+{
+ "docx": [
+  "HubSpot Portal Documentation",
+  "Pulled at <TIMESTAMP>",
+  "Data Dictionary",
+  "Contact (Standard, contacts)",
+  "Company (Standard, companies)",
+  "Deal (Standard, deals)",
+  "Ticket (Standard, tickets)",
+  "Memberships (Custom, 2-999)",
+  "Workflow Inventory",
+  "Association Map",
+  "Association definitions shown here come from each custom object's schema. Default associations between standard objects are not exposed by this endpoint and are omitted.",
+  "Pipelines & Stages",
+  "Sales Pipeline (Deal)",
+  "Membership Pipeline (Memberships)",
+  "Roles & Permissions Summary",
+  "Teams",
+  "Owners",
+  "Property | Label | Type | Field Type | Group",
+  "email | Email | string | text | contactinformation",
+  "lifecyclestage | Lifecycle Stage | enumeration | select | contactinformation",
+  "Property | Label | Type | Field Type | Group",
+  "industry | Industry | enumeration | select | companyinformation",
+  "Property | Label | Type | Field Type | Group",
+  "amount | Amount | number | number | dealinformation",
+  "Property | Label | Type | Field Type | Group",
+  "hs_pipeline_stage | Pipeline Stage | enumeration | select | ticketinformation",
+  "Property | Label | Type | Field Type | Group",
+  "membership_status | Membership Status | enumeration | select | membershipinformation",
+  "Name | Object Type | Enabled | Re-enrollment",
+  "Set Lifecycle Stage | CONTACT | True | True",
+  "From | To (type ID) | Label",
+  "membership | 0-1 | membership_to_contact",
+  "Order | Stage",
+  "0 | Appointment Scheduled",
+  "1 | Closed Won",
+  "Order | Stage",
+  "0 | New",
+  "Team | Member Count",
+  "Sales | 2",
+  "Name | Email | Teams | Archived",
+  "Jane Doe | jane@example.com | Sales | False"
+ ],
+ "markdown": [
+  "# HubSpot Portal Documentation",
+  "",
+  "_Pulled at <TIMESTAMP>_",
+  "",
+  "## Data Dictionary",
+  "### Contact (Standard, `contacts`)",
+  "| Property | Label | Type | Field Type | Group | Options |",
+  "|---|---|---|---|---|---|",
+  "| email | Email | string | text | contactinformation |  |",
+  "| lifecyclestage | Lifecycle Stage | enumeration | select | contactinformation | Lead, Customer |",
+  "",
+  "### Company (Standard, `companies`)",
+  "| Property | Label | Type | Field Type | Group | Options |",
+  "|---|---|---|---|---|---|",
+  "| industry | Industry | enumeration | select | companyinformation | Retail |",
+  "",
+  "### Deal (Standard, `deals`)",
+  "| Property | Label | Type | Field Type | Group | Options |",
+  "|---|---|---|---|---|---|",
+  "| amount | Amount | number | number | dealinformation |  |",
+  "",
+  "### Ticket (Standard, `tickets`)",
+  "| Property | Label | Type | Field Type | Group | Options |",
+  "|---|---|---|---|---|---|",
+  "| hs_pipeline_stage | Pipeline Stage | enumeration | select | ticketinformation |  |",
+  "",
+  "### Memberships (Custom, `2-999`)",
+  "| Property | Label | Type | Field Type | Group | Options |",
+  "|---|---|---|---|---|---|",
+  "| membership_status | Membership Status | enumeration | select | membershipinformation | Active |",
+  "",
+  "## Workflow Inventory",
+  "| Name | Object Type | Enabled | Re-enrollment | Actions |",
+  "|---|---|---|---|---|",
+  "| Set Lifecycle Stage | CONTACT | True | True | 1 |",
+  "",
+  "## Association Map",
+  "_Association definitions shown here come from each custom object's schema. Default associations between standard objects are not exposed by this endpoint and are omitted._",
+  "| From | To (type ID) | Label |",
+  "|---|---|---|",
+  "| membership | 0-1 | membership_to_contact |",
+  "",
+  "## Pipelines & Stages",
+  "### Sales Pipeline (Deal)",
+  "| Order | Stage |",
+  "|---|---|",
+  "| 0 | Appointment Scheduled |",
+  "| 1 | Closed Won |",
+  "",
+  "### Membership Pipeline (Memberships)",
+  "| Order | Stage |",
+  "|---|---|",
+  "| 0 | New |",
+  "",
+  "## Roles & Permissions Summary",
+  "### Teams",
+  "| Team | Member Count |",
+  "|---|---|",
+  "| Sales | 2 |",
+  "",
+  "### Owners",
+  "| Name | Email | Teams | Archived |",
+  "|---|---|---|---|",
+  "| Jane Doe | jane@example.com | Sales | False |"
+ ],
+ "snapshot": {
+  "object_schemas": [
+   {
+    "associations": [],
+    "is_custom": false,
+    "label": "Contact",
+    "object_type": "contacts",
+    "properties": [
+     {
+      "description": "Contact email",
+      "field_type": "text",
+      "group_name": "contactinformation",
+      "hubspot_defined": false,
+      "label": "Email",
+      "name": "email",
+      "options": [],
+      "type": "string"
+     },
+     {
+      "description": "",
+      "field_type": "select",
+      "group_name": "contactinformation",
+      "hubspot_defined": false,
+      "label": "Lifecycle Stage",
+      "name": "lifecyclestage",
+      "options": [
+       "Lead",
+       "Customer"
+      ],
+      "type": "enumeration"
+     }
+    ],
+    "singular_label": ""
+   },
+   {
+    "associations": [],
+    "is_custom": false,
+    "label": "Company",
+    "object_type": "companies",
+    "properties": [
+     {
+      "description": "",
+      "field_type": "select",
+      "group_name": "companyinformation",
+      "hubspot_defined": false,
+      "label": "Industry",
+      "name": "industry",
+      "options": [
+       "Retail"
+      ],
+      "type": "enumeration"
+     }
+    ],
+    "singular_label": ""
+   },
+   {
+    "associations": [],
+    "is_custom": false,
+    "label": "Deal",
+    "object_type": "deals",
+    "properties": [
+     {
+      "description": "",
+      "field_type": "number",
+      "group_name": "dealinformation",
+      "hubspot_defined": false,
+      "label": "Amount",
+      "name": "amount",
+      "options": [],
+      "type": "number"
+     }
+    ],
+    "singular_label": ""
+   },
+   {
+    "associations": [],
+    "is_custom": false,
+    "label": "Ticket",
+    "object_type": "tickets",
+    "properties": [
+     {
+      "description": "",
+      "field_type": "select",
+      "group_name": "ticketinformation",
+      "hubspot_defined": false,
+      "label": "Pipeline Stage",
+      "name": "hs_pipeline_stage",
+      "options": [],
+      "type": "enumeration"
+     }
+    ],
+    "singular_label": ""
+   },
+   {
+    "associations": [
+     {
+      "cardinality": "",
+      "from_object": "membership",
+      "label": "membership_to_contact",
+      "to_object": "0-1"
+     }
+    ],
+    "is_custom": true,
+    "label": "Memberships",
+    "object_type": "2-999",
+    "properties": [
+     {
+      "description": "",
+      "field_type": "select",
+      "group_name": "membershipinformation",
+      "hubspot_defined": false,
+      "label": "Membership Status",
+      "name": "membership_status",
+      "options": [
+       "Active"
+      ],
+      "type": "enumeration"
+     }
+    ],
+    "singular_label": "Membership"
+   }
+  ],
+  "owners": [
+   {
+    "archived": false,
+    "email": "jane@example.com",
+    "first_name": "Jane",
+    "last_name": "Doe",
+    "owner_id": "1",
+    "teams": [
+     "Sales"
+    ]
+   }
+  ],
+  "pipelines": [
+   {
+    "label": "Sales Pipeline",
+    "object_type": "Deal",
+    "pipeline_id": "default",
+    "stages": [
+     {
+      "display_order": 0,
+      "label": "Appointment Scheduled",
+      "stage_id": "s1"
+     },
+     {
+      "display_order": 1,
+      "label": "Closed Won",
+      "stage_id": "s2"
+     }
+    ]
+   },
+   {
+    "label": "Membership Pipeline",
+    "object_type": "Memberships",
+    "pipeline_id": "m1",
+    "stages": [
+     {
+      "display_order": 0,
+      "label": "New",
+      "stage_id": "ms1"
+     }
+    ]
+   }
+  ],
+  "pulled_at": "<TIMESTAMP>",
+  "teams": [
+   {
+    "member_count": 2,
+    "name": "Sales",
+    "team_id": "10"
+   }
+  ],
+  "warnings": [],
+  "workflows": [
+   {
+    "actions": [
+     {
+      "propertyName": "lifecyclestage",
+      "type": "SET_PROPERTY"
+     }
+    ],
+    "enabled": true,
+    "name": "Set Lifecycle Stage",
+    "object_type": "CONTACT",
+    "re_enrollment_enabled": true,
+    "workflow_id": "111"
+   }
+  ]
+ }
+}

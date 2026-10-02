@@ -1,0 +1,53 @@
+{
+ "csv": [
+  "## Customer Requirements",
+  "Requirement",
+  "Sync contacts nightly",
+  "Log SMS replies",
+  "",
+  "## Open Questions",
+  "None recorded."
+ ],
+ "docx": [
+  "Golden WRD",
+  "Sub",
+  "Customer Requirements",
+  "Open Questions",
+  "None recorded.",
+  "Requirement",
+  "Sync contacts nightly",
+  "Log SMS replies"
+ ],
+ "md_docx": [
+  "Title",
+  "Section — one",
+  "bullet → arrow · middot",
+  "bold text",
+  "Sub",
+  "Plain “quoted” paragraph."
+ ],
+ "md_pdf": [
+  "Title\nSection - one\n-  bullet -> arrow - middot\nbold text\nSub\nPlain \"quoted\" paragraph."
+ ],
+ "pdf": [
+  "Golden WRD\nSub\nCustomer Requirements\nRequirement\nSync contacts nightly\nLog SMS replies\nOpen Questions\nNone recorded."
+ ],
+ "xlsx": {
+  "Customer Requirements": [
+   [
+    "Requirement"
+   ],
+   [
+    "Sync contacts nightly"
+   ],
+   [
+    "Log SMS replies"
+   ]
+  ],
+  "Open Questions": [
+   [
+    "None recorded."
+   ]
+  ]
+ }
+}

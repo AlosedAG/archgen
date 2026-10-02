@@ -1,0 +1,97 @@
+{
+ "business_analysis": {
+  "client": {
+   "business_type": "dental",
+   "name": "Bright Smiles"
+  },
+  "mode": "business_analysis",
+  "sections": {
+   "Data": {
+    "answers": {
+     "Custom data elements": "",
+     "Data owners / roles": "",
+     "How often is data updated or cleaned?": "",
+     "Locations / organization structure": "",
+     "Security / compliance requirements": "",
+     "Sync direction(s) needed": "",
+     "Volume — objects, records, assets": "",
+     "Where are their customers / contacts located?": "EU / UK; United States",
+     "Where does their data live today?": "",
+     "Which systems manage that data?": ""
+    },
+    "edge_cases": "Two legal entities",
+    "notes": ""
+   },
+   "Goals": {
+    "answers": {
+     "KPIs — how will they measure success?": "Win rate; Other: demo-to-close — notes: 25%",
+     "Long-term goals (12–24 months)": "open 3 clinics",
+     "Timeline / key dates": "1–3 months",
+     "Which areas of the business are they looking to grow?": "",
+     "Why are they moving to HubSpot?": ""
+    },
+    "edge_cases": "Specialist flagged for follow-up (confirm before scoping): Timeline / key dates",
+    "notes": ""
+   },
+   "Processes": {
+    "answers": {
+     "Challenges & workarounds": "legacy free text answer",
+     "Current reporting — what do they look at today?": "",
+     "Current team processes (sales, marketing, service)": "",
+     "Customer journey stages": "",
+     "Existing automations": "",
+     "How do they communicate with customers?": "",
+     "SLAs / response-time commitments": ""
+    },
+    "edge_cases": "",
+    "notes": ""
+   },
+   "Solutions Design": {
+    "answers": {
+     "Actions & automated steps users need": "",
+     "Desired MVP / go-live date": "",
+     "Experience with HubSpot or other CRMs": "",
+     "Gaps in their current tool": "",
+     "Integrations needed": "",
+     "Primary users of HubSpot": "",
+     "Priority features (must-haves)": "",
+     "Team sizes / number of seats": ""
+    },
+    "edge_cases": "",
+    "notes": ""
+   }
+  }
+ },
+ "client_explainer": {
+  "business_type": "dental",
+  "mode": "client_explainer",
+  "modules": [
+   "Sales Hub",
+   "Service Hub"
+  ]
+ },
+ "request": {
+  "betas": [
+   "server-side-fallback-2026-07-01"
+  ],
+  "extra_body": {
+   "fallbacks": "default"
+  },
+  "max_tokens": 32000,
+  "messages": [
+   {
+    "content": "{\n  \"mode\": \"business_analysis\",\n  \"client\": {\n    \"name\": \"Bright Smiles\",\n    \"business_type\": \"dental\"\n  },\n  \"sections\": {\n    \"Goals\": {\n      \"answers\": {\n        \"Which areas of the business are they looking to grow?\": \"\",\n        \"Long-term goals (12–24 months)\": \"open 3 clinics\",\n        \"KPIs — how will they measure success?\": \"Win rate; Other: demo-to-close — notes: 25%\",\n        \"Timeline / key dates\": \"1–3 months\",\n        \"Why are they moving to HubSpot?\": \"\"\n      },\n      \"notes\": \"\",\n      \"edge_cases\": \"Specialist flagged for follow-up (confirm before scoping): Timeline / key dates\"\n    },\n    \"Data\": {\n      \"answers\": {\n        \"Where does their data live today?\": \"\",\n        \"Which systems manage that data?\": \"\",\n        \"Volume — objects, records, assets\": \"\",\n        \"Sync direction(s) needed\": \"\",\n        \"Custom data elements\": \"\",\n        \"Where are their customers / contacts located?\": \"EU / UK; United States\",\n        \"Locations / organization structure\": \"\",\n        \"Data owners / roles\": \"\",\n        \"How often is data updated or cleaned?\": \"\",\n        \"Security / compliance requirements\": \"\"\n      },\n      \"notes\": \"\",\n      \"edge_cases\": \"Two legal entities\"\n    },\n    \"Processes\": {\n      \"answers\": {\n        \"Customer journey stages\": \"\",\n        \"Current team processes (sales, marketing, service)\": \"\",\n        \"How do they communicate with customers?\": \"\",\n        \"SLAs / response-time commitments\": \"\",\n        \"Existing automations\": \"\",\n        \"Current reporting — what do they look at today?\": \"\",\n        \"Challenges & workarounds\": \"legacy free text answer\"\n      },\n      \"notes\": \"\",\n      \"edge_cases\": \"\"\n    },\n    \"Solutions Design\": {\n      \"answers\": {\n        \"Primary users of HubSpot\": \"\",\n        \"Team sizes / number of seats\": \"\",\n        \"Actions & automated steps users need\": \"\",\n        \"Experience with HubSpot or other CRMs\": \"\",\n        \"Integrations needed\": \"\",\n        \"Priority features (must-haves)\": \"\",\n        \"Gaps in their current tool\": \"\",\n        \"Desired MVP / go-live date\": \"\"\n      },\n      \"notes\": \"\",\n      \"edge_cases\": \"\"\n    }\n  }\n}\n\nFormat the document as Markdown: '#' for the document title, '##' for section headings, '###' for sub-headings, '-' for bullets, and **bold** for emphasis or flags. Do not use tables.",
+    "role": "user"
+   }
+  ],
+  "model": "claude-opus-5-5",
+  "output_config": {
+   "effort": "medium"
+  }
+ },
+ "suggest_modules": [
+  "Sales Hub",
+  "Operations Hub"
+ ],
+ "system_prompt_len": 6304
+}

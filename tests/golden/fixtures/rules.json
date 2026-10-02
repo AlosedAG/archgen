@@ -1,0 +1,431 @@
+{
+ "rules": {
+  "audit_thresholds": {
+   "picklist_similarity_threshold": 0.85,
+   "record_sample_size": 100,
+   "unused_property_max_populated": 0
+  },
+  "base_currency": {
+   "always_required": true,
+   "note": "When more than one currency is in scope, always define exactly one base currency for roll-up reporting; deal/line-item currency fields should default to it.\n"
+  },
+  "integration_heuristics": {
+   "MyStudio": {
+    "properties": [
+     {
+      "description": "External ID linking this contact to their MyStudio member record.",
+      "field_type": "text",
+      "label": "MyStudio Member ID",
+      "name": "mystudio_member_id",
+      "object": "Contact",
+      "type": "string"
+     }
+    ],
+    "workflows": [
+     {
+      "action_summary": "Update mystudio_member_status and mystudio_last_synced_at from the MyStudio integration payload.",
+      "name": "Contact | Sync MyStudio Membership Status",
+      "object_type": "Contact",
+      "trigger": "MyStudio member status changes (via integration)"
+     }
+    ]
+   },
+   "Sakari": {
+    "properties": [
+     {
+      "description": "Whether the contact has opted in to SMS via Sakari.",
+      "field_type": "booleancheckbox",
+      "label": "SMS Opt-In",
+      "name": "sms_opt_in",
+      "object": "Contact",
+      "type": "bool"
+     },
+     {
+      "description": "Timestamp of the most recent Sakari SMS interaction.",
+      "field_type": "date",
+      "label": "Sakari Last Message At",
+      "name": "sakari_last_message_at",
+      "object": "Contact",
+      "type": "datetime"
+     }
+    ],
+    "workflows": [
+     {
+      "action_summary": "Log a timeline event and update sakari_last_message_at.",
+      "name": "Contact | Log Sakari SMS Reply",
+      "object_type": "Contact",
+      "trigger": "Inbound SMS reply received in Sakari"
+     }
+    ]
+   },
+   "other": {
+    "properties": [
+     {
+      "description": "External ID linking this record to {Integration}.",
+      "field_type": "text",
+      "label": "{Integration} External ID",
+      "name": "{integration}_external_id",
+      "object": "Contact",
+      "type": "string"
+     }
+    ],
+    "workflows": []
+   },
+   "payments_provider": {
+    "properties": [
+     {
+      "description": "Status of the associated payment from the payments provider.",
+      "field_type": "select",
+      "label": "Payment Status",
+      "name": "payment_status",
+      "object": "Deal",
+      "options": [
+       "Not Started",
+       "Pending",
+       "Paid",
+       "Failed",
+       "Refunded"
+      ],
+      "type": "enumeration"
+     },
+     {
+      "description": "External transaction/reference ID from the payments provider.",
+      "field_type": "text",
+      "label": "Payment Provider Transaction ID",
+      "name": "payment_provider_id",
+      "object": "Deal",
+      "type": "string"
+     }
+    ],
+    "workflows": [
+     {
+      "action_summary": "Set payment_status and payment_provider_id from the incoming payment webhook.",
+      "name": "Deal | Sync Payment Status",
+      "object_type": "Deal",
+      "trigger": "Payment status changes in the payments provider"
+     }
+    ]
+   }
+  },
+  "naming_conventions": {
+   "custom_object_name": "Singular PascalCase, e.g. 'Membership' not 'Memberships' or 'membership'.",
+   "pipeline_name_pattern": "'<Object> Pipeline', e.g. 'Deal Pipeline'.",
+   "property_internal_name": "snake_case, e.g. 'membership_status'.",
+   "workflow_name_pattern": "'<Object> | <Purpose>', e.g. 'Contact | Sync MyStudio Membership Status'."
+  },
+  "object_model_keywords": {
+   "event": {
+    "associations": [
+     {
+      "cardinality": "many-to-many",
+      "label": "Event to Contact (Registrant)",
+      "to_object": "Contact"
+     }
+    ],
+    "description": "Tracks a bookable event/session, tied to Contacts via registration.",
+    "object_name": "Event",
+    "plural_label": "Events",
+    "properties": [
+     {
+      "description": "Scheduled date/time of the event.",
+      "field_type": "date",
+      "label": "Event Date",
+      "name": "event_date",
+      "required": true,
+      "type": "datetime"
+     },
+     {
+      "description": "Current status of the event.",
+      "field_type": "select",
+      "label": "Event Status",
+      "name": "event_status",
+      "options": [
+       "Scheduled",
+       "Completed",
+       "Cancelled"
+      ],
+      "required": false,
+      "type": "enumeration"
+     }
+    ]
+   },
+   "location": {
+    "associations": [
+     {
+      "cardinality": "many-to-one",
+      "label": "Location to Company",
+      "to_object": "Company"
+     }
+    ],
+    "description": "Tracks a physical or service location, tied to a Company.",
+    "object_name": "Location",
+    "plural_label": "Locations",
+    "properties": [
+     {
+      "description": "Whether the location is currently operating.",
+      "field_type": "select",
+      "label": "Location Status",
+      "name": "location_status",
+      "options": [
+       "Active",
+       "Inactive"
+      ],
+      "required": true,
+      "type": "enumeration"
+     },
+     {
+      "description": "Free-text region/territory label for the location.",
+      "field_type": "text",
+      "label": "Region",
+      "name": "region",
+      "required": false,
+      "type": "string"
+     }
+    ]
+   },
+   "membership": {
+    "associations": [
+     {
+      "cardinality": "many-to-one",
+      "label": "Membership to Contact",
+      "to_object": "Contact"
+     }
+    ],
+    "description": "Tracks an individual membership term, tied to a Contact.",
+    "object_name": "Membership",
+    "plural_label": "Memberships",
+    "properties": [
+     {
+      "description": "Current status of the membership term.",
+      "field_type": "select",
+      "label": "Membership Status",
+      "name": "membership_status",
+      "options": [
+       "Active",
+       "Paused",
+       "Cancelled",
+       "Expired"
+      ],
+      "required": true,
+      "type": "enumeration"
+     },
+     {
+      "description": "Membership term start date.",
+      "field_type": "date",
+      "label": "Start Date",
+      "name": "start_date",
+      "required": true,
+      "type": "date"
+     },
+     {
+      "description": "Membership term end date, if fixed-term.",
+      "field_type": "date",
+      "label": "End Date",
+      "name": "end_date",
+      "required": false,
+      "type": "date"
+     }
+    ]
+   },
+   "subscription": {
+    "associations": [
+     {
+      "cardinality": "many-to-one",
+      "label": "Subscription to Contact",
+      "to_object": "Contact"
+     },
+     {
+      "cardinality": "one-to-one",
+      "label": "Subscription to Deal",
+      "to_object": "Deal"
+     }
+    ],
+    "description": "Tracks a recurring subscription/billing term, tied to a Contact and optionally a Deal.",
+    "object_name": "Subscription",
+    "plural_label": "Subscriptions",
+    "properties": [
+     {
+      "description": "Current status of the subscription.",
+      "field_type": "select",
+      "label": "Subscription Status",
+      "name": "subscription_status",
+      "options": [
+       "Active",
+       "Paused",
+       "Cancelled",
+       "Past Due"
+      ],
+      "required": true,
+      "type": "enumeration"
+     },
+     {
+      "description": "How often the subscription bills.",
+      "field_type": "select",
+      "label": "Billing Frequency",
+      "name": "billing_frequency",
+      "options": [
+       "Monthly",
+       "Quarterly",
+       "Annual"
+      ],
+      "required": true,
+      "type": "enumeration"
+     }
+    ]
+   }
+  },
+  "overwrite_risk": {
+   "action_keywords": [
+    "set ",
+    "update ",
+    "overwrite ",
+    "sync "
+   ],
+   "description": "A workflow action is flagged as an overwrite risk when it sets/updates a property unconditionally (no \"only if blank\" / conditional qualifier) — this can silently clobber manually-entered or integration-sourced data.\n",
+   "safe_qualifiers": [
+    "only if",
+    "if blank",
+    "if empty",
+    "when empty",
+    "conditional",
+    "if not already set"
+   ]
+  },
+  "pipeline_templates": {
+   "Deal": [
+    {
+     "name": "Appointment Scheduled",
+     "order": 0
+    },
+    {
+     "name": "Qualified To Buy",
+     "order": 1
+    },
+    {
+     "name": "Presentation Scheduled",
+     "order": 2
+    },
+    {
+     "name": "Decision Maker Bought In",
+     "order": 3
+    },
+    {
+     "name": "Contract Sent",
+     "order": 4
+    },
+    {
+     "is_closed": true,
+     "is_won": true,
+     "name": "Closed Won",
+     "order": 5
+    },
+    {
+     "is_closed": true,
+     "is_won": false,
+     "name": "Closed Lost",
+     "order": 6
+    }
+   ],
+   "Ticket": [
+    {
+     "name": "New",
+     "order": 0
+    },
+    {
+     "name": "Waiting on Contact",
+     "order": 1
+    },
+    {
+     "name": "Waiting on Us",
+     "order": 2
+    },
+    {
+     "is_closed": true,
+     "is_won": true,
+     "name": "Closed",
+     "order": 3
+    }
+   ],
+   "generic_custom": [
+    {
+     "name": "New",
+     "order": 0
+    },
+    {
+     "name": "In Progress",
+     "order": 1
+    },
+    {
+     "is_closed": true,
+     "is_won": true,
+     "name": "Completed",
+     "order": 2
+    },
+    {
+     "is_closed": true,
+     "is_won": false,
+     "name": "Cancelled",
+     "order": 3
+    }
+   ]
+  },
+  "standard_object_baseline_properties": {
+   "Company": [
+    {
+     "description": "Standard HubSpot industry classification.",
+     "field_type": "select",
+     "label": "Industry",
+     "name": "industry",
+     "required": false,
+     "type": "enumeration"
+    }
+   ],
+   "Contact": [
+    {
+     "description": "Standard HubSpot lifecycle stage; required for reporting handoffs between hubs.",
+     "field_type": "select",
+     "label": "Lifecycle Stage",
+     "name": "lifecyclestage",
+     "required": true,
+     "type": "enumeration"
+    },
+    {
+     "description": "Tracks sales follow-up status independent of lifecycle stage.",
+     "field_type": "select",
+     "label": "Lead Status",
+     "name": "hs_lead_status",
+     "required": false,
+     "type": "enumeration"
+    }
+   ],
+   "Deal": [
+    {
+     "description": "Current stage within the deal pipeline.",
+     "field_type": "select",
+     "label": "Deal Stage",
+     "name": "dealstage",
+     "required": true,
+     "type": "enumeration"
+    },
+    {
+     "description": "Deal value in the base currency unless overridden.",
+     "field_type": "number",
+     "label": "Amount",
+     "name": "amount",
+     "required": true,
+     "type": "number"
+    }
+   ],
+   "Ticket": [
+    {
+     "description": "Current stage within the ticket pipeline.",
+     "field_type": "select",
+     "label": "Pipeline Stage",
+     "name": "hs_pipeline_stage",
+     "required": true,
+     "type": "enumeration"
+    }
+   ]
+  }
+ }
+}

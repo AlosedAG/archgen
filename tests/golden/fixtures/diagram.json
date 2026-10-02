@@ -1,0 +1,197 @@
+{
+ "by_area": {
+  "Associations": 1,
+  "Naming": 4,
+  "Permissions": 2,
+  "Properties": 2,
+  "Records": 6,
+  "Workflows": 1
+ },
+ "by_severity": {
+  "High": 2,
+  "Low": 11,
+  "Medium": 3
+ },
+ "dangling": [],
+ "dot": [
+  "digraph architecture {",
+  "  rankdir=LR;",
+  "  bgcolor=\"transparent\";",
+  "  concentrate=true;",
+  "  nodesep=0.45;",
+  "  ranksep=0.75;",
+  "  node [fontname=\"Helvetica\", fontsize=11, shape=box, style=\"rounded,filled\"];",
+  "  edge [fontname=\"Helvetica\", fontsize=9, color=\"#5B45B0\", fontcolor=\"#14121F\"];",
+  "  \"Contact\" [label=\"Contact\\n5 properties\", fillcolor=\"white\", fontcolor=\"#14121F\", color=\"#E4E1EE\", penwidth=1.5, style=\"rounded,filled\"];",
+  "  \"Company\" [label=\"Company\\n1 property\", fillcolor=\"white\", fontcolor=\"#14121F\", color=\"#E4E1EE\", penwidth=1.5, style=\"rounded,filled\"];",
+  "  \"Deal\" [label=\"Deal\\n4 properties\", fillcolor=\"white\", fontcolor=\"#14121F\", color=\"#E4E1EE\", penwidth=1.5, style=\"rounded,filled\"];",
+  "  \"Ticket\" [label=\"Ticket\\n1 property\", fillcolor=\"white\", fontcolor=\"#14121F\", color=\"#E4E1EE\", penwidth=1.5, style=\"rounded,filled\"];",
+  "  \"Membership\" [label=\"Membership\\n3 properties\", fillcolor=\"#3D2E7C\", fontcolor=\"white\", color=\"#E4E1EE\", penwidth=1.5, style=\"rounded,filled\"];",
+  "  \"Subscription\" [label=\"Subscription\\n2 properties\", fillcolor=\"#3D2E7C\", fontcolor=\"white\", color=\"#E4E1EE\", penwidth=1.5, style=\"rounded,filled\"];",
+  "  \"Location\" [label=\"Location\\n2 properties\", fillcolor=\"#3D2E7C\", fontcolor=\"white\", color=\"#E4E1EE\", penwidth=1.5, style=\"rounded,filled\"];",
+  "  \"Membership\" -> \"Contact\" [label=\"Membership to Contact\"];",
+  "  \"Subscription\" -> \"Contact\" [label=\"Subscription to Contact\"];",
+  "  \"Subscription\" -> \"Deal\" [label=\"Subscription to Deal\"];",
+  "  \"Location\" -> \"Company\" [label=\"Location to Company\"];",
+  "}"
+ ],
+ "dot_unlabeled": [
+  "digraph architecture {",
+  "  rankdir=LR;",
+  "  bgcolor=\"transparent\";",
+  "  concentrate=true;",
+  "  nodesep=0.45;",
+  "  ranksep=0.75;",
+  "  node [fontname=\"Helvetica\", fontsize=11, shape=box, style=\"rounded,filled\"];",
+  "  edge [fontname=\"Helvetica\", fontsize=9, color=\"#5B45B0\", fontcolor=\"#14121F\"];",
+  "  \"Contact\" [label=\"Contact\\n7 properties · 11 finding(s)\", fillcolor=\"white\", fontcolor=\"#14121F\", color=\"#D64545\", penwidth=3, style=\"rounded,filled\"];",
+  "  \"Memberships\" [label=\"Memberships\\n1 property · 2 finding(s)\", fillcolor=\"#3D2E7C\", fontcolor=\"white\", color=\"#F7791D\", penwidth=3, style=\"rounded,filled\"];",
+  "  \"Memberships\" -> \"Contact\";",
+  "}"
+ ],
+ "drawio": [
+  "<?xml version=\"1.0\" encoding=\"UTF-8\"?><mxfile host=\"architecturescope\"><diagram name=\"Architecture\"><mxGraphModel dx=\"800\" dy=\"600\" grid=\"1\" gridSize=\"10\" guides=\"1\" tooltips=\"1\" connect=\"1\" arrows=\"1\" fold=\"1\" page=\"1\" pageScale=\"1\" pageWidth=\"970\" pageHeight=\"386\" math=\"0\" shadow=\"0\"><root><mxCell id=\"0\" /><mxCell id=\"1\" parent=\"0\" /><mxCell id=\"node_0\" value=\"Contact&lt;br&gt;5 properties\" style=\"rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;fontColor=#14121F;strokeColor=#E4E1EE;strokeWidth=1;arcSize=12;fontSize=11;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"40\" y=\"40\" width=\"170\" height=\"68\" as=\"geometry\" /></mxCell><mxCell id=\"node_1\" value=\"Company&lt;br&gt;1 property\" style=\"rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;fontColor=#14121F;strokeColor=#E4E1EE;strokeWidth=1;arcSize=12;fontSize=11;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"280\" y=\"40\" width=\"170\" height=\"68\" as=\"geometry\" /></mxCell><mxCell id=\"node_2\" value=\"Deal&lt;br&gt;4 properties\" style=\"rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;fontColor=#14121F;strokeColor=#E4E1EE;strokeWidth=1;arcSize=12;fontSize=11;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"520\" y=\"40\" width=\"170\" height=\"68\" as=\"geometry\" /></mxCell><mxCell id=\"node_3\" value=\"Ticket&lt;br&gt;1 property\" style=\"rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;fontColor=#14121F;strokeColor=#E4E1EE;strokeWidth=1;arcSize=12;fontSize=11;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"760\" y=\"40\" width=\"170\" height=\"68\" as=\"geometry\" /></mxCell><mxCell id=\"node_4\" value=\"Subscription&lt;br&gt;2 properties\" style=\"rounded=1;whiteSpace=wrap;html=1;fillColor=#3D2E7C;fontColor=white;strokeColor=#E4E1EE;strokeWidth=1;arcSize=12;fontSize=11;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"520\" y=\"278\" width=\"170\" height=\"68\" as=\"geometry\" /></mxCell><mxCell id=\"node_5\" value=\"Location&lt;br&gt;2 properties\" style=\"rounded=1;whiteSpace=wrap;html=1;fillColor=#3D2E7C;fontColor=white;strokeColor=#E4E1EE;strokeWidth=1;arcSize=12;fontSize=11;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"280\" y=\"278\" width=\"170\" height=\"68\" as=\"geometry\" /></mxCell><mxCell id=\"node_6\" value=\"Membership&lt;br&gt;3 properties\" style=\"rounded=1;whiteSpace=wrap;html=1;fillColor=#3D2E7C;fontColor=white;strokeColor=#E4E1EE;strokeWidth=1;arcSize=12;fontSize=11;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"40\" y=\"278\" width=\"170\" height=\"68\" as=\"geometry\" /></mxCell><mxCell id=\"edge_0\" value=\"Membership to Contact\" style=\"edgeStyle=none;rounded=1;html=1;fontSize=10;labelBackgroundColor=#FFFFFF;strokeColor=#5B45B0;exitX=0.500;exitY=0.000;exitDx=0;exitDy=0;entryX=0.333;entryY=1.000;entryDx=0;entryDy=0;\" edge=\"1\" parent=\"1\" source=\"node_6\" target=\"node_0\"><mxGeometry relative=\"1\" as=\"geometry\"><Array as=\"points\"><mxPoint x=\"125\" y=\"193\" /><mxPoint x=\"97\" y=\"193\" /></Array></mxGeometry></mxCell><mxCell id=\"edge_1\" value=\"Subscription to Contact\" style=\"edgeStyle=none;rounded=1;html=1;fontSize=10;labelBackgroundColor=#FFFFFF;strokeColor=#5B45B0;exitX=0.333;exitY=0.000;exitDx=0;exitDy=0;entryX=0.667;entryY=1.000;entryDx=0;entryDy=0;\" edge=\"1\" parent=\"1\" source=\"node_4\" target=\"node_0\"><mxGeometry relative=\"1\" as=\"geometry\"><Array as=\"points\"><mxPoint x=\"577\" y=\"193\" /><mxPoint x=\"153\" y=\"193\" /></Array></mxGeometry></mxCell><mxCell id=\"edge_2\" value=\"Subscription to Deal\" style=\"edgeStyle=none;rounded=1;html=1;fontSize=10;labelBackgroundColor=#FFFFFF;strokeColor=#5B45B0;exitX=0.667;exitY=0.000;exitDx=0;exitDy=0;entryX=0.500;entryY=1.000;entryDx=0;entryDy=0;\" edge=\"1\" parent=\"1\" source=\"node_4\" target=\"node_2\"><mxGeometry relative=\"1\" as=\"geometry\"><Array as=\"points\"><mxPoint x=\"633\" y=\"193\" /><mxPoint x=\"605\" y=\"193\" /></Array></mxGeometry></mxCell><mxCell id=\"edge_3\" value=\"Location to Company\" style=\"edgeStyle=none;rounded=1;html=1;fontSize=10;labelBackgroundColor=#FFFFFF;strokeColor=#5B45B0;exitX=0.500;exitY=0.000;exitDx=0;exitDy=0;entryX=0.500;entryY=1.000;entryDx=0;entryDy=0;\" edge=\"1\" parent=\"1\" source=\"node_5\" target=\"node_1\"><mxGeometry relative=\"1\" as=\"geometry\"><Array as=\"points\"><mxPoint x=\"365\" y=\"211\" /><mxPoint x=\"365\" y=\"211\" /></Array></mxGeometry></mxCell></root></mxGraphModel></diagram></mxfile>"
+ ],
+ "from_blueprint": {
+  "edges": [
+   {
+    "cardinality": "many-to-one",
+    "label": "Membership to Contact",
+    "source": "Membership",
+    "target": "Contact"
+   },
+   {
+    "cardinality": "many-to-one",
+    "label": "Subscription to Contact",
+    "source": "Subscription",
+    "target": "Contact"
+   },
+   {
+    "cardinality": "one-to-one",
+    "label": "Subscription to Deal",
+    "source": "Subscription",
+    "target": "Deal"
+   },
+   {
+    "cardinality": "many-to-one",
+    "label": "Location to Company",
+    "source": "Location",
+    "target": "Company"
+   }
+  ],
+  "nodes": [
+   {
+    "finding_count": 0,
+    "kind": "Standard",
+    "name": "Contact",
+    "notes": "",
+    "property_count": 5,
+    "risk": ""
+   },
+   {
+    "finding_count": 0,
+    "kind": "Standard",
+    "name": "Company",
+    "notes": "",
+    "property_count": 1,
+    "risk": ""
+   },
+   {
+    "finding_count": 0,
+    "kind": "Standard",
+    "name": "Deal",
+    "notes": "",
+    "property_count": 4,
+    "risk": ""
+   },
+   {
+    "finding_count": 0,
+    "kind": "Standard",
+    "name": "Ticket",
+    "notes": "",
+    "property_count": 1,
+    "risk": ""
+   },
+   {
+    "finding_count": 0,
+    "kind": "Custom",
+    "name": "Membership",
+    "notes": "Tracks an individual membership term, tied to a Contact.",
+    "property_count": 3,
+    "risk": ""
+   },
+   {
+    "finding_count": 0,
+    "kind": "Custom",
+    "name": "Subscription",
+    "notes": "Tracks a recurring subscription/billing term, tied to a Contact and optionally a Deal.",
+    "property_count": 2,
+    "risk": ""
+   },
+   {
+    "finding_count": 0,
+    "kind": "Custom",
+    "name": "Location",
+    "notes": "Tracks a physical or service location, tied to a Company.",
+    "property_count": 2,
+    "risk": ""
+   }
+  ]
+ },
+ "from_snapshot": {
+  "edges": [
+   {
+    "cardinality": "many-to-one",
+    "label": "Membership to Contact",
+    "source": "Memberships",
+    "target": "Contact"
+   }
+  ],
+  "nodes": [
+   {
+    "finding_count": 11,
+    "kind": "Standard",
+    "name": "Contact",
+    "notes": "",
+    "property_count": 7,
+    "risk": "High"
+   },
+   {
+    "finding_count": 2,
+    "kind": "Custom",
+    "name": "Memberships",
+    "notes": "",
+    "property_count": 1,
+    "risk": "Medium"
+   }
+  ]
+ },
+ "from_snapshot_engagements": {
+  "edges": [
+   {
+    "cardinality": "many-to-one",
+    "label": "Membership to Contact",
+    "source": "Memberships",
+    "target": "Contact"
+   }
+  ],
+  "nodes": [
+   {
+    "finding_count": 11,
+    "kind": "Standard",
+    "name": "Contact",
+    "notes": "",
+    "property_count": 7,
+    "risk": "High"
+   },
+   {
+    "finding_count": 2,
+    "kind": "Custom",
+    "name": "Memberships",
+    "notes": "",
+    "property_count": 1,
+    "risk": "Medium"
+   }
+  ]
+ }
+}
