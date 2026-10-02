@@ -23,8 +23,8 @@ from streamlit.testing.v1 import AppTest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-from core.blueprint import BlueprintGenerator
-from core.models import (
+from archscope_domain.blueprint import BlueprintGenerator
+from archscope_domain.models import (
     AssociationDef,
     BlueprintInput,
     Finding,
@@ -33,7 +33,7 @@ from core.models import (
     PortalSnapshot,
 )
 from core.project_store import list_documents
-from rules.engine import RulesEngine
+from archscope_domain.rules import RulesEngine
 
 PAGES_DIR = Path(__file__).resolve().parent.parent / "app_pages"
 
@@ -400,11 +400,11 @@ def test_discovery_page_renders_and_exports_a_generated_document(monkeypatch, tm
 
 
 def test_discovery_page_explains_a_broken_question_bank(monkeypatch, tmp_path):
-    import core.discovery_config
+    import archscope_domain.discovery_config
 
     bad = tmp_path / "discovery_options.yaml"
     bad.write_text("sections:\n  Goals:\n    - {id: kpis, label: KPIs, input: dropdown}\n", encoding="utf-8")
-    monkeypatch.setattr(core.discovery_config, "DEFAULT_OPTIONS_PATH", bad)
+    monkeypatch.setattr(archscope_domain.discovery_config, "DEFAULT_OPTIONS_PATH", bad)
     at = _run("11_Discovery_Call_Assistant.py", timeout=20)
     assert any("question bank" in e.value for e in at.error)
     assert any("Goals › kpis" in m.value for m in at.markdown)

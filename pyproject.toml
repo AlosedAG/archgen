@@ -1,0 +1,128 @@
+# ArchitectureScope — Python workspace root.
+#
+#   packages/domain        archscope_domain        pure business logic (no I/O, no frameworks)
+#   packages/integrations  archscope_integrations  adapters for the domain's ports (HubSpot, read-only)
+#   apps/api               archscope_api           FastAPI service
+#   (repo root)            legacy Streamlit app — Home.py, app_pages/, core/ — retired once apps/web ships
+#
+# Local setup:  uv sync --all-packages   (or: pip install -e packages/domain -e packages/integrations -e apps/api)
+
+[project]
+name = "architecturescope"
+version = "0.4.0"
+description = "HubSpot implementation toolkit for solutions architects (workspace root + legacy Streamlit app)."
+requires-python = ">=3.12"
+dependencies = [
+    "archscope-domain",
+    "archscope-integrations",
+    "streamlit>=1.45",
+    "Authlib>=1.3.2",
+    "python-dotenv>=1.0.0",
+    "anthropic>=0.104",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24",
+    "httpx>=0.27",
+    "mypy>=1.13",
+    "ruff>=0.8",
+    "import-linter>=2.1",
+    "types-PyYAML",
+    "types-requests",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["packages/domain", "packages/integrations", "apps/api"]
+
+[tool.uv.sources]
+archscope-domain = { workspace = true }
+archscope-integrations = { workspace = true }
+
+# ---- pytest ---------------------------------------------------------------
+
+[tool.pytest.ini_options]
+testpaths = ["packages/domain/tests", "packages/integrations/tests", "apps/api/tests", "tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+# ---- ruff -----------------------------------------------------------------
+
+[tool.ruff]
+line-length = 130
+target-version = "py312"
+extend-exclude = ["**/alembic/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "ASYNC", "PT"]
+ignore = [
+    "E501",    # long lines are formatter's job; prose strings stay readable
+    "RUF001",  # ambiguous unicode: en/em dashes are intentional in user-facing copy
+    "RUF002",
+    "RUF003",
+    "PT011",   # pytest.raises(ValueError) without match is fine for guard clauses
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["archscope_domain", "archscope_integrations", "archscope_api", "core"]
+
+# ---- mypy -----------------------------------------------------------------
+# Strict on new code (API, ports, integrations). The extracted domain modules
+# are checked too, with their pre-existing gaps tracked per module below
+# and burned down as each module is touched — never added to.
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+pretty = true
+mypy_path = ["packages/domain/src", "packages/integrations/src", "apps/api/src"]
+packages = ["archscope_domain", "archscope_integrations", "archscope_api"]
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["hubspot.*", "fpdf.*", "docx.*", "openpyxl.*", "pypdf.*", "matplotlib.*", "pandas.*"]
+ignore_missing_imports = true
+
+# ---- import-linter: architecture rules, enforced in CI -----------------------
+
+[tool.importlinter]
+root_packages = ["archscope_domain", "archscope_integrations", "archscope_api"]
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Domain is pure: no frameworks, no I/O clients, no outer layers"
+type = "forbidden"
+source_modules = ["archscope_domain"]
+forbidden_modules = [
+    "archscope_integrations",
+    "archscope_api",
+    "streamlit",
+    "fastapi",
+    "starlette",
+    "sqlalchemy",
+    "redis",
+    "hubspot",
+    "requests",
+    "httpx",
+    "anthropic",
+]
+
+[[tool.importlinter.contracts]]
+name = "Integrations depend only on the domain, never on the API"
+type = "forbidden"
+source_modules = ["archscope_integrations"]
+forbidden_modules = ["archscope_api", "streamlit", "fastapi"]
+
+[[tool.importlinter.contracts]]
+name = "API layering: routers map HTTP <-> domain; services never see HTTP schemas"
+type = "layers"
+layers = [
+    "archscope_api.main",
+    "archscope_api.routers",
+    "archscope_api.services | archscope_api.schemas",
+]

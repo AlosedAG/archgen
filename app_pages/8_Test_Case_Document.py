@@ -18,7 +18,7 @@ import pandas as pd
 import streamlit as st
 
 from core.doc_export_ui import render_sections_export
-from core.exporters import clean_rows
+from archscope_domain.exporters import clean_rows
 from core.project_store import guess_project_name
 from core.theme import inject_global_css, render_page_header
 

@@ -1,7 +1,7 @@
 """Streamlit-coupled rendering for the "download this / save this to the
 project library" footer every document-producing page ends with.
 
-Kept separate from ``core.exporters`` so the actual format-conversion
+Kept separate from ``archscope_domain.exporters`` so the actual format-conversion
 logic stays pure-Python and unit-testable without a Streamlit runtime;
 this module is the thin, untested-by-design UI glue on top of it.
 """
@@ -11,7 +11,7 @@ from __future__ import annotations
 import streamlit as st
 
 from core import project_store
-from core.exporters import Section, sections_to_csv, sections_to_docx, sections_to_pdf, sections_to_xlsx
+from archscope_domain.exporters import Section, sections_to_csv, sections_to_docx, sections_to_pdf, sections_to_xlsx
 
 _DOWNLOAD_MIME = {
     "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",

@@ -15,8 +15,8 @@ from __future__ import annotations
 import streamlit as st
 
 from core.doc_export_ui import save_to_library_button
-from core.models import SEVERITIES
-from core.report import (
+from archscope_domain.models import SEVERITIES
+from archscope_domain.report import (
     AREA_EXPLANATIONS,
     SEVERITY_META,
     build_report_context,

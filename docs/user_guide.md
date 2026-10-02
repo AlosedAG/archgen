@@ -84,7 +84,7 @@ Use it **live, during the discovery call**.
 
 - Notes survive switching pages, but not closing the tab. Use **Back up, restore, or reset call notes** to download a backup mid-call; restore it from the same place.
 - **Start a new call** clears every note and draft before the next client.
-- The questions and dropdown options come from `config/discovery_options.yaml` — ask whoever maintains the app to add or change an option.
+- The questions and dropdown options come from `packages/domain/src/archscope_domain/config/discovery_options.yaml` — ask whoever maintains the app to add or change an option.
 - The business analysis's **Preliminary Scope Signals** section is written as input for the Proposal & SOW Builder.
 - Needs an Anthropic API key (Setup). Notes are sent to Anthropic only when you click a Generate button.
 

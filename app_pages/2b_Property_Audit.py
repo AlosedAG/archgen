@@ -5,13 +5,13 @@ from __future__ import annotations
 import streamlit as st
 
 from core.doc_export_ui import render_export_footer
-from core.docgen import DocumentationGenerator
-from core.connections import require_hubspot_token
-from core.hubspot_client import HubSpotAPIError, HubSpotClient, HubSpotScopeError
+from archscope_domain.docgen import DocumentationGenerator
+from core.connections import hubspot_client, require_hubspot_token
+from archscope_integrations.hubspot import HubSpotAPIError, HubSpotScopeError
 from core.project_store import project_name_input
-from core.property_audit import property_audit_to_pdf, property_audit_to_xlsx, run_property_audit
+from archscope_domain.property_audit import property_audit_to_pdf, property_audit_to_xlsx, run_property_audit
 from core.theme import inject_global_css, render_page_header
-from rules.engine import RulesEngine
+from archscope_domain.rules import RulesEngine
 
 st.set_page_config(page_title="Property Audit", layout="wide")
 inject_global_css()
@@ -42,7 +42,7 @@ with pull_col:
     pull_label = "Refresh portal data" if has_snapshot else "Pull from portal"
     if st.button(pull_label, type="primary"):
         try:
-            client = HubSpotClient()
+            client = hubspot_client()
             generator = DocumentationGenerator(client)
             with st.spinner("Pulling schemas, properties, pipelines, workflows, owners, and teams..."):
                 st.session_state["portal_snapshot"] = generator.build_snapshot()
@@ -57,7 +57,7 @@ with pull_col:
 with audit_col:
     if st.button("Run property audit", type="primary", disabled=not has_snapshot):
         try:
-            client = HubSpotClient()
+            client = hubspot_client()
             with st.spinner("Sampling records and rating every property..."):
                 st.session_state["property_audit_result"] = run_property_audit(
                     client, st.session_state["portal_snapshot"], RulesEngine()

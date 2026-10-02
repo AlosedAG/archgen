@@ -83,9 +83,9 @@ the whole guide plus the PDF manuals as downloads. When adding a page, add a
     are dropdowns / multiselects with an "Other (specify)" fallback, a
     shorthand notes line, and a "Flag for follow-up" checkbox per question;
     the questions and options live in
-    [`config/discovery_options.yaml`](config/discovery_options.yaml) (see
+    [`packages/domain/src/archscope_domain/config/discovery_options.yaml`](packages/domain/src/archscope_domain/config/discovery_options.yaml) (see
     [Discovery question bank](#discovery-question-bank)). Drafted by Claude
-    (`core/discovery.py` holds the system prompt); exports `.docx`, `.pdf`, and `.md`. The only module that needs an
+    (`packages/domain/src/archscope_domain/discovery.py` holds the system prompt); exports `.docx`, `.pdf`, and `.md`. The only module that needs an
     Anthropic API key, and the only one that sends anything outside your
     machine besides HubSpot reads — notes go to Anthropic only when a
     Generate button is clicked.
@@ -189,8 +189,8 @@ convention summary, a base-currency recommendation, and a suggested
 workflow list — each workflow flagged `Overwrite Risk: Yes/No` based on
 whether it sets a property unconditionally. Export as Markdown or JSON.
 
-All the logic is table-driven from [`rules/rules.yaml`](rules/rules.yaml),
-loaded by [`rules/engine.py`](rules/engine.py) — edit the YAML to tune
+All the logic is table-driven from [`packages/domain/src/archscope_domain/config/rules.yaml`](packages/domain/src/archscope_domain/config/rules.yaml),
+loaded by [`packages/domain/src/archscope_domain/rules.py`](packages/domain/src/archscope_domain/rules.py) — edit the YAML to tune
 naming conventions, pipeline templates, integration heuristics, or the
 overwrite-risk keyword list without touching code.
 
@@ -252,7 +252,7 @@ properties are always Keep, matching the reference workbook's own rule):
 These thresholds were reverse-engineered from the rating boundaries in
 `examples/RPG_property_audit.xlsx` so this tool's calls read the way a
 reviewer of that workbook would expect — see
-[`core/property_audit.py`](core/property_audit.py)'s `_rate_property` for
+[`packages/domain/src/archscope_domain/property_audit.py`](packages/domain/src/archscope_domain/property_audit.py)'s `_rate_property` for
 the exact logic and the tests that pin each boundary.
 
 **Known scope limitation:** this tool is read-only and only pulls
@@ -281,7 +281,7 @@ or as a styled `.docx` (title page, heading-styled sections, tables) via
 
 The `.docx` section order (Data Dictionary → Workflow Inventory →
 Association Map → Pipelines & Stages → Roles & Permissions) is a sensible
-default — reorder the headings in `core/docgen.py`'s `snapshot_to_docx` if
+default — reorder the headings in `packages/domain/src/archscope_domain/docgen.py`'s `snapshot_to_docx` if
 you want it to match a specific existing tracker template.
 
 ## Module 4: Executive Report
@@ -308,7 +308,7 @@ Two downloads, matching two different audiences:
   (tickets, handoff notes), not client distribution.
 
 Both exports are built from the same computed `ReportContext`
-(`core/report.py`), so the two documents' numbers never disagree with each
+(`packages/domain/src/archscope_domain/report.py`), so the two documents' numbers never disagree with each
 other. If no audit has been run yet, the report still describes the
 portal's structure and says so plainly instead of claiming a false "all
 clear."
@@ -347,7 +347,7 @@ Three self-contained note-taking modules, structured the same way as
 HubSpot's own templates for each document. Every table is an
 `st.data_editor` with dynamic rows — add, delete, or edit anything — and
 every one exports as `.docx`, `.xlsx`, `.csv`, and `.pdf` via the shared
-`core/exporters.py` (a `Section = (title, rows)` list feeds all four
+`packages/domain/src/archscope_domain/exporters.py` (a `Section = (title, rows)` list feeds all four
 formats, so they can never drift out of sync with each other).
 
 - **Requirements Document** (`app_pages/6_Requirements_Document.py`) — Project
@@ -369,9 +369,9 @@ and tracking tools, not a workflow engine.
 
 ## Module 10: Proposal & SOW Builder
 
-`app_pages/10_Proposal_SOW_Builder.py` (UI), `core/proposal.py` (data model,
+`app_pages/10_Proposal_SOW_Builder.py` (UI), `packages/domain/src/archscope_domain/proposal.py` (data model,
 SonaMation defaults, pricing/scope/coverage logic, WRD/JEP import, JSON
-round-trip), `core/proposal_pdf.py` (branded PDF). Based on the Statement of
+round-trip), `packages/domain/src/archscope_domain/proposal_pdf.py` (branded PDF). Based on the Statement of
 Work short form: parties and notice contacts, effective/expiration dates,
 description of services, deliverables and milestone fee schedule, optional
 additional-services menu, payment, and expenses.
@@ -417,7 +417,7 @@ local filesystem.
 
 ## Discovery question bank
 
-[`config/discovery_options.yaml`](config/discovery_options.yaml) is the
+[`packages/domain/src/archscope_domain/config/discovery_options.yaml`](packages/domain/src/archscope_domain/config/discovery_options.yaml) is the
 single source of truth for every question the Discovery Call Assistant
 asks: its section (Goals, Data, Processes, Solutions Design), its label,
 its input type, and its standard answer options. Edit it to standardize
@@ -440,7 +440,7 @@ no code changes needed.
   move into that question's "Other" text.
 
 The file is loaded and validated by
-[`core/discovery_config.py`](core/discovery_config.py). Answers are sent
+[`packages/domain/src/archscope_domain/discovery_config.py`](packages/domain/src/archscope_domain/discovery_config.py). Answers are sent
 to the AI as one readable line per question (selections, "Other" text,
 then notes), and flagged questions are listed with the section's edge
 cases, so the business-analysis prompt itself is unchanged.
@@ -468,7 +468,7 @@ findings, as a regression guard); Module 4's tests build `PortalSnapshot`/
 `Finding` fixtures directly (it has no HubSpot client of its own) and assert
 on both the computed stats and the two export formats. Module 5's tests
 cover both builders (blueprint- and snapshot-sourced), the DOT/`.drawio`
-renderers, and dangling-edge handling. `core/exporters.py` and
+renderers, and dangling-edge handling. `packages/domain/src/archscope_domain/exporters.py` and
 `core/project_store.py` (shared by Modules 5-9) are tested directly —
 including a `.docx`/`.xlsx`/`.pdf` round trip and the Unicode punctuation
 this app's own copy uses throughout (dashes, arrows, middots) surviving
@@ -503,7 +503,7 @@ architecturescope/
 │   └── 10_Proposal_SOW_Builder.py
 ├── core/
 │   ├── discovery.py        # Module 11: answers -> AI payload, system prompt, streaming
-│   ├── discovery_config.py # loads + validates config/discovery_options.yaml
+│   ├── discovery_config.py # loads + validates packages/domain/src/archscope_domain/config/discovery_options.yaml
 │   ├── models.py           # shared dataclasses for all modules
 │   ├── hubspot_client.py   # read-only API client: pagination, 429 backoff, scope errors
 │   ├── blueprint.py        # Module 1 generation + Markdown/JSON export

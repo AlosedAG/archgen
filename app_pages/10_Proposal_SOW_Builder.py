@@ -37,7 +37,7 @@ import pandas as pd
 import streamlit as st
 
 from core.doc_export_ui import save_to_library_button
-from core.proposal import (
+from archscope_domain.proposal import (
     ADDON_LIBRARY,
     BILLING_OPTIONS,
     BLANK_ROWS,
@@ -68,7 +68,7 @@ from core.proposal import (
     to_json,
     validate,
 )
-from core.proposal_pdf import proposal_to_pdf
+from archscope_domain.proposal_pdf import proposal_to_pdf
 from core.project_store import guess_project_name
 from core.theme import BG_ALT, BORDER, ORANGE, PURPLE, PURPLE_LIGHT, TEXT_BODY, inject_global_css, render_page_header
 
