@@ -457,7 +457,10 @@ def report_to_client_docx(ctx: ReportContext) -> io.BytesIO:
         )
         _add_bullets(
             doc,
-            [f"{ps.object_type}: {ps.pipeline_count} pipeline(s), {ps.total_stage_count} stages total." for ps in ctx.pipeline_summaries],
+            [
+                f"{ps.object_type}: {ps.pipeline_count} pipeline(s), {ps.total_stage_count} stages total."
+                for ps in ctx.pipeline_summaries
+            ],
         )
 
     doc.add_heading("Automation", level=1)

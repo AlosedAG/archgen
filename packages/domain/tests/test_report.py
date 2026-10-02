@@ -41,7 +41,13 @@ def _snapshot() -> PortalSnapshot:
         is_custom=False,
         properties=[
             PortalPropertyDef(name="email", label="Email", type="string", group_name="contactinformation", hubspot_defined=True),
-            PortalPropertyDef(name="lifecyclestage", label="Lifecycle Stage", type="enumeration", group_name="contactinformation", hubspot_defined=True),
+            PortalPropertyDef(
+                name="lifecyclestage",
+                label="Lifecycle Stage",
+                type="enumeration",
+                group_name="contactinformation",
+                hubspot_defined=True,
+            ),
         ],
     )
     locations = ObjectSchema(
@@ -61,7 +67,10 @@ def _snapshot() -> PortalSnapshot:
         object_type="Deal",
         pipeline_id="p1",
         label="Sales Pipeline",
-        stages=[PortalPipelineStage(stage_id="s1", label="New", display_order=0), PortalPipelineStage(stage_id="s2", label="Won", display_order=1)],
+        stages=[
+            PortalPipelineStage(stage_id="s1", label="New", display_order=0),
+            PortalPipelineStage(stage_id="s2", label="Won", display_order=1),
+        ],
     )
     workflows = [
         PortalWorkflow(workflow_id="w1", name="Contact | Welcome Email", enabled=True, object_type="Contact"),
@@ -84,10 +93,34 @@ def _snapshot() -> PortalSnapshot:
 
 def _findings() -> list[Finding]:
     return [
-        Finding(area="Workflows", object_type="Contact", description="Workflow 'X' sets a property unconditionally.", severity="High", recommended_fix="Add an 'only if blank' branch."),
-        Finding(area="Permissions", object_type="Team", description="Team 'Empty Team' has zero members.", severity="Medium", recommended_fix="Confirm the team is still needed."),
-        Finding(area="Naming", object_type="Contact", description="Property 'Lead_Score' naming drift.", severity="Low", recommended_fix="Rename to snake_case."),
-        Finding(area="Naming", object_type="Contact", description="Property 'Other_Prop' naming drift.", severity="Low", recommended_fix="Rename to snake_case."),
+        Finding(
+            area="Workflows",
+            object_type="Contact",
+            description="Workflow 'X' sets a property unconditionally.",
+            severity="High",
+            recommended_fix="Add an 'only if blank' branch.",
+        ),
+        Finding(
+            area="Permissions",
+            object_type="Team",
+            description="Team 'Empty Team' has zero members.",
+            severity="Medium",
+            recommended_fix="Confirm the team is still needed.",
+        ),
+        Finding(
+            area="Naming",
+            object_type="Contact",
+            description="Property 'Lead_Score' naming drift.",
+            severity="Low",
+            recommended_fix="Rename to snake_case.",
+        ),
+        Finding(
+            area="Naming",
+            object_type="Contact",
+            description="Property 'Other_Prop' naming drift.",
+            severity="Low",
+            recommended_fix="Rename to snake_case.",
+        ),
     ]
 
 
@@ -154,7 +187,14 @@ def test_report_to_client_docx_produces_valid_document_with_expected_sections():
     doc = Document(buffer)
     heading_texts = [p.text for p in doc.paragraphs if p.style.name.startswith("Heading") or p.style.name == "Title"]
     assert any("Acme" in h for h in heading_texts)
-    for expected in ["Overall health", "What's in your portal", "Automation", "Users & teams", "Things worth fixing", "Recommended next steps"]:
+    for expected in [
+        "Overall health",
+        "What's in your portal",
+        "Automation",
+        "Users & teams",
+        "Things worth fixing",
+        "Recommended next steps",
+    ]:
         assert expected in heading_texts
     body_text = "\n".join(p.text for p in doc.paragraphs)
     assert "Needs Attention" in body_text
@@ -162,7 +202,13 @@ def test_report_to_client_docx_produces_valid_document_with_expected_sections():
 
 def test_report_to_client_docx_caps_examples_per_group():
     many_findings = [
-        Finding(area="Naming", object_type="Contact", description=f"Property 'p{i}' naming drift.", severity="Low", recommended_fix="Rename.")
+        Finding(
+            area="Naming",
+            object_type="Contact",
+            description=f"Property 'p{i}' naming drift.",
+            severity="Low",
+            recommended_fix="Rename.",
+        )
         for i in range(10)
     ]
     ctx = build_report_context(_snapshot(), many_findings)

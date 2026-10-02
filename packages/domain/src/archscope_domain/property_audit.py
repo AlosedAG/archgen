@@ -187,9 +187,7 @@ def _summarize(
 # ---- audit run ---------------------------------------------------------------
 
 
-def run_property_audit(
-    client: PortalReader, snapshot: PortalSnapshot, rules: RulesEngine | None = None
-) -> PropertyAuditResult:
+def run_property_audit(client: PortalReader, snapshot: PortalSnapshot, rules: RulesEngine | None = None) -> PropertyAuditResult:
     rules = rules or RulesEngine()
     sample_size = rules.record_sample_size()
     warnings: list[str] = []
@@ -320,7 +318,11 @@ def property_audit_to_xlsx(result: PropertyAuditResult, project_name: str = "") 
         ws.cell(row=row_i, column=1, value=s.object_label).font = body_bold_font
         ws.cell(row=row_i, column=2, value=s.properties_count).alignment = center
         ws.cell(row=row_i, column=3, value=s.custom_count).alignment = center
-        for col, count, rtg in ((4, s.remove_count, RATING_REMOVE), (5, s.review_count, RATING_REVIEW), (6, s.keep_count, RATING_KEEP)):
+        for col, count, rtg in (
+            (4, s.remove_count, RATING_REMOVE),
+            (5, s.review_count, RATING_REVIEW),
+            (6, s.keep_count, RATING_KEEP),
+        ):
             c = ws.cell(row=row_i, column=col, value=count)
             c.font = body_bold_font
             c.fill = rating_fill(rtg)
@@ -330,7 +332,15 @@ def property_audit_to_xlsx(result: PropertyAuditResult, project_name: str = "") 
 
     last_data_row = row_i - 1
     total = result.totals
-    total_values = [total.object_label, total.properties_count, total.custom_count, total.remove_count, total.review_count, total.keep_count, total.cleanup_score]
+    total_values = [
+        total.object_label,
+        total.properties_count,
+        total.custom_count,
+        total.remove_count,
+        total.review_count,
+        total.keep_count,
+        total.cleanup_score,
+    ]
     for col, val in enumerate(total_values, start=1):
         c = ws.cell(row=row_i, column=col, value=val)
         c.font = header_font
@@ -344,7 +354,19 @@ def property_audit_to_xlsx(result: PropertyAuditResult, project_name: str = "") 
         ws.column_dimensions[letter].width = width
 
     # ---- All Properties ----
-    all_headers = ["Object", "Property", "Internal name", "Type", "Custom", "Fill %", "Uses", "Rating", "Assessment", "Notes", "Tag"]
+    all_headers = [
+        "Object",
+        "Property",
+        "Internal name",
+        "Type",
+        "Custom",
+        "Fill %",
+        "Uses",
+        "Rating",
+        "Assessment",
+        "Notes",
+        "Tag",
+    ]
     ws2 = wb.create_sheet("All Properties")
     for col, h in enumerate(all_headers, start=1):
         cell = ws2.cell(row=1, column=col, value=h)
@@ -408,13 +430,28 @@ def property_audit_to_xlsx(result: PropertyAuditResult, project_name: str = "") 
     ws4["A1"].font = Font(name="Arial", size=16, bold=True, color=argb(AUDIT_TITLE))
     how_rows = [
         ("Summary", "Per-object counts and cleanup score. Sorted worst-first. Score recalculates if you edit the counts."),
-        ("All Properties", f"Every one of the {len(result.rows)} properties, one row each. Filter/sort by Fill %, Uses, Custom, or Rating. Write in Notes and Tag."),
-        ("Flagged for Action", f"The {len(flagged)} custom properties rated Remove candidate or Review, worst first — the actual cleanup worklist."),
+        (
+            "All Properties",
+            f"Every one of the {len(result.rows)} properties, one row each. Filter/sort by Fill %, Uses, Custom, or Rating. Write in Notes and Tag.",
+        ),
+        (
+            "Flagged for Action",
+            f"The {len(flagged)} custom properties rated Remove candidate or Review, worst first — the actual cleanup worklist.",
+        ),
         ("", ""),
-        ("Custom = Yes", "A custom (non-default) property. Only custom properties are ever flagged; native HubSpot properties are always Keep."),
-        ("Fill %", f"Share of a sample of up to {result.sample_size} records that have a value for this property. 0.0 = never populated in the sample."),
-        ("Uses", "Number of this portal's workflows whose actions reference the property. This tool only reads workflows — forms, lists, reports, and "
-                 "dashboards aren't pulled, so a property used only in one of those will still show 0 here."),
+        (
+            "Custom = Yes",
+            "A custom (non-default) property. Only custom properties are ever flagged; native HubSpot properties are always Keep.",
+        ),
+        (
+            "Fill %",
+            f"Share of a sample of up to {result.sample_size} records that have a value for this property. 0.0 = never populated in the sample.",
+        ),
+        (
+            "Uses",
+            "Number of this portal's workflows whose actions reference the property. This tool only reads workflows — forms, lists, reports, and "
+            "dashboards aren't pulled, so a property used only in one of those will still show 0 here.",
+        ),
         ("", ""),
         ("Rating key", ""),
         (RATING_KEEP, "Native property, or custom and healthy (well filled and/or referenced by a workflow) — leave it."),
@@ -520,7 +557,7 @@ def _key_findings(result: PropertyAuditResult) -> list[str]:
         parts = ", ".join(f"{s.object_label} ({s.cleanup_score}/100)" for s in worst)
         lines.append(f"Lowest cleanup scores: {parts} — start there for the biggest impact.")
     lines.append(
-        "\"Uses\" only counts references found in this portal's workflow actions — forms, lists, reports, and "
+        '"Uses" only counts references found in this portal\'s workflow actions — forms, lists, reports, and '
         "dashboards aren't read by this tool, so real usage of a property may be higher than shown here."
     )
     if result.warnings:
@@ -542,9 +579,21 @@ def _render_pdf(result: PropertyAuditResult, project_name: str, max_breakdown_ob
     pdf.cell(0, 12, _pdf_safe("HubSpot Property Health Audit"), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     pdf.set_font("Helvetica", "", 11)
     pdf.set_text_color(*AUDIT_SUBTITLE)
-    pdf.cell(0, 7, _pdf_safe(f"Every object and property, rated Keep / Review / Remove candidate — {project_name or 'this HubSpot portal'}"), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.cell(
+        0,
+        7,
+        _pdf_safe(f"Every object and property, rated Keep / Review / Remove candidate — {project_name or 'this HubSpot portal'}"),
+        new_x=XPos.LMARGIN,
+        new_y=YPos.NEXT,
+    )
     pdf.set_font("Helvetica", "I", 9)
-    pdf.cell(0, 6, _pdf_safe(f"Prepared {result.generated_at[:10]} · sampled up to {result.sample_size} records per object"), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.cell(
+        0,
+        6,
+        _pdf_safe(f"Prepared {result.generated_at[:10]} · sampled up to {result.sample_size} records per object"),
+        new_x=XPos.LMARGIN,
+        new_y=YPos.NEXT,
+    )
     pdf.set_draw_color(*AUDIT_HEADER_BG)
     pdf.set_line_width(0.6)
     pdf.line(pdf.l_margin, pdf.get_y() + 2, pdf.w - pdf.r_margin, pdf.get_y() + 2)
@@ -666,7 +715,13 @@ def _render_pdf(result: PropertyAuditResult, project_name: str, max_breakdown_ob
     pdf.ln(2)
     pdf.set_font("Helvetica", "I", 8)
     pdf.set_text_color(*AUDIT_MUTED)
-    pdf.multi_cell(0, 4.5, _pdf_safe("Percentages are of that object's own property count. \"% flagged\" = Review + Remove candidate."), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.multi_cell(
+        0,
+        4.5,
+        _pdf_safe('Percentages are of that object\'s own property count. "% flagged" = Review + Remove candidate.'),
+        new_x=XPos.LMARGIN,
+        new_y=YPos.NEXT,
+    )
 
     # ---- Page 3: methodology ----
     pdf.add_page()
@@ -748,12 +803,14 @@ def _render_pdf(result: PropertyAuditResult, project_name: str, max_breakdown_ob
 
             mini_w = 26
             mini_y = pdf.get_y()
-            for i, (value, label) in enumerate((
-                (str(s.properties_count), "Total"),
-                (str(s.keep_count), "Keep"),
-                (str(s.review_count), "Review"),
-                (str(s.remove_count), "Remove"),
-            )):
+            for i, (value, label) in enumerate(
+                (
+                    (str(s.properties_count), "Total"),
+                    (str(s.keep_count), "Keep"),
+                    (str(s.review_count), "Review"),
+                    (str(s.remove_count), "Remove"),
+                )
+            ):
                 _stat_tile(pdf, pdf.l_margin + i * (mini_w + 3), mini_y, mini_w, 15, value, label)
             pdf.set_y(mini_y + 19)
 
@@ -784,7 +841,13 @@ def _render_pdf(result: PropertyAuditResult, project_name: str, max_breakdown_ob
         if skipped > 0:
             pdf.set_font("Helvetica", "I", 9)
             pdf.set_text_color(*AUDIT_MUTED)
-            pdf.multi_cell(0, 5, _pdf_safe(f"...and {skipped} more object(s) — see the full workbook for detail."), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            pdf.multi_cell(
+                0,
+                5,
+                _pdf_safe(f"...and {skipped} more object(s) — see the full workbook for detail."),
+                new_x=XPos.LMARGIN,
+                new_y=YPos.NEXT,
+            )
 
     return bytes(pdf.output())
 

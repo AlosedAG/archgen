@@ -48,8 +48,12 @@ def blueprint() -> Blueprint:
             "Deal": [],
         },
         associations=[
-            AssociationDef(from_object="Membership", to_object="Contact", label="Membership to Contact", cardinality="many-to-one"),
-            AssociationDef(from_object="Membership", to_object="Company", label="Membership to Company", cardinality="many-to-one"),
+            AssociationDef(
+                from_object="Membership", to_object="Contact", label="Membership to Contact", cardinality="many-to-one"
+            ),
+            AssociationDef(
+                from_object="Membership", to_object="Company", label="Membership to Company", cardinality="many-to-one"
+            ),
         ],
     )
 

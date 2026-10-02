@@ -81,7 +81,9 @@ def test_get_gives_up_after_max_retries(monkeypatch: pytest.MonkeyPatch) -> None
         client.get_workflows()
 
 
-@pytest.mark.parametrize(("status", "error"), [(401, PortalScopeError), (403, PortalScopeError), (404, PortalAPIError), (500, PortalAPIError)])
+@pytest.mark.parametrize(
+    ("status", "error"), [(401, PortalScopeError), (403, PortalScopeError), (404, PortalAPIError), (500, PortalAPIError)]
+)
 def test_http_failures_map_to_port_errors(status: int, error: type[Exception]) -> None:
     client, _ = _client([_FakeResponse(status, {"message": "nope"})])
     with pytest.raises(error):
@@ -109,7 +111,11 @@ def test_sdk_pipelines_404_is_empty(monkeypatch: pytest.MonkeyPatch) -> None:
     def missing(**_: Any) -> None:
         raise _SdkError(404)
 
-    monkeypatch.setattr(client, "_sdk", SimpleNamespace(crm=SimpleNamespace(pipelines=SimpleNamespace(pipelines_api=SimpleNamespace(get_all=missing)))))
+    monkeypatch.setattr(
+        client,
+        "_sdk",
+        SimpleNamespace(crm=SimpleNamespace(pipelines=SimpleNamespace(pipelines_api=SimpleNamespace(get_all=missing)))),
+    )
     assert client.get_pipelines("2-123") == []
 
 

@@ -232,7 +232,9 @@ def _proposal() -> dict[str, Any]:
             "Customer Requirements": [{"Requirement": "Sync contacts nightly"}, {"Requirement": "Log SMS"}],
             "Project Definitions": [{"Term": "Member", "Definition": "Paying customer"}],
             "Known Challenges or Risks": [{"Type": "Risk", "Description": "Dirty data"}],
-            "Project Plan": [{"Milestone": "Go live", "Related Requirement": "1", "Target Date": "2026-12-01 00:00:00", "Status": ""}],
+            "Project Plan": [
+                {"Milestone": "Go live", "Related Requirement": "1", "Target Date": "2026-12-01 00:00:00", "Status": ""}
+            ],
             "Open Questions": [{"Question": "Which ERP?"}],
         },
     )
@@ -305,10 +307,20 @@ def case_discovery() -> Any:
     )
 
     notes = empty_notes()
-    notes["Goals"]["answers"]["kpis"] = {"selected": ["Win rate", "Other (specify)"], "other": "demo-to-close", "notes": "25%", "flagged": False}
+    notes["Goals"]["answers"]["kpis"] = {
+        "selected": ["Win rate", "Other (specify)"],
+        "other": "demo-to-close",
+        "notes": "25%",
+        "flagged": False,
+    }
     notes["Goals"]["answers"]["timeline"] = {"selected": ["1–3 months"], "other": "", "notes": "", "flagged": True}
     notes["Goals"]["answers"]["long_term_goals"] = {"selected": [], "other": "", "notes": "open 3 clinics", "flagged": False}
-    notes["Data"]["answers"]["data_regions"] = {"selected": ["EU / UK", "United States"], "other": "", "notes": "", "flagged": False}
+    notes["Data"]["answers"]["data_regions"] = {
+        "selected": ["EU / UK", "United States"],
+        "other": "",
+        "notes": "",
+        "flagged": False,
+    }
     notes["Data"]["edge_cases"] = "Two legal entities"
     notes["Processes"]["answers"]["pain_points"] = "legacy free text answer"
     ba = build_business_analysis_input(notes, client_name="Bright Smiles", business_type="dental")

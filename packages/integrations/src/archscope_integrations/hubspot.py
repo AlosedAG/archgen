@@ -66,9 +66,7 @@ class HubSpotClient:
                 if status == 429:
                     attempt += 1
                     if attempt > MAX_RETRIES:
-                        raise HubSpotAPIError(
-                            f"Rate limited repeatedly; gave up after {MAX_RETRIES} retries."
-                        ) from exc
+                        raise HubSpotAPIError(f"Rate limited repeatedly; gave up after {MAX_RETRIES} retries.") from exc
                     headers = getattr(exc, "headers", None) or {}
                     retry_after = headers.get("Retry-After") if hasattr(headers, "get") else None
                     delay = float(retry_after) if retry_after else DEFAULT_BACKOFF_SECONDS * (2 ** (attempt - 1))
@@ -81,9 +79,7 @@ class HubSpotClient:
                         "the exact scopes needed."
                     ) from exc
                 if status == 404:
-                    raise HubSpotAPIError(
-                        "Not found (HTTP 404) — this portal may not have this object/feature."
-                    ) from exc
+                    raise HubSpotAPIError("Not found (HTTP 404) — this portal may not have this object/feature.") from exc
                 raise HubSpotAPIError(f"HubSpot API error: {exc}") from exc
 
     # ---- requests-based fallback (workflows, teams) ----------------------
@@ -101,9 +97,7 @@ class HubSpotClient:
             if response.status_code == 429:
                 attempt += 1
                 if attempt > MAX_RETRIES:
-                    raise HubSpotAPIError(
-                        f"Rate limited repeatedly calling {url}; gave up after {MAX_RETRIES} retries."
-                    )
+                    raise HubSpotAPIError(f"Rate limited repeatedly calling {url}; gave up after {MAX_RETRIES} retries.")
                 retry_after = response.headers.get("Retry-After")
                 delay = float(retry_after) if retry_after else DEFAULT_BACKOFF_SECONDS * (2 ** (attempt - 1))
                 time.sleep(delay)
@@ -122,7 +116,6 @@ class HubSpotClient:
                 return {}
             data: JSON = response.json()
             return data
-
 
     # ---- pulls: schemas, properties, pipelines, owners (via SDK) ---------
 
@@ -162,9 +155,7 @@ class HubSpotClient:
                 break
         return owners
 
-    def get_records_sample(
-        self, object_type: str, limit: int = 100, properties: list[str] | None = None
-    ) -> list[JSON]:
+    def get_records_sample(self, object_type: str, limit: int = 100, properties: list[str] | None = None) -> list[JSON]:
         """Up to `limit` records of the given object type (sampled, not exhaustive)."""
         records: list[JSON] = []
         after: str | None = None
@@ -182,9 +173,7 @@ class HubSpotClient:
                 break
         return records[:limit]
 
-    def get_associations_sample(
-        self, from_object_type: str, to_object_type: str, object_ids: list[str]
-    ) -> dict[str, list[str]]:
+    def get_associations_sample(self, from_object_type: str, to_object_type: str, object_ids: list[str]) -> dict[str, list[str]]:
         """Batch-read association targets for a sample of record IDs.
 
         Uses HubSpot's CRM v3 batch associations "read" endpoint — a

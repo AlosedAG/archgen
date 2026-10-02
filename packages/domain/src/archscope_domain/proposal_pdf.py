@@ -60,8 +60,18 @@ WHITE = (255, 255, 255)
 # Scope bucket colors: (header fill, light tint, heading, one-line explainer)
 SCOPE_STYLE: dict[str, tuple[tuple[int, int, int], tuple[int, int, int], str, str]] = {
     SCOPE_IN: (PURPLE, (228, 224, 245), "INCLUDED", "Delivered under this agreement, up to the stated limit."),
-    SCOPE_OUT: ((110, 105, 128), (238, 236, 242), "NOT INCLUDED", "Not part of this agreement. Can be added only through a Change Request."),
-    SCOPE_OPTIONAL: (ORANGE, (253, 232, 214), "AVAILABLE AS ADD-ON", "Pre-priced options you can add at any time - see the Cost volume."),
+    SCOPE_OUT: (
+        (110, 105, 128),
+        (238, 236, 242),
+        "NOT INCLUDED",
+        "Not part of this agreement. Can be added only through a Change Request.",
+    ),
+    SCOPE_OPTIONAL: (
+        ORANGE,
+        (253, 232, 214),
+        "AVAILABLE AS ADD-ON",
+        "Pre-priced options you can add at any time - see the Cost volume.",
+    ),
     SCOPE_CLIENT: (PURPLE_LIGHT, (236, 232, 250), "YOUR TEAM PROVIDES", "Client responsibilities the schedule depends on."),
 }
 
@@ -282,7 +292,13 @@ def _cover(pdf: _ProposalPDF) -> None:
     pdf.cell(0, 7, "Addresses and contacts for notices", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     pdf.ln(1)
     client_d, seller_d = p.get("client", {}), p.get("seller", {})
-    pairs = [("Company", "company"), ("Primary contact", "contact"), ("Address", "address"), ("Phone", "phone"), ("Email", "email")]
+    pairs = [
+        ("Company", "company"),
+        ("Primary contact", "contact"),
+        ("Address", "address"),
+        ("Phone", "phone"),
+        ("Email", "email"),
+    ]
     pdf.set_font("Helvetica", "", 9)
     pdf.set_text_color(*TEXT_BODY)
     pdf.set_draw_color(*BORDER)
@@ -391,9 +407,7 @@ def _scope_at_a_glance(pdf: _ProposalPDF) -> None:
         pdf.cell(tile_w, 5, _t(label), align="C")
     pdf.set_y(y + 23)
 
-    addon_prices = {
-        str(a.get("Service", "")).strip().lower(): a for a in nonblank(p.get("addons", []), "Service")
-    }
+    addon_prices = {str(a.get("Service", "")).strip().lower(): a for a in nonblank(p.get("addons", []), "Service")}
     for status in (SCOPE_IN, SCOPE_OUT, SCOPE_OPTIONAL, SCOPE_CLIENT):
         items = groups[status]
         if status == SCOPE_CLIENT and not items:
@@ -477,7 +491,9 @@ def _technical(pdf: _ProposalPDF, sections: dict[str, bool]) -> None:
     pdf.data_table(nonblank(p.get("objectives", []), "Objective"), ["Objective", "Success Measure"], (95, 65))
 
     pdf.heading("1.3 Requirements")
-    pdf.para("Requirements the solution must satisfy. Each one is traced to the scope items that deliver it (section 1.8).", size=9)
+    pdf.para(
+        "Requirements the solution must satisfy. Each one is traced to the scope items that deliver it (section 1.8).", size=9
+    )
     reqs = number_requirements(nonblank(p.get("requirements", []), "Requirement"))
     pdf.data_table(reqs, ["ID", "Requirement", "Priority", "Source"], (14, 92, 22, 32))
 
@@ -491,7 +507,9 @@ def _technical(pdf: _ProposalPDF, sections: dict[str, bool]) -> None:
     pdf.data_table(nonblank(p.get("tools", []), "Tool / Platform"), ["Tool / Platform", "Purpose", "Provided By"], (48, 86, 26))
 
     pdf.heading("1.7 Techniques & Procedures")
-    pdf.data_table(nonblank(p.get("techniques", []), "Technique / Procedure"), ["Technique / Procedure", "How It Is Applied"], (50, 110))
+    pdf.data_table(
+        nonblank(p.get("techniques", []), "Technique / Procedure"), ["Technique / Procedure", "How It Is Applied"], (50, 110)
+    )
 
     groups = scope_by_status(p)
     pdf.heading("1.8 Detailed Scope of Work")
@@ -533,7 +551,9 @@ def _technical(pdf: _ProposalPDF, sections: dict[str, bool]) -> None:
             return FontFace(emphasis="BOLD", color=ORANGE)
         return FontFace(emphasis="BOLD", color=TEXT_BODY)
 
-    pdf.data_table(coverage, ["ID", "Requirement", "Scope Items", "Coverage"], (14, 94, 26, 26), cell_style=_coverage_style, font_size=8)
+    pdf.data_table(
+        coverage, ["ID", "Requirement", "Scope Items", "Coverage"], (14, 94, 26, 26), cell_style=_coverage_style, font_size=8
+    )
 
     pdf.heading("1.9 Assumptions")
     for row in nonblank(p.get("assumptions", []), "Assumption"):
@@ -557,23 +577,38 @@ def _management(pdf: _ProposalPDF, sections: dict[str, bool]) -> None:
         "schedule, how risks are handled, and how deliverables are accepted.",
     )
     pdf.heading("2.1 Project Team & Roles")
-    pdf.data_table(nonblank(p.get("team", []), "Name", "Role"), ["Side", "Role", "Name", "Email", "Responsibilities"], (22, 32, 32, 38, 36))
+    pdf.data_table(
+        nonblank(p.get("team", []), "Name", "Role"), ["Side", "Role", "Name", "Email", "Responsibilities"], (22, 32, 32, 38, 36)
+    )
 
     pdf.heading("2.2 Governance & Communication")
-    pdf.data_table(nonblank(p.get("governance", []), "Meeting / Report"), ["Meeting / Report", "Cadence", "Participants", "Purpose"], (36, 24, 38, 62))
+    pdf.data_table(
+        nonblank(p.get("governance", []), "Meeting / Report"),
+        ["Meeting / Report", "Cadence", "Participants", "Purpose"],
+        (36, 24, 38, 62),
+    )
 
     pdf.heading("2.3 Schedule")
-    pdf.data_table(nonblank(p.get("timeline", []), "Phase / Milestone"), ["Phase / Milestone", "Start", "End", "Key Deliverables"], (50, 22, 22, 66))
+    pdf.data_table(
+        nonblank(p.get("timeline", []), "Phase / Milestone"),
+        ["Phase / Milestone", "Start", "End", "Key Deliverables"],
+        (50, 22, 22, 66),
+    )
 
     n = 4
     if sections.get("risks"):
         pdf.heading(f"2.{n} Risk Management")
         n += 1
-        pdf.data_table(nonblank(p.get("risks", []), "Risk"), ["Risk", "Likelihood", "Impact", "Mitigation", "Owner"], (50, 18, 16, 54, 22))
+        pdf.data_table(
+            nonblank(p.get("risks", []), "Risk"), ["Risk", "Likelihood", "Impact", "Mitigation", "Owner"], (50, 18, 16, 54, 22)
+        )
     if sections.get("kpis"):
         pdf.heading(f"2.{n} Targeted KPIs")
         n += 1
-        pdf.para("Primary KPIs are the value drivers tied to return on investment; secondary KPIs track operational improvement.", size=9)
+        pdf.para(
+            "Primary KPIs are the value drivers tied to return on investment; secondary KPIs track operational improvement.",
+            size=9,
+        )
         pdf.data_table(nonblank(p.get("kpis", []), "KPI"), ["KPI", "Type", "Definition", "Target"], (40, 18, 72, 30))
     pdf.heading(f"2.{n} Acceptance Process")
     pdf.para(p.get("acceptance_process", ""))
@@ -585,10 +620,21 @@ def _cost(pdf: _ProposalPDF, sections: dict[str, bool]) -> None:
     money = lambda v: format_money(to_float(v), currency)  # noqa: E731
     totals = pricing_summary(p)
 
-    pdf.volume("III", "Cost & Pricing", "What the proposed work costs, when it is invoiced, and the price of anything beyond the agreed scope.")
+    pdf.volume(
+        "III",
+        "Cost & Pricing",
+        "What the proposed work costs, when it is invoiced, and the price of anything beyond the agreed scope.",
+    )
     pdf.heading("3.1 Deliverables & Milestone Schedule")
     milestones = nonblank(p.get("milestones", []), "Milestone")
-    total_row = {"Milestone": "Total", "Deliverables": "", "Start On or Before": "", "Due On or Before": "", "Fee": totals["milestone_total"], "_total": True}
+    total_row = {
+        "Milestone": "Total",
+        "Deliverables": "",
+        "Start On or Before": "",
+        "Due On or Before": "",
+        "Fee": totals["milestone_total"],
+        "_total": True,
+    }
 
     def _ms_style(row: dict[str, Any], col: str) -> FontFace | None:
         if row.get("_total"):
@@ -611,7 +657,10 @@ def _cost(pdf: _ProposalPDF, sections: dict[str, bool]) -> None:
     if sections.get("addons") and addons:
         pdf.heading(f"3.{n} Optional Add-on Services Menu")
         n += 1
-        pdf.para("Pre-priced services the client can add to this agreement at any time. Items marked Selected are included in the total below.", size=9)
+        pdf.para(
+            "Pre-priced services the client can add to this agreement at any time. Items marked Selected are included in the total below.",
+            size=9,
+        )
         rows = [{**a, "Selected": "Selected" if to_bool(a.get("Add to Total")) else ""} for a in addons]
         pdf.data_table(
             rows,
@@ -669,7 +718,9 @@ def _signatures(pdf: _ProposalPDF) -> None:
     gap = 10
     w = (pdf.content_w - gap) / 2
     y = pdf.get_y()
-    for i, party in enumerate((p.get("client", {}).get("company") or "Client", p.get("seller", {}).get("company") or "SonaMation")):
+    for i, party in enumerate(
+        (p.get("client", {}).get("company") or "Client", p.get("seller", {}).get("company") or "SonaMation")
+    ):
         x = pdf.l_margin + i * (w + gap)
         pdf.set_fill_color(*BG_ALT)
         pdf.rect(x, y, w, 58, style="F", round_corners=True, corner_radius=2.5)

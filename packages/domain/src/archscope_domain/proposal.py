@@ -135,22 +135,62 @@ DEFAULT_METHODOLOGY = [
 DEFAULT_TOOLS = [
     {"Tool / Platform": "HubSpot (customer portal)", "Purpose": "System being configured", "Provided By": "Client"},
     {"Tool / Platform": "HubSpot sandbox", "Purpose": "Build and test without touching live data", "Provided By": "Client"},
-    {"Tool / Platform": "ArchitectureScope", "Purpose": "Read-only portal audit, blueprint, documentation, diagrams", "Provided By": "SonaMation"},
-    {"Tool / Platform": "Shared project workspace", "Purpose": "Status reporting, decisions log, file exchange", "Provided By": "SonaMation"},
+    {
+        "Tool / Platform": "ArchitectureScope",
+        "Purpose": "Read-only portal audit, blueprint, documentation, diagrams",
+        "Provided By": "SonaMation",
+    },
+    {
+        "Tool / Platform": "Shared project workspace",
+        "Purpose": "Status reporting, decisions log, file exchange",
+        "Provided By": "SonaMation",
+    },
 ]
 
 DEFAULT_TECHNIQUES = [
-    {"Technique / Procedure": "Requirements traceability", "How It Is Applied": "Every scope item cites the requirement it satisfies; nothing is built without one."},
-    {"Technique / Procedure": "Read-only audit before change", "How It Is Applied": "The live portal is audited first so changes are made against a known baseline."},
-    {"Technique / Procedure": "Sandbox-first configuration", "How It Is Applied": "Changes are built and tested in a sandbox before being promoted to production."},
-    {"Technique / Procedure": "Two-round testing (QA, then UAT)", "How It Is Applied": "SonaMation tests internally first; the client then accepts against written criteria."},
+    {
+        "Technique / Procedure": "Requirements traceability",
+        "How It Is Applied": "Every scope item cites the requirement it satisfies; nothing is built without one.",
+    },
+    {
+        "Technique / Procedure": "Read-only audit before change",
+        "How It Is Applied": "The live portal is audited first so changes are made against a known baseline.",
+    },
+    {
+        "Technique / Procedure": "Sandbox-first configuration",
+        "How It Is Applied": "Changes are built and tested in a sandbox before being promoted to production.",
+    },
+    {
+        "Technique / Procedure": "Two-round testing (QA, then UAT)",
+        "How It Is Applied": "SonaMation tests internally first; the client then accepts against written criteria.",
+    },
 ]
 
 DEFAULT_GOVERNANCE = [
-    {"Meeting / Report": "Kickoff", "Cadence": "Once", "Participants": "Both teams", "Purpose": "Confirm scope, roles, timeline, access"},
-    {"Meeting / Report": "Status call", "Cadence": "Weekly", "Participants": "Project leads", "Purpose": "Progress, blockers, decisions needed"},
-    {"Meeting / Report": "Written status report", "Cadence": "Weekly", "Participants": "Sponsor, project leads", "Purpose": "Progress against milestones, risks, open change requests"},
-    {"Meeting / Report": "Steering review", "Cadence": "Per milestone", "Participants": "Sponsors", "Purpose": "Milestone acceptance, scope and budget decisions"},
+    {
+        "Meeting / Report": "Kickoff",
+        "Cadence": "Once",
+        "Participants": "Both teams",
+        "Purpose": "Confirm scope, roles, timeline, access",
+    },
+    {
+        "Meeting / Report": "Status call",
+        "Cadence": "Weekly",
+        "Participants": "Project leads",
+        "Purpose": "Progress, blockers, decisions needed",
+    },
+    {
+        "Meeting / Report": "Written status report",
+        "Cadence": "Weekly",
+        "Participants": "Sponsor, project leads",
+        "Purpose": "Progress against milestones, risks, open change requests",
+    },
+    {
+        "Meeting / Report": "Steering review",
+        "Cadence": "Per milestone",
+        "Participants": "Sponsors",
+        "Purpose": "Milestone acceptance, scope and budget decisions",
+    },
 ]
 
 DEFAULT_ASSUMPTIONS = [
@@ -207,35 +247,164 @@ DEFAULT_RATE_CARD = [
 # starts concrete instead of vague.
 
 SCOPE_LIBRARY: list[dict[str, str]] = [
-    {"Workstream": "Discovery", "Item": "Current-state portal audit", "Quantity / Limit": "1 portal", "Tools / Techniques": "ArchitectureScope Portal Auditor (read-only)", "Acceptance Criteria": "Audit report delivered and reviewed with client"},
-    {"Workstream": "Discovery", "Item": "Written Requirements Document", "Quantity / Limit": "Up to 3 workshops", "Tools / Techniques": "Stakeholder interviews, WRD template", "Acceptance Criteria": "WRD signed off by client decision-maker"},
-    {"Workstream": "Architecture", "Item": "Data model & architecture blueprint", "Quantity / Limit": "Up to 2 custom objects", "Tools / Techniques": "ArchitectureScope Architecture Generator + Diagram", "Acceptance Criteria": "Blueprint approved by client"},
-    {"Workstream": "Configuration", "Item": "Custom properties", "Quantity / Limit": "Up to 50 properties", "Tools / Techniques": "HubSpot property settings, data dictionary", "Acceptance Criteria": "Properties match approved data dictionary"},
-    {"Workstream": "Configuration", "Item": "Deal / ticket pipelines", "Quantity / Limit": "Up to 2 pipelines, 8 stages each", "Tools / Techniques": "HubSpot pipeline settings", "Acceptance Criteria": "Stages and required fields match blueprint"},
-    {"Workstream": "Automation", "Item": "Workflows", "Quantity / Limit": "Up to 10 workflows", "Tools / Techniques": "HubSpot Workflows, overwrite-risk review", "Acceptance Criteria": "Each workflow passes its QA and UAT test case"},
-    {"Workstream": "Automation", "Item": "Lead scoring model", "Quantity / Limit": "1 model", "Tools / Techniques": "HubSpot lead scoring, buyer persona", "Acceptance Criteria": "Scores calculated on test contacts as specified"},
-    {"Workstream": "Marketing", "Item": "Campaign build (landing page, form, thank-you page, auto-response email)", "Quantity / Limit": "1 campaign", "Tools / Techniques": "HubSpot Marketing Hub", "Acceptance Criteria": "Campaign assets live and test submission tracked end to end"},
-    {"Workstream": "Integration", "Item": "Native integration setup", "Quantity / Limit": "1 integration, up to 3 synced objects", "Tools / Techniques": "HubSpot App Marketplace / Data Sync", "Acceptance Criteria": "Records sync in both directions on test data"},
-    {"Workstream": "Data", "Item": "Data import / migration", "Quantity / Limit": "Up to 10,000 records, 3 objects", "Tools / Techniques": "HubSpot import tool, field mapping sheet", "Acceptance Criteria": "Record counts reconcile with source file"},
-    {"Workstream": "Reporting", "Item": "Dashboards & reports", "Quantity / Limit": "Up to 2 dashboards, 10 reports", "Tools / Techniques": "HubSpot reporting", "Acceptance Criteria": "Reports match agreed definitions"},
-    {"Workstream": "Enablement", "Item": "User training", "Quantity / Limit": "2 live sessions, recorded", "Tools / Techniques": "Video call, training guide", "Acceptance Criteria": "Sessions delivered and recordings shared"},
-    {"Workstream": "Enablement", "Item": "Hand-off documentation pack", "Quantity / Limit": "1 pack", "Tools / Techniques": "ArchitectureScope Documentation Generator", "Acceptance Criteria": "Documentation delivered for all in-scope items"},
-    {"Workstream": "Support", "Item": "Post-launch hypercare", "Quantity / Limit": "2 weeks", "Tools / Techniques": "Shared support channel", "Acceptance Criteria": "Hypercare period completed"},
+    {
+        "Workstream": "Discovery",
+        "Item": "Current-state portal audit",
+        "Quantity / Limit": "1 portal",
+        "Tools / Techniques": "ArchitectureScope Portal Auditor (read-only)",
+        "Acceptance Criteria": "Audit report delivered and reviewed with client",
+    },
+    {
+        "Workstream": "Discovery",
+        "Item": "Written Requirements Document",
+        "Quantity / Limit": "Up to 3 workshops",
+        "Tools / Techniques": "Stakeholder interviews, WRD template",
+        "Acceptance Criteria": "WRD signed off by client decision-maker",
+    },
+    {
+        "Workstream": "Architecture",
+        "Item": "Data model & architecture blueprint",
+        "Quantity / Limit": "Up to 2 custom objects",
+        "Tools / Techniques": "ArchitectureScope Architecture Generator + Diagram",
+        "Acceptance Criteria": "Blueprint approved by client",
+    },
+    {
+        "Workstream": "Configuration",
+        "Item": "Custom properties",
+        "Quantity / Limit": "Up to 50 properties",
+        "Tools / Techniques": "HubSpot property settings, data dictionary",
+        "Acceptance Criteria": "Properties match approved data dictionary",
+    },
+    {
+        "Workstream": "Configuration",
+        "Item": "Deal / ticket pipelines",
+        "Quantity / Limit": "Up to 2 pipelines, 8 stages each",
+        "Tools / Techniques": "HubSpot pipeline settings",
+        "Acceptance Criteria": "Stages and required fields match blueprint",
+    },
+    {
+        "Workstream": "Automation",
+        "Item": "Workflows",
+        "Quantity / Limit": "Up to 10 workflows",
+        "Tools / Techniques": "HubSpot Workflows, overwrite-risk review",
+        "Acceptance Criteria": "Each workflow passes its QA and UAT test case",
+    },
+    {
+        "Workstream": "Automation",
+        "Item": "Lead scoring model",
+        "Quantity / Limit": "1 model",
+        "Tools / Techniques": "HubSpot lead scoring, buyer persona",
+        "Acceptance Criteria": "Scores calculated on test contacts as specified",
+    },
+    {
+        "Workstream": "Marketing",
+        "Item": "Campaign build (landing page, form, thank-you page, auto-response email)",
+        "Quantity / Limit": "1 campaign",
+        "Tools / Techniques": "HubSpot Marketing Hub",
+        "Acceptance Criteria": "Campaign assets live and test submission tracked end to end",
+    },
+    {
+        "Workstream": "Integration",
+        "Item": "Native integration setup",
+        "Quantity / Limit": "1 integration, up to 3 synced objects",
+        "Tools / Techniques": "HubSpot App Marketplace / Data Sync",
+        "Acceptance Criteria": "Records sync in both directions on test data",
+    },
+    {
+        "Workstream": "Data",
+        "Item": "Data import / migration",
+        "Quantity / Limit": "Up to 10,000 records, 3 objects",
+        "Tools / Techniques": "HubSpot import tool, field mapping sheet",
+        "Acceptance Criteria": "Record counts reconcile with source file",
+    },
+    {
+        "Workstream": "Reporting",
+        "Item": "Dashboards & reports",
+        "Quantity / Limit": "Up to 2 dashboards, 10 reports",
+        "Tools / Techniques": "HubSpot reporting",
+        "Acceptance Criteria": "Reports match agreed definitions",
+    },
+    {
+        "Workstream": "Enablement",
+        "Item": "User training",
+        "Quantity / Limit": "2 live sessions, recorded",
+        "Tools / Techniques": "Video call, training guide",
+        "Acceptance Criteria": "Sessions delivered and recordings shared",
+    },
+    {
+        "Workstream": "Enablement",
+        "Item": "Hand-off documentation pack",
+        "Quantity / Limit": "1 pack",
+        "Tools / Techniques": "ArchitectureScope Documentation Generator",
+        "Acceptance Criteria": "Documentation delivered for all in-scope items",
+    },
+    {
+        "Workstream": "Support",
+        "Item": "Post-launch hypercare",
+        "Quantity / Limit": "2 weeks",
+        "Tools / Techniques": "Shared support channel",
+        "Acceptance Criteria": "Hypercare period completed",
+    },
 ]
 
 # Based on the "Additional Services Menu" in the SOW example; the prices are
 # placeholders to overwrite with SonaMation's own.
 ADDON_LIBRARY: list[dict[str, Any]] = [
-    {"Service": "Marketing Automation Platform Setup", "Includes": "Portal setup, domains, tracking code, email settings", "Cost": 5000.0, "Billing": "One Time"},
-    {"Service": "Campaign Development", "Includes": "Premium content piece, landing page, form, auto-responder, 2 CTAs", "Cost": 4500.0, "Billing": "One Time"},
-    {"Service": "Lead Scoring Setup", "Includes": "Basic rules and paths, smart lists, notifications and alerts", "Cost": 3500.0, "Billing": "One Time"},
-    {"Service": "Buyer Persona Development", "Includes": "Persona workshops and documented personas", "Cost": 2500.0, "Billing": "One Time"},
-    {"Service": "SEO Site Audit & Optimization", "Includes": "Technical SEO audit and on-page fixes", "Cost": 2500.0, "Billing": "One Time"},
-    {"Service": "Site Conversion Path Optimization", "Includes": "Conversion path review and improvements", "Cost": 4500.0, "Billing": "One Time"},
+    {
+        "Service": "Marketing Automation Platform Setup",
+        "Includes": "Portal setup, domains, tracking code, email settings",
+        "Cost": 5000.0,
+        "Billing": "One Time",
+    },
+    {
+        "Service": "Campaign Development",
+        "Includes": "Premium content piece, landing page, form, auto-responder, 2 CTAs",
+        "Cost": 4500.0,
+        "Billing": "One Time",
+    },
+    {
+        "Service": "Lead Scoring Setup",
+        "Includes": "Basic rules and paths, smart lists, notifications and alerts",
+        "Cost": 3500.0,
+        "Billing": "One Time",
+    },
+    {
+        "Service": "Buyer Persona Development",
+        "Includes": "Persona workshops and documented personas",
+        "Cost": 2500.0,
+        "Billing": "One Time",
+    },
+    {
+        "Service": "SEO Site Audit & Optimization",
+        "Includes": "Technical SEO audit and on-page fixes",
+        "Cost": 2500.0,
+        "Billing": "One Time",
+    },
+    {
+        "Service": "Site Conversion Path Optimization",
+        "Includes": "Conversion path review and improvements",
+        "Cost": 4500.0,
+        "Billing": "One Time",
+    },
     {"Service": "Premium Content Piece", "Includes": "One gated content asset", "Cost": 2500.0, "Billing": "One Time"},
-    {"Service": "Lead Intelligence (1,000 contacts)", "Includes": "Third-party enrichment for segmentation; $0.25 per additional contact", "Cost": 500.0, "Billing": "One Time"},
-    {"Service": "Marketing Support Team", "Includes": "Unlimited chat, 1 hour phone support per month, bi-weekly training webinars; 12-month term", "Cost": 500.0, "Billing": "Monthly"},
-    {"Service": "Quarterly Assessment", "Includes": "Quarterly portal health review and recommendations", "Cost": 2500.0, "Billing": "Per Year"},
+    {
+        "Service": "Lead Intelligence (1,000 contacts)",
+        "Includes": "Third-party enrichment for segmentation; $0.25 per additional contact",
+        "Cost": 500.0,
+        "Billing": "One Time",
+    },
+    {
+        "Service": "Marketing Support Team",
+        "Includes": "Unlimited chat, 1 hour phone support per month, bi-weekly training webinars; 12-month term",
+        "Cost": 500.0,
+        "Billing": "Monthly",
+    },
+    {
+        "Service": "Quarterly Assessment",
+        "Includes": "Quarterly portal health review and recommendations",
+        "Cost": 2500.0,
+        "Billing": "Per Year",
+    },
 ]
 
 
@@ -439,8 +608,7 @@ def requirement_coverage(proposal: dict[str, Any]) -> list[dict[str, str]]:
     for req in requirements:
         rid = _text(req.get("ID"))
         linked = [
-            s for s in scope
-            if rid and rid.lower() in [part.strip().lower() for part in _text(s.get("Req. ID")).split(",")]
+            s for s in scope if rid and rid.lower() in [part.strip().lower() for part in _text(s.get("Req. ID")).split(",")]
         ]
         statuses = {_text(s.get("Status")) or SCOPE_IN for s in linked}
         coverage = COVERAGE_NONE
@@ -689,9 +857,23 @@ def as_template(proposal: dict[str, Any]) -> dict[str, Any]:
     menu, standard terms, section choices) — for "save as template"."""
     template = default_proposal()
     for key in (
-        "seller", "company_overview", "methodology", "tools", "techniques", "governance", "assumptions",
-        "change_process", "acceptance_process", "currency", "addons", "rate_card", "payment_terms",
-        "expenses", "confidentiality", "sections", "kpis",
+        "seller",
+        "company_overview",
+        "methodology",
+        "tools",
+        "techniques",
+        "governance",
+        "assumptions",
+        "change_process",
+        "acceptance_process",
+        "currency",
+        "addons",
+        "rate_card",
+        "payment_terms",
+        "expenses",
+        "confidentiality",
+        "sections",
+        "kpis",
     ):
         template[key] = copy.deepcopy(proposal.get(key, template[key]))
     for addon in template["addons"]:

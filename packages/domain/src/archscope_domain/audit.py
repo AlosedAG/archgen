@@ -67,8 +67,7 @@ class PortalAuditor:
                             ),
                             severity="Medium",
                             recommended_fix=(
-                                "Rename or archive one of the duplicate properties to avoid "
-                                "confusing report/workflow builders."
+                                "Rename or archive one of the duplicate properties to avoid confusing report/workflow builders."
                             ),
                         )
                     )

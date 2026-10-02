@@ -20,20 +20,68 @@ class FakeHubSpotClient:
             raise HubSpotScopeError("missing scope crm.schemas.companies.read")
         data = {
             "contacts": [
-                {"name": "email", "label": "Email", "type": "string", "field_type": "text", "group_name": "contactinformation", "options": [], "description": "Contact email"},
-                {"name": "lifecyclestage", "label": "Lifecycle Stage", "type": "enumeration", "field_type": "select", "group_name": "contactinformation", "options": [{"label": "Lead"}, {"label": "Customer"}], "description": ""},
+                {
+                    "name": "email",
+                    "label": "Email",
+                    "type": "string",
+                    "field_type": "text",
+                    "group_name": "contactinformation",
+                    "options": [],
+                    "description": "Contact email",
+                },
+                {
+                    "name": "lifecyclestage",
+                    "label": "Lifecycle Stage",
+                    "type": "enumeration",
+                    "field_type": "select",
+                    "group_name": "contactinformation",
+                    "options": [{"label": "Lead"}, {"label": "Customer"}],
+                    "description": "",
+                },
             ],
             "companies": [
-                {"name": "industry", "label": "Industry", "type": "enumeration", "field_type": "select", "group_name": "companyinformation", "options": [{"label": "Retail"}], "description": ""},
+                {
+                    "name": "industry",
+                    "label": "Industry",
+                    "type": "enumeration",
+                    "field_type": "select",
+                    "group_name": "companyinformation",
+                    "options": [{"label": "Retail"}],
+                    "description": "",
+                },
             ],
             "deals": [
-                {"name": "amount", "label": "Amount", "type": "number", "field_type": "number", "group_name": "dealinformation", "options": [], "description": ""},
+                {
+                    "name": "amount",
+                    "label": "Amount",
+                    "type": "number",
+                    "field_type": "number",
+                    "group_name": "dealinformation",
+                    "options": [],
+                    "description": "",
+                },
             ],
             "tickets": [
-                {"name": "hs_pipeline_stage", "label": "Pipeline Stage", "type": "enumeration", "field_type": "select", "group_name": "ticketinformation", "options": [], "description": ""},
+                {
+                    "name": "hs_pipeline_stage",
+                    "label": "Pipeline Stage",
+                    "type": "enumeration",
+                    "field_type": "select",
+                    "group_name": "ticketinformation",
+                    "options": [],
+                    "description": "",
+                },
             ],
             "2-999": [
-                {"name": "membership_status", "label": "Membership Status", "type": "enumeration", "field_type": "select", "group_name": "membershipinformation", "options": [{"label": "Active"}], "description": ""},
+                {
+                    "name": "membership_status",
+                    "label": "Membership Status",
+                    "type": "enumeration",
+                    "field_type": "select",
+                    "group_name": "membershipinformation",
+                    "options": [{"label": "Active"}],
+                    "description": "",
+                },
             ],
         }
         return data.get(object_type, [])
@@ -70,7 +118,9 @@ class FakeHubSpotClient:
         return data.get(object_type, [])
 
     def get_workflows(self) -> list[dict]:
-        return [{"id": 111, "name": "Set Lifecycle Stage", "enabled": True, "type": "CONTACT", "reEnrollmentTriggersEnabled": True}]
+        return [
+            {"id": 111, "name": "Set Lifecycle Stage", "enabled": True, "type": "CONTACT", "reEnrollmentTriggersEnabled": True}
+        ]
 
     def get_workflow_detail(self, workflow_id) -> dict:
         return {

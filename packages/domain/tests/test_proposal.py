@@ -146,13 +146,18 @@ def test_import_from_wrd_fills_blanks_and_appends_rows():
         "Customer Requirements": [{"Requirement": "Sync contacts nightly"}, {"Requirement": "Log SMS"}],
         "Project Definitions": [{"Term": "Member", "Definition": "Paying customer"}],
         "Known Challenges or Risks": [{"Type": "Risk", "Description": "Dirty data"}],
-        "Project Plan": [{"Milestone": "Go live", "Related Requirement": "1", "Target Date": "2026-12-01 00:00:00", "Status": ""}],
+        "Project Plan": [
+            {"Milestone": "Go live", "Related Requirement": "1", "Target Date": "2026-12-01 00:00:00", "Status": ""}
+        ],
         "Open Questions": [{"Question": "Which ERP?"}],
     }
     merged = import_from_wrd(p, wrd)
     assert merged["problem_statement"] == "Already written"  # never overwritten
     assert [o["Objective"] for o in merged["objectives"]] == ["One source of truth"]
-    assert [(r["ID"], r["Requirement"]) for r in merged["requirements"]] == [("R-01", "Sync contacts nightly"), ("R-02", "Log SMS")]
+    assert [(r["ID"], r["Requirement"]) for r in merged["requirements"]] == [
+        ("R-01", "Sync contacts nightly"),
+        ("R-02", "Log SMS"),
+    ]
     assert merged["glossary"] == [{"Term": "Member", "Definition": "Paying customer"}]
     assert merged["risks"][0]["Risk"] == "Risk: Dirty data"
     assert merged["timeline"][0]["End"] == "2026-12-01"
@@ -172,8 +177,13 @@ def test_import_from_jep_maps_team_needs_and_contact():
     merged = import_from_jep(default_proposal(), jep, prospect_name="Acme")
     assert merged["client"]["company"] == "Acme"
     assert merged["seller"]["contact"] == "Aylin"
-    assert merged["team"] == [{"Side": "Client", "Role": "Sponsor", "Name": "Jane", "Email": "j@acme.com", "Responsibilities": ""}]
-    assert [(r["Requirement"], r["Priority"]) for r in merged["requirements"]] == [("ERP sync", "Must Have"), ("Forecasting", "To Confirm")]
+    assert merged["team"] == [
+        {"Side": "Client", "Role": "Sponsor", "Name": "Jane", "Email": "j@acme.com", "Responsibilities": ""}
+    ]
+    assert [(r["Requirement"], r["Priority"]) for r in merged["requirements"]] == [
+        ("ERP sync", "Must Have"),
+        ("Forecasting", "To Confirm"),
+    ]
     assert merged["timeline"][0]["Phase / Milestone"] == "Demo"
 
 
@@ -227,9 +237,18 @@ def test_pdf_contains_scope_buckets_volumes_and_totals():
     p["problem_statement"] = "Deals live in spreadsheets — no visibility."  # non-Latin-1 dash
     text = _pdf_text(proposal_to_pdf(p))
     for expected in (
-        "Scope at a Glance", "INCLUDED", "NOT INCLUDED", "AVAILABLE AS ADD-ON",
-        "Technical Approach", "Management Approach", "Cost & Pricing",
-        "Build renewals pipeline", "Historical email migration", "$3,500.00 One Time", "$11,500.00", "Acme Corp",
+        "Scope at a Glance",
+        "INCLUDED",
+        "NOT INCLUDED",
+        "AVAILABLE AS ADD-ON",
+        "Technical Approach",
+        "Management Approach",
+        "Cost & Pricing",
+        "Build renewals pipeline",
+        "Historical email migration",
+        "$3,500.00 One Time",
+        "$11,500.00",
+        "Acme Corp",
     ):
         assert expected in text, expected
 
@@ -247,5 +266,9 @@ def test_pdf_has_no_blank_page_after_contents():
     reader = PdfReader(io.BytesIO(proposal_to_pdf(default_proposal())))
     # Every page carries header/footer text; a blank page has nothing else.
     for number, page in enumerate(reader.pages, start=1):
-        body = [line for line in page.extract_text().splitlines() if not line.startswith(("SonaMation", "Page ", "Confidential", "Proposal"))]
+        body = [
+            line
+            for line in page.extract_text().splitlines()
+            if not line.startswith(("SonaMation", "Page ", "Confidential", "Proposal"))
+        ]
         assert body, f"page {number} is blank"

@@ -276,9 +276,7 @@ def markdown_to_pdf(markdown: str, *, title: str = "") -> bytes:
 
     def _write(text: str, height: float, *, indent: float = 0.0, markdown_text: bool = True) -> None:
         pdf.set_x(pdf.l_margin + indent)
-        pdf.multi_cell(
-            pdf.epw - indent, height, _pdf_safe(text), markdown=markdown_text, new_x=XPos.LMARGIN, new_y=YPos.NEXT
-        )
+        pdf.multi_cell(pdf.epw - indent, height, _pdf_safe(text), markdown=markdown_text, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
     blocks = _md_blocks(markdown)
     if title and not (blocks and blocks[0][0] == "heading" and blocks[0][1] == 1):

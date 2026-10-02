@@ -70,8 +70,7 @@ class BlueprintGenerator:
 
         if bp_input.custom_object_notes.strip():
             warnings.append(
-                "Custom object notes provided but not auto-modeled — review manually: "
-                f"\"{bp_input.custom_object_notes.strip()}\""
+                f'Custom object notes provided but not auto-modeled — review manually: "{bp_input.custom_object_notes.strip()}"'
             )
 
         return Blueprint(
@@ -193,9 +192,7 @@ class BlueprintGenerator:
             )
         return note
 
-    def _build_workflows(
-        self, bp_input: BlueprintInput, custom_objects: list[CustomObjectDef]
-    ) -> list[WorkflowSuggestion]:
+    def _build_workflows(self, bp_input: BlueprintInput, custom_objects: list[CustomObjectDef]) -> list[WorkflowSuggestion]:
         workflows: list[WorkflowSuggestion] = []
 
         for integration in bp_input.integrations:
@@ -299,8 +296,7 @@ def blueprint_to_markdown(blueprint: Blueprint) -> str:
     for co in blueprint.custom_objects:
         for p in co.properties:
             lines.append(
-                f"| {co.name} | {p.name} | {p.label} | {p.type} | {p.required} | "
-                f"{', '.join(p.options or [])} | {p.description} |"
+                f"| {co.name} | {p.name} | {p.label} | {p.type} | {p.required} | {', '.join(p.options or [])} | {p.description} |"
             )
     lines.append("")
 
@@ -334,9 +330,7 @@ def blueprint_to_markdown(blueprint: Blueprint) -> str:
     lines.append("|---|---|---|---|---|---|")
     for wf in blueprint.workflows:
         risk_flag = "**YES**" if wf.overwrite_risk else "No"
-        lines.append(
-            f"| {wf.name} | {wf.object_type} | {wf.trigger} | {wf.action_summary} | {risk_flag} | {wf.risk_reason} |"
-        )
+        lines.append(f"| {wf.name} | {wf.object_type} | {wf.trigger} | {wf.action_summary} | {risk_flag} | {wf.risk_reason} |")
     lines.append("")
 
     return "\n".join(lines)

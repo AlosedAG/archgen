@@ -244,10 +244,7 @@ def snapshot_to_markdown(snapshot: PortalSnapshot) -> str:
         lines.append("| Property | Label | Type | Field Type | Group | Options |")
         lines.append("|---|---|---|---|---|---|")
         for p in schema.properties:
-            lines.append(
-                f"| {p.name} | {p.label} | {p.type} | {p.field_type} | {p.group_name} | "
-                f"{', '.join(p.options)} |"
-            )
+            lines.append(f"| {p.name} | {p.label} | {p.type} | {p.field_type} | {p.group_name} | {', '.join(p.options)} |")
         lines.append("")
 
     lines.append("## Workflow Inventory")

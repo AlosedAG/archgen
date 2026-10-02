@@ -195,9 +195,7 @@ def from_snapshot(
             target_label = type_id_labels.get(a.to_object, a.to_object)
             if is_engagement:
                 nodes.setdefault(target_label, DiagramNode(name=target_label, kind="Activity"))
-            edges.append(
-                DiagramEdge(source=schema.label, target=target_label, label=a.label, cardinality=a.cardinality or "")
-            )
+            edges.append(DiagramEdge(source=schema.label, target=target_label, label=a.label, cardinality=a.cardinality or ""))
     _ensure_endpoints(nodes, edges)
     return list(nodes.values()), dedupe_edges(edges)
 
@@ -452,9 +450,7 @@ def _avoid_label_collisions(routes: list[_EdgeRoute], step: float = 18.0, max_sh
         half_w = _label_half_width(e)
         y = ly
         shift = 0.0
-        while shift <= max_shift and any(
-            abs(y - py) < step and abs(lx - px) < (half_w + pw + 10) for px, py, pw in placed
-        ):
+        while shift <= max_shift and any(abs(y - py) < step and abs(lx - px) < (half_w + pw + 10) for px, py, pw in placed):
             shift += step
             y = ly + shift
         placed.append((lx, y, half_w))
@@ -662,10 +658,14 @@ def to_png_bytes(nodes: list[DiagramNode], edges: list[DiagramEdge], show_labels
 
     if ordered_nodes:
         ax.text(
-            _MARGIN, 16,
+            _MARGIN,
+            16,
             "Purple = custom object · White = standard object · Dashed = HubSpot activity · "
             "Border color = worst finding severity",
-            fontsize=7, color=TEXT_BODY, ha="left", va="center",
+            fontsize=7,
+            color=TEXT_BODY,
+            ha="left",
+            va="center",
         )
 
     for e, points, (lx, ly), *_sides in routes:
@@ -674,7 +674,9 @@ def to_png_bytes(nodes: list[DiagramNode], edges: list[DiagramEdge], show_labels
         if len(xs) > 1:
             ax.plot(xs, ys, color=PURPLE_LIGHT, linewidth=1.1, zorder=1, solid_capstyle="round")
         ax.annotate(
-            "", xy=points[-1], xytext=points[-2],
+            "",
+            xy=points[-1],
+            xytext=points[-2],
             arrowprops=dict(arrowstyle="-|>", color=PURPLE_LIGHT, lw=1.1, shrinkA=0, shrinkB=2),
             zorder=1,
         )
@@ -682,7 +684,14 @@ def to_png_bytes(nodes: list[DiagramNode], edges: list[DiagramEdge], show_labels
             text = _condensed_label(e.label or e.cardinality)
             if text:
                 ax.text(
-                    lx, ly, text, fontsize=7, ha="center", va="center", color=TEXT_DARK, zorder=3,
+                    lx,
+                    ly,
+                    text,
+                    fontsize=7,
+                    ha="center",
+                    va="center",
+                    color=TEXT_DARK,
+                    zorder=3,
                     bbox=dict(facecolor="white", edgecolor="none", pad=1.5, alpha=0.92),
                 )
 
@@ -692,17 +701,27 @@ def to_png_bytes(nodes: list[DiagramNode], edges: list[DiagramEdge], show_labels
         fill = "#FFFFFF" if fill == "white" else fill
         stroke = SEVERITY_COLORS.get(n.risk, BORDER)
         patch = FancyBboxPatch(
-            (box.x, box.y), box.w, box.h,
+            (box.x, box.y),
+            box.w,
+            box.h,
             boxstyle="round,pad=0,rounding_size=8",
             linewidth=2.2 if n.risk else 1.1,
-            edgecolor=stroke, facecolor=fill,
+            edgecolor=stroke,
+            facecolor=fill,
             linestyle="dashed" if n.kind == "Activity" else "solid",
             zorder=2,
         )
         ax.add_patch(patch)
         ax.text(
-            box.cx, box.y + box.h / 2, "\n".join(box.lines),
-            fontsize=8.5, ha="center", va="center", color=font_color, zorder=3, linespacing=1.4,
+            box.cx,
+            box.y + box.h / 2,
+            "\n".join(box.lines),
+            fontsize=8.5,
+            ha="center",
+            va="center",
+            color=font_color,
+            zorder=3,
+            linespacing=1.4,
         )
 
     buf = _io.BytesIO()
