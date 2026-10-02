@@ -79,9 +79,13 @@ the whole guide plus the PDF manuals as downloads. When adding a page, add a
     (a) a structured business-analysis document — executive summary, current
     state, requirements, preliminary scope signals for the SOW, and a
     specific follow-up list for every question left blank — and (b) a
-    plain-language explainer of the HubSpot hubs the client needs. Drafted
-    by Claude (`core/discovery.py` holds the system prompt and question
-    bank); exports `.docx`, `.pdf`, and `.md`. The only module that needs an
+    plain-language explainer of the HubSpot hubs the client needs. Answers
+    are dropdowns / multiselects with an "Other (specify)" fallback, a
+    shorthand notes line, and a "Flag for follow-up" checkbox per question;
+    the questions and options live in
+    [`config/discovery_options.yaml`](config/discovery_options.yaml) (see
+    [Discovery question bank](#discovery-question-bank)). Drafted by Claude
+    (`core/discovery.py` holds the system prompt); exports `.docx`, `.pdf`, and `.md`. The only module that needs an
     Anthropic API key, and the only one that sends anything outside your
     machine besides HubSpot reads — notes go to Anthropic only when a
     Generate button is clicked.
@@ -411,6 +415,36 @@ file, or delete one. Purely local files, no database, consistent with the
 rest of the app never touching anything but HubSpot (read-only) and the
 local filesystem.
 
+## Discovery question bank
+
+[`config/discovery_options.yaml`](config/discovery_options.yaml) is the
+single source of truth for every question the Discovery Call Assistant
+asks: its section (Goals, Data, Processes, Solutions Design), its label,
+its input type, and its standard answer options. Edit it to standardize
+options across the team, reword or reorder questions, or add new ones —
+no code changes needed.
+
+- **Input types:** `multiselect` (any number of options), `select`
+  (one, as a dropdown), `radio` (one, shown inline — best for five
+  options or fewer), or `text` (free text, no options).
+- **"Other (specify)"** is appended to every option list automatically
+  (rename it with the top-level `other_option:` key), along with a free-text
+  box for it, a notes line, and a follow-up flag. Don't list those in the YAML.
+- **Ids** are snake_case and unique across all sections. Saved notes
+  refer to questions by id, so rename the `label`, not the `id`, when
+  rewording.
+- **Editing safely:** changes are picked up on the next page refresh. If
+  the file has a mistake, the page lists each bad entry instead of
+  showing the form; `pytest tests/test_discovery_config.py` checks the
+  same thing. Removing an option doesn't lose answers that used it — they
+  move into that question's "Other" text.
+
+The file is loaded and validated by
+[`core/discovery_config.py`](core/discovery_config.py). Answers are sent
+to the AI as one readable line per question (selections, "Other" text,
+then notes), and flagged questions are listed with the section's edge
+cases, so the business-analysis prompt itself is unchanged.
+
 ## Caching
 
 Modules 2 and 3 cache the pulled portal snapshot in
@@ -468,6 +502,8 @@ architecturescope/
 │   ├── 9_Project_Library.py
 │   └── 10_Proposal_SOW_Builder.py
 ├── core/
+│   ├── discovery.py        # Module 11: answers -> AI payload, system prompt, streaming
+│   ├── discovery_config.py # loads + validates config/discovery_options.yaml
 │   ├── models.py           # shared dataclasses for all modules
 │   ├── hubspot_client.py   # read-only API client: pagination, 429 backoff, scope errors
 │   ├── blueprint.py        # Module 1 generation + Markdown/JSON export
@@ -482,6 +518,8 @@ architecturescope/
 │   ├── proposal_pdf.py     # Module 10: SonaMation-branded proposal/SOW PDF
 │   ├── theme.py             # brand CSS + the audit .xlsx/PDF color palette (matches examples/)
 │   └── project_store.py    # Module 9's filesystem-backed save/list/delete
+├── config/
+│   └── discovery_options.yaml  # Discovery Call Assistant questions + dropdown options (editable)
 ├── rules/
 │   ├── rules.yaml         # editable best-practice rules
 │   └── engine.py          # loads rules.yaml, exposes naming/risk checks

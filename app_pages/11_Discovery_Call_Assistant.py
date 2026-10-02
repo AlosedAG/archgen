@@ -12,6 +12,12 @@ The only module that calls an external AI service; it needs an Anthropic
 API key (Setup page, or ``ANTHROPIC_API_KEY``). Notes themselves are typed
 and kept locally with no key at all — only the Generate buttons need one.
 
+Questions, their input type (dropdown / multiselect / radio / text), and
+their options come from ``config/discovery_options.yaml`` — edit that, not
+this page, to change what's asked. Each choice question also gets an
+"Other (specify)" box, a shorthand notes line, and a "Flag for follow-up"
+checkbox.
+
 Every note field's value lives under a ``disc_*`` session key, which the
 router (Home.py) re-saves on every run so notes survive switching pages
 mid-call.
@@ -28,15 +34,17 @@ import streamlit as st
 from core.connections import SETUP_URL, get_anthropic_key
 from core.discovery import (
     HUBSPOT_MODULES,
-    SECTIONS,
     DiscoveryError,
     answered_count,
     build_business_analysis_input,
     build_client_explainer_input,
+    flagged_keys,
     has_any_notes,
+    question_bank,
     stream_document,
     suggest_modules,
 )
+from core.discovery_config import INPUT_MULTISELECT, INPUT_SELECT, DiscoveryConfigError, Question
 from core.doc_export_ui import render_export_footer
 from core.exporters import markdown_to_docx, markdown_to_pdf
 from core.project_store import project_name_input
@@ -57,27 +65,113 @@ CE_MODULES_KEY = "disc_ce_modules"
 BUSINESS_TYPE_KEY = "disc_business_type"
 
 
+try:
+    BANK = question_bank()
+except DiscoveryConfigError as exc:
+    st.error(
+        f"The discovery question bank (`config/{exc.path.name}`) has errors, so the form can't be shown. "
+        "Fix these entries and refresh the page:"
+    )
+    st.markdown("\n".join(f"- {problem}" for problem in exc.problems))
+    st.stop()
+SECTIONS = BANK.sections
+
+
 def _field_key(section: str, field: str) -> str:
     return f"disc_{section.lower().replace(' ', '_')}_{field}"
+
+
+def _part_key(section: str, question: Question, part: str) -> str:
+    """Session key for a question's companion widget: ``other`` (the
+    "Other (specify)" text), ``notes``, or ``flag``. Double underscore so
+    it can't collide with a question id (ids are single-underscore)."""
+    return f"{_field_key(section, question.key)}__{part}"
+
+
+def _question_keys(section: str, question: Question) -> list[str]:
+    """Every session key one question's answer is spread across. A text
+    question's answer lives in its main key, so it has no notes/other."""
+    keys = [_field_key(section, question.key), _part_key(section, question, "flag")]
+    if question.is_choice:
+        keys += [_part_key(section, question, "other"), _part_key(section, question, "notes")]
+    return keys
 
 
 def _all_note_keys() -> list[str]:
     keys = [BUSINESS_TYPE_KEY]
     for section, questions in SECTIONS.items():
-        keys += [_field_key(section, q.key) for q in questions]
+        for q in questions:
+            keys += _question_keys(section, q)
         keys += [_field_key(section, "notes"), _field_key(section, "edge_cases")]
     return keys
+
+
+def _collect_answer(section: str, question: Question) -> dict:
+    """One question's widgets, read back as a structured answer (see
+    :func:`core.discovery.empty_answer`)."""
+    value = st.session_state.get(_field_key(section, question.key))
+    flagged = bool(st.session_state.get(_part_key(section, question, "flag"), False))
+    if not question.is_choice:
+        return {"selected": [], "other": "", "notes": str(value or ""), "flagged": flagged}
+    return {
+        "selected": list(value) if isinstance(value, list) else ([value] if value else []),
+        "other": st.session_state.get(_part_key(section, question, "other"), ""),
+        "notes": st.session_state.get(_part_key(section, question, "notes"), ""),
+        "flagged": flagged,
+    }
 
 
 def _collect_notes() -> dict:
     return {
         section: {
-            "answers": {q.key: st.session_state.get(_field_key(section, q.key), "") for q in questions},
+            "answers": {q.key: _collect_answer(section, q) for q in questions},
             "notes": st.session_state.get(_field_key(section, "notes"), ""),
             "edge_cases": st.session_state.get(_field_key(section, "edge_cases"), ""),
         }
         for section, questions in SECTIONS.items()
     }
+
+
+def _append_text(key: str, text: str) -> None:
+    existing = str(st.session_state.get(key, "") or "").strip()
+    st.session_state[key] = f"{existing}; {text}" if existing else text
+
+
+def _sanitize_choice_state(section: str, question: Question) -> None:
+    """Make a choice question's stored value safe to hand to its widget
+    (Streamlit raises on a value that isn't among the options), without
+    losing anything the specialist typed:
+
+    - free text from a backup saved before the question had options
+      moves into the question's notes;
+    - selections no longer in the YAML (an option was renamed/removed)
+      move into the "Other (specify)" text;
+    - extra selections when a multiselect became a single select move
+      into notes.
+    """
+    key = _field_key(section, question.key)
+    if key not in st.session_state:
+        return
+    value = st.session_state[key]
+    choices = BANK.choices(question)
+    if isinstance(value, str) and value.strip() and value not in choices:
+        _append_text(_part_key(section, question, "notes"), value.strip())
+        value = None
+    items = list(value) if isinstance(value, (list, tuple)) else ([value] if value else [])
+    valid = [v for v in items if v in choices]
+    stale = [str(v) for v in items if v not in choices and str(v).strip()]
+    if stale:
+        _append_text(_part_key(section, question, "other"), "; ".join(stale))
+        if BANK.other_option not in valid:
+            valid.append(BANK.other_option)
+    if question.input == INPUT_MULTISELECT:
+        cleaned = valid
+    else:
+        cleaned = valid[0] if valid else None
+        if len(valid) > 1:
+            _append_text(_part_key(section, question, "notes"), "; ".join(valid[1:]))
+    if cleaned != st.session_state[key]:
+        st.session_state[key] = cleaned
 
 
 def _load_notes_backup() -> None:
@@ -90,10 +184,19 @@ def _load_notes_backup() -> None:
     except (ValueError, AttributeError):
         st.session_state["disc_upload_error"] = "That file isn't a notes backup from this page."
         return
+    choice_keys = {_field_key(s, q.key) for s, qs in SECTIONS.items() for q in qs if q.is_choice}
     valid = set(_all_note_keys())
     for key, value in fields.items():
-        if key in valid:
-            st.session_state[key] = str(value)
+        if key not in valid:
+            continue
+        if key.endswith("__flag"):
+            st.session_state[key] = bool(value)
+        elif key in choice_keys:
+            # Left as saved (list, single option, or a pre-dropdown free-text
+            # answer) — _sanitize_choice_state fits it to the widget.
+            st.session_state[key] = value
+        else:
+            st.session_state[key] = str(value or "")
     if data.get("project_name"):
         st.session_state["report_project_name"] = data["project_name"]
     st.session_state.pop("disc_upload_error", None)
@@ -135,6 +238,62 @@ def _generate(payload: dict, output_key: str) -> None:
         return
     st.session_state[output_key] = text if isinstance(text, str) else "".join(map(str, text))
     st.rerun()
+
+
+def _render_question(section: str, question: Question) -> None:
+    """One question card: the dropdown/multiselect/radio from the YAML
+    (or a text box for text questions), an "Other — specify" box when the
+    fallback option is picked, a shorthand notes line, and the follow-up flag."""
+    key = _field_key(section, question.key)
+    help_text = question.hint or None
+    with st.container(border=True):
+        if not question.is_choice:
+            st.text_area(question.label, key=key, height=90, help=help_text, placeholder="Shorthand is fine")
+        else:
+            _sanitize_choice_state(section, question)
+            choices = BANK.choices(question)
+            # index=None: nothing pre-selected — an unanswered question must
+            # stay blank so it's reported as a gap, not as the first option.
+            if question.input == INPUT_MULTISELECT:
+                picked = st.multiselect(
+                    question.label, choices, key=key, help=help_text, placeholder="Choose all that apply"
+                )
+            elif question.input == INPUT_SELECT:
+                picked = st.selectbox(
+                    question.label, choices, index=None, key=key, help=help_text, placeholder="Choose one"
+                )
+            else:
+                picked = st.radio(question.label, choices, index=None, key=key, help=help_text, horizontal=True)
+            if BANK.other_option in (picked if isinstance(picked, list) else [picked]):
+                st.text_input(
+                    "Other — specify",
+                    key=_part_key(section, question, "other"),
+                    placeholder="What did they say?",
+                )
+            st.text_input(
+                f"Notes — {question.label}",
+                key=_part_key(section, question, "notes"),
+                placeholder="Notes / shorthand",
+                label_visibility="collapsed",
+            )
+        st.checkbox("⚑ Flag for follow-up", key=_part_key(section, question, "flag"))
+
+
+def _render_flagged_summary(notes: dict) -> None:
+    """Every question flagged for follow-up, across all sections — the
+    specialist's to-revisit list before the call ends."""
+    flagged = [
+        (section, q.label)
+        for section, questions in SECTIONS.items()
+        for q in questions
+        if q.key in flagged_keys(notes[section])
+    ]
+    if not flagged:
+        return
+    with st.container(border=True):
+        st.markdown(f"**⚑ Flagged for follow-up ({len(flagged)})**")
+        st.markdown("\n".join(f"- **{section}** — {label}" for section, label in flagged))
+        st.caption("Flagged questions are sent with your notes as items to confirm before scoping.")
 
 
 def _render_result(output_key: str, *, doc_title: str, document_type: str, file_suffix: str) -> None:
@@ -198,16 +357,15 @@ with ba_tab:
     progress_notes = _collect_notes()
     for tab, (section, questions) in zip(section_tabs, SECTIONS.items()):
         with tab:
-            st.caption(f"{answered_count(progress_notes[section])} of {len(questions)} questions answered")
+            flag_count = len(flagged_keys(progress_notes[section]))
+            st.caption(
+                f"{answered_count(progress_notes[section])} of {len(questions)} questions answered"
+                + (f" · ⚑ {flag_count} flagged for follow-up" if flag_count else "")
+            )
             cols = st.columns(2)
             for i, question in enumerate(questions):
                 with cols[i % 2]:
-                    st.text_area(
-                        question.label,
-                        key=_field_key(section, question.key),
-                        height=90,
-                        placeholder=question.hint or None,
-                    )
+                    _render_question(section, question)
             notes_col, edge_col = st.columns(2)
             with notes_col:
                 st.text_area(
@@ -225,6 +383,7 @@ with ba_tab:
                 )
 
     notes = _collect_notes()
+    _render_flagged_summary(notes)
     can_generate = bool(api_key) and has_any_notes(notes)
     if st.button(
         "Generate business analysis",
@@ -258,7 +417,7 @@ with ba_tab:
         backup = {
             "project_name": st.session_state.get("report_project_name", ""),
             "saved_on": date.today().isoformat(),
-            "fields": {k: st.session_state.get(k, "") for k in _all_note_keys()},
+            "fields": {k: st.session_state[k] for k in _all_note_keys() if k in st.session_state},
         }
         st.download_button(
             "Download notes backup (.json)",

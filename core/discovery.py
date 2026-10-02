@@ -10,6 +10,9 @@ Two modes, matching the system prompt below:
 - ``client_explainer`` — a plain-language explainer of selected HubSpot
   hubs for a non-technical client.
 
+The questions themselves (labels, input types, dropdown options) live in
+``config/discovery_options.yaml``, loaded by :mod:`core.discovery_config`.
+
 Kept free of Streamlit so it's unit-testable with a fake Anthropic client:
 the page (``app_pages/11_Discovery_Call_Assistant.py``) only collects
 inputs and renders what :func:`stream_document` yields.
@@ -20,8 +23,9 @@ from __future__ import annotations
 import json
 import os
 import re
-from dataclasses import dataclass
 from typing import Any, Iterator
+
+from core.discovery_config import Question, QuestionBank, load_question_bank
 
 DEFAULT_MODEL = "claude-opus-5-5"
 # Server-side refusal fallback: if a safety classifier declines the request,
@@ -39,53 +43,19 @@ def model_id() -> str:
     return os.environ.get("ANTHROPIC_MODEL") or DEFAULT_MODEL
 
 
-@dataclass(frozen=True)
-class Question:
-    key: str
-    label: str
-    hint: str = ""
+def question_bank() -> QuestionBank:
+    """The discovery question bank from ``config/discovery_options.yaml``
+    (re-read when the file changes). Raises
+    :class:`~core.discovery_config.DiscoveryConfigError` if it's invalid."""
+    return load_question_bank()
 
 
-# Section name -> discovery questions, in the order they're usually asked.
-# Labels are what the model sees as the question each answer belongs to.
-SECTIONS: dict[str, list[Question]] = {
-    "Goals": [
-        Question("growth_areas", "Which areas of the business are they looking to grow?"),
-        Question("long_term_goals", "Long-term goals (12–24 months)"),
-        Question("kpis", "KPIs — how will they measure success?", "e.g. lead-to-customer rate, response time"),
-        Question("timeline", "Timeline / key dates"),
-        Question("reason_for_switching", "Why are they moving to HubSpot?", "Critical context — capture their words"),
-    ],
-    "Data": [
-        Question("data_location", "Where does their data live today?", "Spreadsheets, CRM, ERP, billing…"),
-        Question("systems", "Which systems manage that data?"),
-        Question("volume", "Volume — objects, records, assets", "e.g. 40k contacts, 3k deals/yr"),
-        Question("sync_direction", "Sync direction(s) needed", "One-way into HubSpot? Two-way? Source of truth?"),
-        Question("custom_data", "Custom data elements", "Anything that isn't a contact, company, deal, or ticket"),
-        Question("data_owners", "Data owners / roles"),
-        Question("cleansing_frequency", "How often is data updated or cleaned?"),
-        Question("compliance", "Security / compliance requirements", "HIPAA, GDPR, SOC 2, data residency…"),
-    ],
-    "Processes": [
-        Question("journey_stages", "Customer journey stages"),
-        Question("team_processes", "Current team processes (sales, marketing, service)"),
-        Question("communication", "How do they communicate with customers?", "Email, phone, SMS, chat…"),
-        Question("slas", "SLAs / response-time commitments"),
-        Question("automations", "Existing automations"),
-        Question("reporting", "Current reporting — what do they look at today?"),
-        Question("pain_points", "Challenges & workarounds"),
-    ],
-    "Solutions Design": [
-        Question("primary_users", "Primary users of HubSpot"),
-        Question("team_sizes", "Team sizes / number of seats"),
-        Question("required_actions", "Actions & automated steps users need"),
-        Question("prior_tools", "Experience with HubSpot or other CRMs"),
-        Question("integrations", "Integrations needed"),
-        Question("priority_features", "Priority features (must-haves)"),
-        Question("feature_gaps", "Gaps in their current tool"),
-        Question("mvp_date", "Desired MVP / go-live date"),
-    ],
-}
+def sections() -> dict[str, list[Question]]:
+    """Section name -> discovery questions, in the order they're usually
+    asked. Labels are what the model sees as the question each answer
+    belongs to."""
+    return question_bank().sections
+
 
 HUBSPOT_MODULES: list[str] = [
     "Marketing Hub",
@@ -203,16 +173,66 @@ class DiscoveryError(RuntimeError):
     """The model couldn't produce a complete document (refusal or cut off)."""
 
 
+# Prepended to a section's edge_cases when the specialist ticked "Flag for
+# follow-up" on any of its questions. Sent in edge_cases rather than as a
+# new payload field so the verbatim system prompt still describes the
+# input exactly — it already tells the model to surface edge cases.
+FOLLOW_UP_PREFIX = "Specialist flagged for follow-up (confirm before scoping): "
+
+
+def empty_answer() -> dict[str, Any]:
+    """One question's structured answer: the options picked, the "Other
+    (specify)" text, shorthand notes, and the follow-up flag. Text-only
+    questions keep their answer in ``notes``."""
+    return {"selected": [], "other": "", "notes": "", "flagged": False}
+
+
+def as_answer(value: Any) -> dict[str, Any]:
+    """Normalize a stored answer to :func:`empty_answer`'s shape. A plain
+    string (notes from before answers were structured) becomes the notes."""
+    if isinstance(value, dict):
+        answer = {**empty_answer(), **value}
+        selected = answer["selected"]
+        answer["selected"] = [selected] if isinstance(selected, str) else list(selected or [])
+        return answer
+    return {**empty_answer(), "notes": str(value or "")}
+
+
+def format_answer(value: Any, *, other_option: str | None = None) -> str:
+    """One answer as the readable line the model receives, e.g.
+    ``"HIPAA; Other: state privacy law — notes: legal reviewing"``.
+    Empty string when nothing was captured (a gap)."""
+    answer = as_answer(value)
+    other_option = other_option or question_bank().other_option
+    parts = []
+    for choice in answer["selected"]:
+        if choice == other_option:
+            other = str(answer["other"] or "").strip()
+            parts.append(f"Other: {other}" if other else "Other (not specified)")
+        else:
+            parts.append(str(choice))
+    text = "; ".join(parts)
+    notes = str(answer["notes"] or "").strip()
+    if notes:
+        text = f"{text} — notes: {notes}" if text else notes
+    return text
+
+
 def empty_notes() -> dict[str, dict[str, Any]]:
     """Blank notes in the shape :func:`build_business_analysis_input` takes."""
     return {
-        section: {"answers": {q.key: "" for q in questions}, "notes": "", "edge_cases": ""}
-        for section, questions in SECTIONS.items()
+        section: {"answers": {q.key: empty_answer() for q in questions}, "notes": "", "edge_cases": ""}
+        for section, questions in sections().items()
     }
 
 
 def answered_count(section_notes: dict[str, Any]) -> int:
-    return sum(1 for v in section_notes.get("answers", {}).values() if str(v).strip())
+    return sum(1 for v in section_notes.get("answers", {}).values() if format_answer(v))
+
+
+def flagged_keys(section_notes: dict[str, Any]) -> list[str]:
+    """Ids of the questions in a section flagged for follow-up."""
+    return [key for key, v in section_notes.get("answers", {}).items() if as_answer(v)["flagged"]]
 
 
 def has_any_notes(notes: dict[str, dict[str, Any]]) -> bool:
@@ -230,20 +250,30 @@ def build_business_analysis_input(
     """Request payload for ``business_analysis`` mode. Every question is
     included even when blank — a blank answer is itself information (it
     becomes an Open Questions & Gaps item), so it's sent as ``""`` rather
-    than dropped."""
-    sections: dict[str, Any] = {}
-    for section, questions in SECTIONS.items():
+    than dropped.
+
+    Structured answers are flattened to one line each (see
+    :func:`format_answer`), and questions flagged for follow-up are listed
+    in the section's ``edge_cases``, so the payload keeps the shape the
+    system prompt describes."""
+    bank = question_bank()
+    payload_sections: dict[str, Any] = {}
+    for section, questions in bank.sections.items():
         section_notes = notes.get(section, {})
         answers = section_notes.get("answers", {})
-        sections[section] = {
-            "answers": {q.label: str(answers.get(q.key, "") or "").strip() for q in questions},
+        edge_cases = str(section_notes.get("edge_cases", "") or "").strip()
+        flagged = [q.label for q in questions if as_answer(answers.get(q.key))["flagged"]]
+        if flagged:
+            edge_cases = "\n".join(filter(None, [edge_cases, FOLLOW_UP_PREFIX + "; ".join(flagged)]))
+        payload_sections[section] = {
+            "answers": {q.label: format_answer(answers.get(q.key), other_option=bank.other_option) for q in questions},
             "notes": str(section_notes.get("notes", "") or "").strip(),
-            "edge_cases": str(section_notes.get("edge_cases", "") or "").strip(),
+            "edge_cases": edge_cases,
         }
     return {
         "mode": MODE_BUSINESS_ANALYSIS,
         "client": {"name": client_name.strip(), "business_type": business_type.strip()},
-        "sections": sections,
+        "sections": payload_sections,
     }
 
 

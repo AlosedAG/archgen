@@ -74,15 +74,17 @@ A pasted key can be removed with **Forget this key**.
 Use it **live, during the discovery call**.
 
 1. Enter the **Client / project name** and the client's **business type** (e.g. "multi-location dental practice").
-2. On **1 · Business analysis**, jot answers under **Goals**, **Data**, **Processes**, and **Solutions Design**. Shorthand and out-of-order notes are fine. Use **Edge cases / flags** for compliance, multi-location/multi-entity, or anything the client contradicted.
-3. Leave unknowns blank — the AI never guesses. Every blank becomes a specific item under **Open Questions & Gaps**, which is your follow-up checklist.
-4. After the call, click **Generate business analysis**. Review it under **Preview**, fix anything under **Edit text**, then download (.docx / .pdf / .md) or **Save to Project Library**.
-5. Switch to **2 · Client explainer**, click **Use the hubs recommended in the business analysis** (or pick hubs yourself), and **Generate client explainer** — a plain-language page you can send the client.
+2. On **1 · Business analysis**, answer under **Goals**, **Data**, **Processes**, and **Solutions Design**, in any order. Most questions are dropdowns: pick the common answers, choose **Other (specify)** to type something that isn't listed, and use the notes line under each question for shorthand (numbers, dates, the client's exact words). Use **Edge cases / flags** for compliance, multi-location/multi-entity, or anything the client contradicted.
+3. Tick **⚑ Flag for follow-up** on any question you need to revisit. Flagged questions are listed above the Generate button and passed to the AI as items to confirm.
+4. Leave unknowns blank — the AI never guesses. Every blank becomes a specific item under **Open Questions & Gaps**, which is your follow-up checklist.
+5. After the call, click **Generate business analysis**. Review it under **Preview**, fix anything under **Edit text**, then download (.docx / .pdf / .md) or **Save to Project Library**.
+6. Switch to **2 · Client explainer**, click **Use the hubs recommended in the business analysis** (or pick hubs yourself), and **Generate client explainer** — a plain-language page you can send the client.
 
 **Tips**
 
 - Notes survive switching pages, but not closing the tab. Use **Back up, restore, or reset call notes** to download a backup mid-call; restore it from the same place.
 - **Start a new call** clears every note and draft before the next client.
+- The questions and dropdown options come from `config/discovery_options.yaml` — ask whoever maintains the app to add or change an option.
 - The business analysis's **Preliminary Scope Signals** section is written as input for the Proposal & SOW Builder.
 - Needs an Anthropic API key (Setup). Notes are sent to Anthropic only when you click a Generate button.
 

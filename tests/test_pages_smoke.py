@@ -344,15 +344,42 @@ def test_discovery_notes_survive_switching_pages():
     at.run(timeout=20)
     at.switch_page("app_pages/11_Discovery_Call_Assistant.py")
     at.run(timeout=20)
-    kpi = [t for t in at.text_area if t.label == "KPIs — how will they measure success?"][0]
-    kpi.input("lead-to-patient rate").run(timeout=20)
+    kpi = [m for m in at.multiselect if m.label == "KPIs — how will they measure success?"][0]
+    kpi.select("Win rate").select("Other (specify)").run(timeout=20)
+    at.text_input(key="disc_goals_kpis__other").input("demo-to-close").run(timeout=20)
+    at.text_input(key="disc_goals_kpis__notes").input("target 25%").run(timeout=20)
+    at.checkbox(key="disc_goals_timeline__flag").check().run(timeout=20)
+    at.text_area(key="disc_goals_long_term_goals").input("open 3 clinics").run(timeout=20)
     at.switch_page("app_pages/6_Requirements_Document.py")
     at.run(timeout=20)
     at.switch_page("app_pages/11_Discovery_Call_Assistant.py")
     at.run(timeout=20)
     assert not at.exception, [str(e) for e in at.exception]
-    kpi = [t for t in at.text_area if t.label == "KPIs — how will they measure success?"][0]
-    assert kpi.value == "lead-to-patient rate"
+    assert at.multiselect(key="disc_goals_kpis").value == ["Win rate", "Other (specify)"]
+    assert at.text_input(key="disc_goals_kpis__other").value == "demo-to-close"
+    assert at.text_input(key="disc_goals_kpis__notes").value == "target 25%"
+    assert at.checkbox(key="disc_goals_timeline__flag").value is True
+    assert at.text_area(key="disc_goals_long_term_goals").value == "open 3 clinics"
+    assert any("Flagged for follow-up (1)" in m.value for m in at.markdown)
+
+
+def test_discovery_old_free_text_and_stale_options_are_kept():
+    """Free-text answers from a pre-dropdown notes backup, and selections of
+    options since removed from the YAML, must render without error and
+    without losing what the specialist typed."""
+    at = _run(
+        "11_Discovery_Call_Assistant.py",
+        timeout=20,
+        disc_goals_kpis="lead-to-patient rate",
+        disc_data_compliance=["HIPAA", "An option removed from the YAML"],
+        disc_goals_timeline=["1–3 months", "3–6 months"],
+    )
+    assert at.multiselect(key="disc_goals_kpis").value == []
+    assert at.text_input(key="disc_goals_kpis__notes").value == "lead-to-patient rate"
+    assert at.multiselect(key="disc_data_compliance").value == ["HIPAA", "Other (specify)"]
+    assert at.text_input(key="disc_data_compliance__other").value == "An option removed from the YAML"
+    assert at.selectbox(key="disc_goals_timeline").value == "1–3 months"
+    assert at.text_input(key="disc_goals_timeline__notes").value == "3–6 months"
 
 
 def test_discovery_page_renders_and_exports_a_generated_document(monkeypatch, tmp_path):
@@ -370,3 +397,15 @@ def test_discovery_page_renders_and_exports_a_generated_document(monkeypatch, tm
     at = save.click().run(timeout=20)
     assert not at.exception, [str(e) for e in at.exception]
     assert {d.filename.rsplit(".", 1)[-1] for d in list_documents("Bright Smiles")} == {"docx", "pdf", "md"}
+
+
+def test_discovery_page_explains_a_broken_question_bank(monkeypatch, tmp_path):
+    import core.discovery_config
+
+    bad = tmp_path / "discovery_options.yaml"
+    bad.write_text("sections:\n  Goals:\n    - {id: kpis, label: KPIs, input: dropdown}\n", encoding="utf-8")
+    monkeypatch.setattr(core.discovery_config, "DEFAULT_OPTIONS_PATH", bad)
+    at = _run("11_Discovery_Call_Assistant.py", timeout=20)
+    assert any("question bank" in e.value for e in at.error)
+    assert any("Goals › kpis" in m.value for m in at.markdown)
+    assert not at.multiselect

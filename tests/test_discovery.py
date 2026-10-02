@@ -14,14 +14,15 @@ from core.discovery import (
     HUBSPOT_MODULES,
     MODE_BUSINESS_ANALYSIS,
     MODE_CLIENT_EXPLAINER,
-    SECTIONS,
     SYSTEM_PROMPT,
     DiscoveryError,
     build_business_analysis_input,
     build_client_explainer_input,
     build_request,
     empty_notes,
+    format_answer,
     has_any_notes,
+    sections,
     stream_document,
     suggest_modules,
 )
@@ -39,17 +40,57 @@ def test_edge_case_alone_counts_as_notes():
 
 def test_business_analysis_payload_keeps_blank_answers_and_uses_question_labels():
     notes = empty_notes()
+    # A plain string (notes from before answers were structured) still works.
     notes["Goals"]["answers"]["kpis"] = "  lead-to-patient rate  "
     payload = build_business_analysis_input(notes, client_name="Bright Smiles", business_type="dental")
 
     assert payload["mode"] == MODE_BUSINESS_ANALYSIS
     assert payload["client"] == {"name": "Bright Smiles", "business_type": "dental"}
-    assert list(payload["sections"]) == list(SECTIONS)
+    assert list(payload["sections"]) == list(sections())
     goals = payload["sections"]["Goals"]["answers"]
     assert goals["KPIs — how will they measure success?"] == "lead-to-patient rate"
     # Blank answers are sent as "" (they become follow-up gaps), not dropped.
-    assert len(goals) == len(SECTIONS["Goals"])
+    assert len(goals) == len(sections()["Goals"])
     assert goals["Timeline / key dates"] == ""
+
+
+def test_structured_answers_are_flattened_for_the_model():
+    notes = empty_notes()
+    notes["Data"]["answers"]["compliance"] = {
+        "selected": ["HIPAA", "Other (specify)"],
+        "other": "state privacy law",
+        "notes": "legal reviewing",
+        "flagged": False,
+    }
+    notes["Data"]["answers"]["sync_direction"] = {"selected": ["Two-way sync"], "other": "", "notes": "", "flagged": False}
+    answers = build_business_analysis_input(notes)["sections"]["Data"]["answers"]
+    assert answers["Security / compliance requirements"] == "HIPAA; Other: state privacy law — notes: legal reviewing"
+    assert answers["Sync direction(s) needed"] == "Two-way sync"
+
+
+def test_format_answer_variants():
+    assert format_answer(None) == ""
+    assert format_answer({"selected": [], "other": "", "notes": "", "flagged": True}) == ""
+    assert format_answer({"selected": [], "notes": "only notes"}) == "only notes"
+    assert format_answer({"selected": ["Other (specify)"]}) == "Other (not specified)"
+    # "Other" text is ignored unless the Other option is actually picked.
+    assert format_answer({"selected": ["Email"], "other": "stale"}) == "Email"
+    # A single select's value may arrive as a bare string.
+    assert format_answer({"selected": "Weekly"}) == "Weekly"
+
+
+def test_flagged_questions_go_to_edge_cases_and_count_as_unanswered():
+    notes = empty_notes()
+    notes["Data"]["edge_cases"] = "Two legal entities"
+    notes["Data"]["answers"]["volume"]["flagged"] = True
+    notes["Data"]["answers"]["compliance"]["flagged"] = True
+    data = build_business_analysis_input(notes)["sections"]["Data"]
+    assert data["edge_cases"] == (
+        "Two legal entities\nSpecialist flagged for follow-up (confirm before scoping): "
+        "Volume — objects, records, assets; Security / compliance requirements"
+    )
+    assert data["answers"]["Volume — objects, records, assets"] == ""
+    assert build_business_analysis_input(empty_notes())["sections"]["Data"]["edge_cases"] == ""
 
 
 def test_client_explainer_payload_omits_blank_business_type():
