@@ -104,7 +104,8 @@ this codebase creates, updates, or deletes anything in a connected portal.
 
 ## Setup
 
-Requires Python 3.11+.
+Requires Python 3.12+. (Developing on the platform rebuild? See
+[Platform (rebuild)](#platform-rebuild).)
 
 ```bash
 pip install -r requirements.txt
@@ -485,50 +486,91 @@ resolves and renders through `st.navigation`.
 
 ## Project structure
 
+The codebase is mid-migration from a single Streamlit app to a decoupled
+platform (FastAPI + Next.js) — see [Platform (rebuild)](#platform-rebuild).
+Business logic lives in one framework-free package that both the legacy
+Streamlit app and the new API import, so they can't drift apart.
+
 ```
 architecturescope/
-├── Home.py                          # Streamlit entry point — st.navigation router, sidebar sections
-├── app_pages/
-│   ├── 0_Home.py
-│   ├── 1_Architecture_Generator.py
-│   ├── 2_Portal_Auditor.py
-│   ├── 2b_Property_Audit.py
-│   ├── 3_Documentation_Generator.py
-│   ├── 4_Executive_Report.py
-│   ├── 5_Architecture_Diagram.py
-│   ├── 6_Requirements_Document.py
-│   ├── 7_Joint_Evaluation_Plan.py
-│   ├── 8_Test_Case_Document.py
-│   ├── 9_Project_Library.py
-│   └── 10_Proposal_SOW_Builder.py
-├── core/
-│   ├── discovery.py        # Module 11: answers -> AI payload, system prompt, streaming
-│   ├── discovery_config.py # loads + validates packages/domain/src/archscope_domain/config/discovery_options.yaml
-│   ├── models.py           # shared dataclasses for all modules
-│   ├── hubspot_client.py   # read-only API client: pagination, 429 backoff, scope errors
-│   ├── blueprint.py        # Module 1 generation + Markdown/JSON export
-│   ├── docgen.py           # Module 3 portal pull + Markdown/docx export
-│   ├── audit.py            # Module 2 checks + CSV/Markdown export
-│   ├── property_audit.py   # Module 2B: per-property rating + .xlsx/PDF export matching examples/
-│   ├── report.py           # Module 4: snapshot+findings -> plain-language report, client + internal .docx export
-│   ├── diagram.py          # Module 5: node/edge model + DOT/.drawio/.json rendering
-│   ├── exporters.py        # Section -> .docx/.xlsx/.csv/.pdf, shared by Modules 5-9
-│   ├── doc_export_ui.py    # Streamlit download-row + "Save to Project Library" button, shared by all modules
-│   ├── proposal.py         # Module 10: proposal model, defaults, scope/pricing logic, WRD/JEP import
-│   ├── proposal_pdf.py     # Module 10: SonaMation-branded proposal/SOW PDF
-│   ├── theme.py             # brand CSS + the audit .xlsx/PDF color palette (matches examples/)
-│   └── project_store.py    # Module 9's filesystem-backed save/list/delete
-├── config/
-│   └── discovery_options.yaml  # Discovery Call Assistant questions + dropdown options (editable)
-├── rules/
-│   ├── rules.yaml         # editable best-practice rules
-│   └── engine.py          # loads rules.yaml, exposes naming/risk checks
-├── examples/                # reference audit workbook + PDF report this app's palette/shape is matched to
-├── sample_inputs/
-│   └── example_project.json
-├── project_library/        # generated at runtime, git-ignored — Module 9's saved output
-└── tests/
+├── packages/
+│   ├── domain/                       archscope_domain — pure business logic, no I/O, no frameworks
+│   │   ├── src/archscope_domain/
+│   │   │   ├── models.py             shared dataclasses (blueprint, portal snapshot, findings)
+│   │   │   ├── ports.py              PortalReader: the read-only interface the domain reads portals through
+│   │   │   ├── rules.py              RulesEngine over config/rules.yaml
+│   │   │   ├── blueprint.py          Module 1 generation + Markdown/JSON
+│   │   │   ├── audit.py              Module 2 checks + CSV/Markdown
+│   │   │   ├── property_audit.py     Module 2B rating + .xlsx/PDF matching examples/
+│   │   │   ├── docgen.py             Module 3 portal pull + Markdown/.docx
+│   │   │   ├── report.py             Module 4 report figures + client/internal .docx
+│   │   │   ├── diagram.py            Module 5 node/edge model + DOT/.drawio/PNG
+│   │   │   ├── proposal.py, proposal_pdf.py   Module 10 model, pricing/scope logic, branded PDF
+│   │   │   ├── discovery.py, discovery_config.py   Module 11 payloads, system prompt, question bank
+│   │   │   ├── exporters.py          sections/Markdown -> .docx/.xlsx/.csv/.pdf
+│   │   │   ├── branding.py           brand palette shared by every renderer
+│   │   │   └── config/               rules.yaml, discovery_options.yaml (editable, no code changes)
+│   │   └── tests/                    unit tests + golden/ parity fixtures
+│   └── integrations/                 archscope_integrations — HubSpotClient (read-only PortalReader adapter)
+├── apps/
+│   └── api/                          archscope_api — FastAPI service
+│       ├── src/archscope_api/
+│       │   ├── main.py               app factory, middleware, routers
+│       │   ├── routers/              HTTP only (v1/: architecture, portal, proposals, discovery, exports)
+│       │   ├── services/             use cases over the domain (never see HTTP schemas)
+│       │   ├── schemas/              Pydantic v2 public contract + domain mappers
+│       │   └── problems.py           RFC 9457 problem+json errors
+│       ├── openapi.json              committed API contract (CI fails if stale)
+│       └── tests/
+├── Home.py, app_pages/, core/        legacy Streamlit app (UI only; retired module by module)
+├── tests/                            Streamlit smoke tests
+├── sample_inputs/example_project.json
+├── examples/                         reference audit workbook + PDF the exports are matched to
+├── pyproject.toml, uv.lock           uv workspace, tooling config, architecture contracts
+└── .github/workflows/ci-python.yml
 ```
+
+## Platform (rebuild)
+
+Target: Next.js (TypeScript) web app → FastAPI → PostgreSQL/Redis, with the
+domain package at the core. Phase 1 (done): domain extraction and the
+stateless API. Next: persistence and auth (Phase 2), then the web app
+starting with Discovery (Phase 3).
+
+**Local development** (Python 3.12+, [uv](https://docs.astral.sh/uv/)):
+
+```bash
+uv sync --all-packages                          # workspace + dev tools, from uv.lock
+uv run uvicorn archscope_api.main:app --reload  # API at http://localhost:8000/docs
+uv run streamlit run Home.py                    # legacy app, same domain code
+```
+
+**Checks** (exactly what CI runs):
+
+```bash
+uv run ruff check packages apps && uv run ruff format --check packages apps
+uv run mypy                       # --strict on domain, integrations, api
+uv run lint-imports               # architecture contracts (see pyproject.toml)
+uv run pytest                     # domain + golden parity, API, Streamlit smoke
+uv run python -m archscope_api.openapi   # regenerate the contract after API changes
+```
+
+**Golden parity.** `packages/domain/tests/golden/` pins every domain output
+(structured results, and the extracted text of every .docx/.xlsx/.pdf) to
+what the Streamlit-era code produced. The API tests replay the same inputs
+over HTTP. If an output change is intended, regenerate with
+`GOLDEN_UPDATE=1 uv run pytest packages/domain/tests/golden` and review the
+fixture diff like code.
+
+**Architecture rules** (import-linter, enforced in CI): the domain may not
+import any framework, HTTP or database library; integrations may not
+import the API; API services may not import HTTP schemas.
+
+**API configuration** (environment, prefix `ARCHSCOPE_`): `ENVIRONMENT`
+(`local`/`test`/`staging`/`production`; docs are off in production),
+`CORS_ORIGINS`, `LOG_LEVEL`; plus `ANTHROPIC_API_KEY` / `ANTHROPIC_MODEL`
+for discovery drafting. HubSpot tokens are sent per request in the
+`X-HubSpot-Token` header until Phase 2 adds encrypted stored credentials.
 
 ## Known limitations (MVP scope)
 

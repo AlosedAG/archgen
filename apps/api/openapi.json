@@ -244,7 +244,7 @@
         "additionalProperties": false,
         "properties": {
           "snapshot": {
-            "$ref": "#/components/schemas/PortalSnapshot-Input"
+            "$ref": "#/components/schemas/PortalSnapshot"
           }
         },
         "required": [
@@ -289,88 +289,7 @@
         "title": "AuditResult",
         "type": "object"
       },
-      "Blueprint-Input": {
-        "additionalProperties": false,
-        "description": "A generated HubSpot architecture: objects, properties, associations,\npipelines, naming conventions, and workflow suggestions (each flagged\nfor overwrite risk).",
-        "properties": {
-          "associations": {
-            "items": {
-              "$ref": "#/components/schemas/AssociationDef"
-            },
-            "title": "Associations",
-            "type": "array"
-          },
-          "base_currency_note": {
-            "default": "",
-            "title": "Base Currency Note",
-            "type": "string"
-          },
-          "custom_objects": {
-            "items": {
-              "$ref": "#/components/schemas/CustomObjectDef"
-            },
-            "title": "Custom Objects",
-            "type": "array"
-          },
-          "generated_at": {
-            "title": "Generated At",
-            "type": "string"
-          },
-          "inputs": {
-            "$ref": "#/components/schemas/BlueprintInput"
-          },
-          "naming_conventions": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "title": "Naming Conventions",
-            "type": "object"
-          },
-          "pipelines": {
-            "items": {
-              "$ref": "#/components/schemas/PipelineDef"
-            },
-            "title": "Pipelines",
-            "type": "array"
-          },
-          "project_name": {
-            "title": "Project Name",
-            "type": "string"
-          },
-          "standard_object_properties": {
-            "additionalProperties": {
-              "items": {
-                "$ref": "#/components/schemas/PropertyDef"
-              },
-              "type": "array"
-            },
-            "title": "Standard Object Properties",
-            "type": "object"
-          },
-          "warnings": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Warnings",
-            "type": "array"
-          },
-          "workflows": {
-            "items": {
-              "$ref": "#/components/schemas/WorkflowSuggestion"
-            },
-            "title": "Workflows",
-            "type": "array"
-          }
-        },
-        "required": [
-          "project_name",
-          "generated_at",
-          "inputs"
-        ],
-        "title": "Blueprint",
-        "type": "object"
-      },
-      "Blueprint-Output": {
+      "Blueprint": {
         "additionalProperties": false,
         "description": "A generated HubSpot architecture: objects, properties, associations,\npipelines, naming conventions, and workflow suggestions (each flagged\nfor overwrite risk).",
         "properties": {
@@ -714,7 +633,7 @@
         "additionalProperties": false,
         "properties": {
           "blueprint": {
-            "$ref": "#/components/schemas/Blueprint-Input"
+            "$ref": "#/components/schemas/Blueprint"
           }
         },
         "required": [
@@ -747,7 +666,7 @@
             "type": "boolean"
           },
           "snapshot": {
-            "$ref": "#/components/schemas/PortalSnapshot-Input"
+            "$ref": "#/components/schemas/PortalSnapshot"
           }
         },
         "required": [
@@ -1593,64 +1512,7 @@
         "title": "PortalPropertyDef",
         "type": "object"
       },
-      "PortalSnapshot-Input": {
-        "additionalProperties": false,
-        "description": "Everything pulled from one portal at ``pulled_at``. Partial pulls are\nnormal: a missing scope becomes a ``warnings`` entry, not an error.",
-        "properties": {
-          "object_schemas": {
-            "items": {
-              "$ref": "#/components/schemas/ObjectSchema"
-            },
-            "title": "Object Schemas",
-            "type": "array"
-          },
-          "owners": {
-            "items": {
-              "$ref": "#/components/schemas/Owner"
-            },
-            "title": "Owners",
-            "type": "array"
-          },
-          "pipelines": {
-            "items": {
-              "$ref": "#/components/schemas/PortalPipeline"
-            },
-            "title": "Pipelines",
-            "type": "array"
-          },
-          "pulled_at": {
-            "title": "Pulled At",
-            "type": "string"
-          },
-          "teams": {
-            "items": {
-              "$ref": "#/components/schemas/Team"
-            },
-            "title": "Teams",
-            "type": "array"
-          },
-          "warnings": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Warnings",
-            "type": "array"
-          },
-          "workflows": {
-            "items": {
-              "$ref": "#/components/schemas/PortalWorkflow"
-            },
-            "title": "Workflows",
-            "type": "array"
-          }
-        },
-        "required": [
-          "pulled_at"
-        ],
-        "title": "PortalSnapshot",
-        "type": "object"
-      },
-      "PortalSnapshot-Output": {
+      "PortalSnapshot": {
         "additionalProperties": false,
         "description": "Everything pulled from one portal at ``pulled_at``. Partial pulls are\nnormal: a missing scope becomes a ``warnings`` entry, not an error.",
         "properties": {
@@ -1820,7 +1682,7 @@
         "additionalProperties": false,
         "properties": {
           "snapshot": {
-            "$ref": "#/components/schemas/PortalSnapshot-Input"
+            "$ref": "#/components/schemas/PortalSnapshot"
           }
         },
         "required": [
@@ -2518,7 +2380,7 @@
             "type": "object"
           },
           "snapshot": {
-            "$ref": "#/components/schemas/PortalSnapshot-Output"
+            "$ref": "#/components/schemas/PortalSnapshot"
           },
           "standard_object_count": {
             "title": "Standard Object Count",
@@ -2617,7 +2479,7 @@
             "type": "string"
           },
           "snapshot": {
-            "$ref": "#/components/schemas/PortalSnapshot-Input"
+            "$ref": "#/components/schemas/PortalSnapshot"
           }
         },
         "required": [
@@ -3216,7 +3078,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Blueprint-Output"
+                  "$ref": "#/components/schemas/Blueprint"
                 }
               }
             },
@@ -3246,7 +3108,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Blueprint-Input"
+                "$ref": "#/components/schemas/Blueprint"
               }
             }
           },
@@ -3762,7 +3624,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PortalSnapshot-Output"
+                  "$ref": "#/components/schemas/PortalSnapshot"
                 }
               }
             },
@@ -3803,7 +3665,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PortalSnapshot-Input"
+                "$ref": "#/components/schemas/PortalSnapshot"
               }
             }
           },

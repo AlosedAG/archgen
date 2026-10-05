@@ -2,7 +2,7 @@
 name = "archscope-domain"
 version = "0.4.0"
 description = "ArchitectureScope domain logic: blueprint, audits, reports, diagrams, proposals, discovery, exports."
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 dependencies = [
     "PyYAML>=6.0",
     "pandas>=2.0",

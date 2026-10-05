@@ -55,6 +55,9 @@ asyncio_default_fixture_loop_scope = "function"
 [tool.ruff]
 line-length = 130
 target-version = "py312"
+# The domain + integrations packages also install into the legacy Streamlit
+# deployment, so they stay 3.11-compatible (CI runs their tests on 3.11).
+per-file-target-version = { "packages/**/*.py" = "py311" }
 extend-exclude = ["**/alembic/versions"]
 
 [tool.ruff.lint]
