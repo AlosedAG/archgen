@@ -1,0 +1,25 @@
+[project]
+name = "archscope-api"
+version = "0.4.0"
+description = "ArchitectureScope HTTP API (FastAPI) over the archscope_domain package."
+requires-python = ">=3.12"
+dependencies = [
+    "archscope-domain",
+    "archscope-integrations",
+    "fastapi>=0.115",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    "uvicorn[standard]>=0.32",
+    "anthropic>=0.104",
+]
+
+[tool.uv.sources]
+archscope-domain = { workspace = true }
+archscope-integrations = { workspace = true }
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/archscope_api"]
