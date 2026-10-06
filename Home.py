@@ -20,11 +20,13 @@ Before anything else, ``core.auth.require_login`` shows the sign-in
 screen (Google and/or username + password) and stops the script until a
 user is signed in.
 
-Two things run on every page, before the page itself:
+Three things run on every page, before the page itself:
 
 - the page's own section of the user guide (``docs/user_guide.md``) is
   shown at the bottom of the sidebar, so instructions are always one click
   away without leaving the page;
+- the floating **Feedback** button (``core/feedback_ui.py``) is added, so
+  users can email a bug report or idea with screenshots from any page;
 - Discovery Call Assistant notes (``disc_*`` keys) are re-saved, because
   Streamlit otherwise drops a widget's value as soon as the user switches
   to a page that doesn't render it — and losing live call notes mid-call
@@ -36,6 +38,7 @@ from __future__ import annotations
 import streamlit as st
 
 from core.auth import require_login
+from core.feedback_ui import render_feedback_widget
 from core.guide import page_guide
 
 require_login()
@@ -98,5 +101,8 @@ if _guide:
         with st.expander("📖 Guide for this page"):
             st.markdown(_guide)
             st.page_link(user_guide, label="Open the full user guide")
+
+# Floating Feedback button (bottom-right) on every page, for signed-in users.
+render_feedback_widget(pg.title)
 
 pg.run()
