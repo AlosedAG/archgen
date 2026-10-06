@@ -446,6 +446,25 @@ to the AI as one readable line per question (selections, "Other" text,
 then notes), and flagged questions are listed with the section's edge
 cases, so the business-analysis prompt itself is unchanged.
 
+## In-app feedback
+
+Every page has an orange **Feedback** button in the bottom-right corner.
+It opens a small chat where users pick **Bug / Idea / Question**, describe
+what happened, attach up to 5 screenshots or PDFs (paperclip), and press
+send. The app emails it to the owner with the page name, time and the
+signed-in user's address (set as Reply-To, so answering is one click).
+
+Configure the sending mailbox in the app's secrets — the `[feedback]`
+section of [`.streamlit/secrets.toml.example`](.streamlit/secrets.toml.example)
+(on Streamlit Community Cloud: **App settings → Secrets**). For a Google
+Workspace account, use an **App Password** (Google Account → Security →
+2-Step Verification → App passwords), not the normal password. Without
+this section the button still opens but tells users to email instead.
+
+Code: `core/feedback.py` (email building/sending, unit-tested) and
+`core/feedback_ui.py` (the floating chat widget, added to every page by
+`Home.py`).
+
 ## Caching
 
 Modules 2 and 3 cache the pulled portal snapshot in

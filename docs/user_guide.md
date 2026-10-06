@@ -193,6 +193,8 @@ Files are stored locally in the `project_library/` folder.
 
 ## Troubleshooting
 
+- **Found a bug or have an idea?** Click the orange **Feedback** button in the bottom-right corner of any page, describe it, attach screenshots with the paperclip, and press send. It goes straight to the app owner.
+
 - **"Missing scope or invalid token"** — the HubSpot private app lacks a read scope, or the token was mistyped. Compare against the scope table on the Setup page.
 - **"The Anthropic API key was rejected"** — re-copy the key from console.anthropic.com and paste it again on Setup.
 - **A page lost my work** — closing or reloading the browser tab clears the session. Save to the Project Library (or, on the Discovery Call Assistant, download a notes backup) as you go.
