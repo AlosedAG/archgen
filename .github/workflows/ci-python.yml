@@ -1,0 +1,66 @@
+name: CI · Python
+
+on:
+  push:
+    branches: [main, "version-*", "rebuild/**"]
+  pull_request:
+
+concurrency:
+  group: ci-python-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Lint · types · architecture
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: "3.11"
+      - name: Install workspace (locked)
+        run: uv sync --all-packages --frozen
+      - name: Ruff lint
+        run: uv run --frozen ruff check packages apps
+      - name: Ruff format
+        run: uv run --frozen ruff format --check packages apps
+      - name: mypy --strict
+        run: uv run --frozen mypy
+      - name: Architecture contracts (import-linter)
+        run: uv run --frozen lint-imports
+      - name: OpenAPI contract is current
+        run: |
+          uv run --frozen python -m archscope_api.openapi
+          git diff --exit-code apps/api/openapi.json || {
+            echo "::error::apps/api/openapi.json is stale. Run 'uv run python -m archscope_api.openapi' and commit it."
+            exit 1
+          }
+
+  test:
+    name: Tests (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: ${{ matrix.python }}
+      - name: Install workspace (locked)
+        run: uv sync --all-packages --frozen
+      - name: Domain (unit + golden parity)
+        run: uv run --frozen pytest packages -q
+      - name: API (integration over ASGI)
+        run: uv run --frozen pytest apps/api/tests -q
+      - name: Legacy Streamlit app (smoke)
+        env:
+          AUTH_DISABLED: "1"
+        run: uv run --frozen pytest tests -q
+

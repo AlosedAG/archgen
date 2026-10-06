@@ -1,0 +1,416 @@
+# Discovery Call Assistant — question bank.
+#
+# Single source of truth for every question the Discovery Call Assistant
+# asks, grouped by section, in the order they're usually asked. Edit this
+# file to add, reword, reorder, or re-option questions — no code changes
+# needed. Loaded and validated by archscope_domain/discovery_config.py; edits are
+# picked up on the next page refresh. If the file is invalid, the page
+# shows exactly which entry is wrong instead of rendering the form.
+#
+# Each question:
+#   id:      unique snake_case key, across ALL sections (lowercase letters,
+#            digits, single underscores). Discovery rules and saved notes
+#            refer to questions by id — renaming an id orphans notes saved
+#            under the old one, so change the label instead where possible.
+#            "notes" and "edge_cases" are reserved.
+#   label:   the question as shown on the page. The AI also sees this label
+#            as the question each answer belongs to.
+#   input:   multiselect — pick any number of options
+#            select      — pick one option from a dropdown
+#            radio       — pick one option, all shown inline (best for <=5)
+#            text        — free text only (no options)
+#   options: the common answers (required for multiselect/select/radio).
+#            "Other (specify)" is added automatically at the end — don't
+#            list it here. Option text is exactly what the AI receives.
+#   hint:    optional — shown as the "?" tooltip on the question.
+#
+# Every non-text question also gets a free-text "Other" box (shown when
+# "Other (specify)" is picked), a shorthand notes field, and a
+# "Flag for follow-up" checkbox — those are added by the page, not here.
+
+other_option: "Other (specify)"
+
+sections:
+  Goals:
+    - id: growth_areas
+      label: "Which areas of the business are they looking to grow?"
+      input: multiselect
+      options:
+        - New customer acquisition
+        - Upsell / cross-sell to existing customers
+        - Retention / renewals
+        - New markets or regions
+        - New products or services
+        - Partner / channel sales
+        - Brand awareness
+
+    - id: long_term_goals
+      label: "Long-term goals (12–24 months)"
+      input: text
+
+    - id: kpis
+      label: "KPIs — how will they measure success?"
+      input: multiselect
+      hint: "Note any target numbers in the notes field"
+      options:
+        - Lead volume
+        - MQL → SQL conversion
+        - Lead-to-customer rate
+        - Pipeline value
+        - Win rate
+        - Sales cycle length
+        - Revenue / ARR growth
+        - Customer retention / churn
+        - NPS / CSAT
+        - Ticket response / resolution time
+        - Marketing ROI / CAC
+
+    - id: timeline
+      label: "Timeline / key dates"
+      input: select
+      hint: "Put any specific dates in the notes field"
+      options:
+        - ASAP (under 1 month)
+        - 1–3 months
+        - 3–6 months
+        - 6–12 months
+        - 12+ months
+        - Tied to a specific date or event
+        - Not defined yet
+
+    - id: reason_for_switching
+      label: "Why are they moving to HubSpot?"
+      input: multiselect
+      hint: "Critical context — capture their own words in the notes field"
+      options:
+        - Outgrowing current tool
+        - Cost of current tool
+        - Poor user adoption / usability
+        - Consolidating multiple tools
+        - Lack of reporting / visibility
+        - Missing automation
+        - Current contract ending / tool sunset
+        - New leadership or company mandate
+        - No CRM today
+
+  Data:
+    - id: data_location
+      label: "Where does their data live today?"
+      input: multiselect
+      options:
+        - Spreadsheets
+        - Another CRM
+        - ERP
+        - Billing / accounting system
+        - Marketing automation platform
+        - Help desk / ticketing system
+        - E-commerce platform
+        - Custom database / in-house app
+        - Email inboxes
+        - Paper / manual records
+
+    - id: systems
+      label: "Which systems manage that data?"
+      input: multiselect
+      options:
+        - Salesforce
+        - Microsoft Dynamics 365
+        - Zoho CRM
+        - Pipedrive
+        - Excel / Google Sheets
+        - QuickBooks
+        - Xero
+        - NetSuite
+        - Stripe
+        - Shopify
+        - Mailchimp
+        - Marketo
+        - Zendesk
+
+    - id: volume
+      label: "Volume — objects, records, assets"
+      input: select
+      hint: "Approximate total contacts — note per-object counts (e.g. 3k deals/yr) in the notes field"
+      options:
+        - Under 10k contacts
+        - 10k–100k contacts
+        - 100k–500k contacts
+        - 500k–1M contacts
+        - Over 1M contacts
+        - Unknown
+
+    - id: sync_direction
+      label: "Sync direction(s) needed"
+      input: select
+      hint: "Note the source of truth for each object in the notes field"
+      options:
+        - One-way into HubSpot
+        - One-way out of HubSpot
+        - Two-way sync
+        - One-time migration only
+        - No sync needed
+        - Undecided
+
+    - id: custom_data
+      label: "Custom data elements"
+      input: multiselect
+      hint: "Anything that isn't a contact, company, deal, or ticket"
+      options:
+        - Products / line items
+        - Memberships / subscriptions
+        - Locations / sites
+        - Assets / equipment
+        - Appointments / events
+        - Projects
+        - Contracts
+        - Custom properties only
+        - None identified
+
+    - id: data_regions
+      label: "Where are their customers / contacts located?"
+      input: multiselect
+      hint: "Drives privacy and data-residency requirements"
+      options:
+        - United States
+        - Canada
+        - EU / UK
+        - Latin America
+        - Asia-Pacific
+        - Middle East / Africa
+
+    - id: org_structure
+      label: "Locations / organization structure"
+      input: select
+      options:
+        - Single location
+        - Multiple locations (same country)
+        - Multi-region / international
+        - Multi-entity (separate brands or business units)
+        - Franchise model
+
+    - id: data_owners
+      label: "Data owners / roles"
+      input: multiselect
+      options:
+        - RevOps / Operations
+        - Sales leadership
+        - Marketing
+        - Customer service
+        - IT
+        - Finance
+        - External agency / consultant
+        - No clear owner
+
+    - id: cleansing_frequency
+      label: "How often is data updated or cleaned?"
+      input: select
+      options:
+        - Continuously / automated
+        - Weekly
+        - Monthly
+        - Quarterly
+        - Annually
+        - Ad hoc / rarely
+        - Never
+
+    - id: compliance
+      label: "Security / compliance requirements"
+      input: multiselect
+      hint: "Capture exact wording in the notes field"
+      options:
+        - GDPR
+        - CCPA / CPRA
+        - HIPAA
+        - SOC 2
+        - PCI DSS
+        - CASL
+        - Data residency requirements
+        - Industry-specific regulation
+        - None stated
+
+  Processes:
+    - id: journey_stages
+      label: "Customer journey stages"
+      input: multiselect
+      options:
+        - Subscriber
+        - Lead
+        - Marketing qualified lead (MQL)
+        - Sales qualified lead (SQL)
+        - Opportunity
+        - Customer
+        - Evangelist / advocate
+        - Custom stages (see notes)
+        - Not defined
+
+    - id: team_processes
+      label: "Current team processes (sales, marketing, service)"
+      input: multiselect
+      options:
+        - Inbound lead handling
+        - Outbound prospecting
+        - Lead routing / assignment
+        - Quoting / proposals
+        - Customer onboarding
+        - Renewals
+        - Account management
+        - Support ticketing
+        - Event / webinar management
+
+    - id: communication
+      label: "How do they communicate with customers?"
+      input: multiselect
+      options:
+        - Email
+        - Phone
+        - SMS
+        - Live chat
+        - WhatsApp
+        - Social media
+        - Video calls
+        - In person
+        - Customer portal
+
+    - id: slas
+      label: "SLAs / response-time commitments"
+      input: radio
+      hint: "Note the actual targets (e.g. 1-hour first response) in the notes field"
+      options:
+        - Formal SLAs defined
+        - Informal targets
+        - None yet — want to define
+        - None needed
+
+    - id: automations
+      label: "Existing automations"
+      input: multiselect
+      options:
+        - None
+        - Email nurture
+        - Lead routing / assignment
+        - Task creation / reminders
+        - Internal notifications
+        - Data sync / field updates
+        - Ticket routing
+        - Third-party automation (Zapier, Make…)
+
+    - id: reporting
+      label: "Current reporting — what do they look at today?"
+      input: multiselect
+      options:
+        - Spreadsheet reports
+        - Dashboards in current CRM
+        - BI tool (Power BI, Tableau, Looker…)
+        - Manual exports
+        - No regular reporting
+
+    - id: pain_points
+      label: "Challenges & workarounds"
+      input: multiselect
+      options:
+        - Manual data entry
+        - Duplicate / dirty data
+        - No visibility / poor reporting
+        - Disconnected tools
+        - Slow lead follow-up
+        - Poor sales–marketing handoff
+        - Low user adoption
+        - Missed renewals / churn
+
+  Solutions Design:
+    - id: primary_users
+      label: "Primary users of HubSpot"
+      input: multiselect
+      options:
+        - Sales
+        - Marketing
+        - Customer service
+        - Operations / RevOps
+        - Leadership
+        - Finance
+        - Partners / resellers
+
+    - id: team_sizes
+      label: "Team sizes / number of seats"
+      input: select
+      hint: "Note the per-team breakdown in the notes field"
+      options:
+        - 1–5 users
+        - 6–20 users
+        - 21–50 users
+        - 51–200 users
+        - Over 200 users
+
+    - id: required_actions
+      label: "Actions & automated steps users need"
+      input: multiselect
+      options:
+        - Lead assignment / rotation
+        - Deal stage automation
+        - Task reminders
+        - Email sequences
+        - Quote generation
+        - Ticket routing
+        - Approval steps
+        - Internal notifications
+        - Record creation from forms
+
+    - id: prior_tools
+      label: "Experience with HubSpot or other CRMs"
+      input: select
+      options:
+        - New to CRMs
+        - Experienced with another CRM
+        - Using HubSpot today (existing portal)
+        - Used HubSpot at a previous company
+        - Mixed across the team
+
+    - id: integrations
+      label: "Integrations needed"
+      input: multiselect
+      options:
+        - Gmail / Google Workspace
+        - Outlook / Microsoft 365
+        - Salesforce
+        - ERP
+        - Accounting (QuickBooks, Xero, NetSuite…)
+        - Stripe / payments
+        - Shopify / e-commerce
+        - Zoom / Microsoft Teams
+        - Slack
+        - Calendly / scheduling
+        - Custom API / in-house system
+
+    - id: priority_features
+      label: "Priority features (must-haves)"
+      input: multiselect
+      options:
+        - Email marketing
+        - Landing pages / forms
+        - Lead scoring
+        - Deal pipelines
+        - Sales sequences
+        - Quotes
+        - Help desk / ticketing
+        - Knowledge base
+        - Customer portal
+        - Reporting dashboards
+        - Data sync
+        - Website / CMS
+        - Payments
+
+    - id: feature_gaps
+      label: "Gaps in their current tool"
+      input: text
+
+    - id: mvp_date
+      label: "Desired MVP / go-live date"
+      input: select
+      hint: "Put the specific date in the notes field"
+      options:
+        - Within 30 days
+        - 1–3 months
+        - 3–6 months
+        - 6+ months
+        - Specific date (see notes)
+        - Not defined yet

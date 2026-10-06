@@ -23,8 +23,8 @@ from streamlit.testing.v1 import AppTest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-from core.blueprint import BlueprintGenerator
-from core.models import (
+from archscope_domain.blueprint import BlueprintGenerator
+from archscope_domain.models import (
     AssociationDef,
     BlueprintInput,
     Finding,
@@ -33,12 +33,17 @@ from core.models import (
     PortalSnapshot,
 )
 from core.project_store import list_documents
-from rules.engine import RulesEngine
+from archscope_domain.rules import RulesEngine
 
 PAGES_DIR = Path(__file__).resolve().parent.parent / "app_pages"
 
 
-def _run(page_name: str, *, timeout: float | None = None, **session_state) -> AppTest:
+# AppTest's default per-run timeout is 3s; a page's first (cold) run imports
+# pandas/matplotlib/the HubSpot SDK and can take longer than that on CI runners.
+APPTEST_TIMEOUT = 30
+
+
+def _run(page_name: str, *, timeout: float = APPTEST_TIMEOUT, **session_state) -> AppTest:
     at = AppTest.from_file(str(PAGES_DIR / page_name))
     for key, value in session_state.items():
         at.session_state[key] = value
@@ -187,7 +192,7 @@ def test_wrd_save_to_library_generates_all_four_formats(monkeypatch, tmp_path):
 
     save_buttons = [b for b in at.button if b.label == "Save to Project Library"]
     assert save_buttons, "expected a Save to Project Library button"
-    at = save_buttons[0].click().run()
+    at = save_buttons[0].click().run(timeout=APPTEST_TIMEOUT)
     assert not at.exception, [str(e) for e in at.exception]
 
     docs = list_documents("Acme Corp")
@@ -201,7 +206,7 @@ def test_test_case_document_loads_requirements_from_wrd_snapshot(monkeypatch, tm
 
     load_buttons = [b for b in at.button if "Load requirements" in b.label]
     assert load_buttons and not load_buttons[0].disabled
-    at = load_buttons[0].click().run()
+    at = load_buttons[0].click().run(timeout=APPTEST_TIMEOUT)
     assert not at.exception, [str(e) for e in at.exception]
 
     seed = at.session_state["tcd_rows_seed"]
@@ -400,11 +405,11 @@ def test_discovery_page_renders_and_exports_a_generated_document(monkeypatch, tm
 
 
 def test_discovery_page_explains_a_broken_question_bank(monkeypatch, tmp_path):
-    import core.discovery_config
+    import archscope_domain.discovery_config
 
     bad = tmp_path / "discovery_options.yaml"
     bad.write_text("sections:\n  Goals:\n    - {id: kpis, label: KPIs, input: dropdown}\n", encoding="utf-8")
-    monkeypatch.setattr(core.discovery_config, "DEFAULT_OPTIONS_PATH", bad)
+    monkeypatch.setattr(archscope_domain.discovery_config, "DEFAULT_OPTIONS_PATH", bad)
     at = _run("11_Discovery_Call_Assistant.py", timeout=20)
     assert any("question bank" in e.value for e in at.error)
     assert any("Goals › kpis" in m.value for m in at.markdown)

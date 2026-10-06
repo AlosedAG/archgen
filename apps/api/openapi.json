@@ -1,0 +1,4333 @@
+{
+  "components": {
+    "schemas": {
+      "AddLibraryAddonsRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "proposal": {
+            "$ref": "#/components/schemas/ProposalDocument"
+          },
+          "services": {
+            "description": "Service names from the add-on library.",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Services",
+            "type": "array"
+          }
+        },
+        "required": [
+          "proposal",
+          "services"
+        ],
+        "title": "AddLibraryAddonsRequest",
+        "type": "object"
+      },
+      "AddLibraryItemsRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "description": "Item names from the scope library.",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Items",
+            "type": "array"
+          },
+          "proposal": {
+            "$ref": "#/components/schemas/ProposalDocument"
+          },
+          "status": {
+            "default": "In Scope",
+            "enum": [
+              "In Scope",
+              "Out of Scope",
+              "Optional Add-on",
+              "Client Responsibility"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "proposal",
+          "items"
+        ],
+        "title": "AddLibraryItemsRequest",
+        "type": "object"
+      },
+      "AddonLibraryItem": {
+        "additionalProperties": false,
+        "properties": {
+          "billing": {
+            "enum": [
+              "One Time",
+              "Monthly",
+              "Per Unit",
+              "Per Year",
+              "Hourly"
+            ],
+            "title": "Billing",
+            "type": "string"
+          },
+          "cost": {
+            "title": "Cost",
+            "type": "number"
+          },
+          "includes": {
+            "title": "Includes",
+            "type": "string"
+          },
+          "service": {
+            "title": "Service",
+            "type": "string"
+          }
+        },
+        "required": [
+          "service",
+          "includes",
+          "cost",
+          "billing"
+        ],
+        "title": "AddonLibraryItem",
+        "type": "object"
+      },
+      "AddonRow": {
+        "additionalProperties": false,
+        "properties": {
+          "add_to_total": {
+            "default": false,
+            "title": "Add to Total",
+            "type": "boolean"
+          },
+          "billing": {
+            "default": "One Time",
+            "enum": [
+              "One Time",
+              "Monthly",
+              "Per Unit",
+              "Per Year",
+              "Hourly"
+            ],
+            "title": "Billing",
+            "type": "string"
+          },
+          "cost": {
+            "default": 0.0,
+            "minimum": 0.0,
+            "title": "Cost",
+            "type": "number"
+          },
+          "includes": {
+            "default": "",
+            "title": "Includes",
+            "type": "string"
+          },
+          "service": {
+            "default": "",
+            "title": "Service",
+            "type": "string"
+          }
+        },
+        "title": "AddonRow",
+        "type": "object"
+      },
+      "AnalysisPayload": {
+        "additionalProperties": false,
+        "description": "Exactly what is sent to the model for a business analysis —\nreturned for preview/debugging without calling the model.",
+        "properties": {
+          "client": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Client",
+            "type": "object"
+          },
+          "mode": {
+            "const": "business_analysis",
+            "title": "Mode",
+            "type": "string"
+          },
+          "sections": {
+            "additionalProperties": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Sections",
+            "type": "object"
+          }
+        },
+        "required": [
+          "mode",
+          "client",
+          "sections"
+        ],
+        "title": "AnalysisPayload",
+        "type": "object"
+      },
+      "Answer": {
+        "additionalProperties": false,
+        "description": "One question's structured answer. Text questions use ``notes``.",
+        "properties": {
+          "flagged": {
+            "default": false,
+            "description": "Specialist marked this question for follow-up.",
+            "title": "Flagged",
+            "type": "boolean"
+          },
+          "notes": {
+            "default": "",
+            "maxLength": 20000,
+            "title": "Notes",
+            "type": "string"
+          },
+          "other": {
+            "default": "",
+            "title": "Other",
+            "type": "string"
+          },
+          "selected": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Selected",
+            "type": "array"
+          }
+        },
+        "title": "Answer",
+        "type": "object"
+      },
+      "AssociationDef": {
+        "additionalProperties": false,
+        "properties": {
+          "cardinality": {
+            "default": "many-to-many",
+            "title": "Cardinality",
+            "type": "string"
+          },
+          "from_object": {
+            "title": "From Object",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "to_object": {
+            "title": "To Object",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from_object",
+          "to_object",
+          "label"
+        ],
+        "title": "AssociationDef",
+        "type": "object"
+      },
+      "AssumptionRow": {
+        "additionalProperties": false,
+        "properties": {
+          "assumption": {
+            "default": "",
+            "title": "Assumption",
+            "type": "string"
+          }
+        },
+        "title": "AssumptionRow",
+        "type": "object"
+      },
+      "AuditRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "snapshot": {
+            "$ref": "#/components/schemas/PortalSnapshot"
+          }
+        },
+        "required": [
+          "snapshot"
+        ],
+        "title": "AuditRequest",
+        "type": "object"
+      },
+      "AuditResult": {
+        "additionalProperties": false,
+        "description": "Best-practice findings for one snapshot, highest severity first,\nplus the counts dashboards chart.",
+        "properties": {
+          "by_area": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Finding count per audit area.",
+            "title": "By Area",
+            "type": "object"
+          },
+          "by_severity": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Finding count per severity, every severity present.",
+            "title": "By Severity",
+            "type": "object"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/Finding"
+            },
+            "title": "Findings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "findings",
+          "by_severity",
+          "by_area"
+        ],
+        "title": "AuditResult",
+        "type": "object"
+      },
+      "Blueprint": {
+        "additionalProperties": false,
+        "description": "A generated HubSpot architecture: objects, properties, associations,\npipelines, naming conventions, and workflow suggestions (each flagged\nfor overwrite risk).",
+        "properties": {
+          "associations": {
+            "items": {
+              "$ref": "#/components/schemas/AssociationDef"
+            },
+            "title": "Associations",
+            "type": "array"
+          },
+          "base_currency_note": {
+            "default": "",
+            "title": "Base Currency Note",
+            "type": "string"
+          },
+          "custom_objects": {
+            "items": {
+              "$ref": "#/components/schemas/CustomObjectDef"
+            },
+            "title": "Custom Objects",
+            "type": "array"
+          },
+          "generated_at": {
+            "title": "Generated At",
+            "type": "string"
+          },
+          "inputs": {
+            "$ref": "#/components/schemas/BlueprintInput"
+          },
+          "naming_conventions": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Naming Conventions",
+            "type": "object"
+          },
+          "pipelines": {
+            "items": {
+              "$ref": "#/components/schemas/PipelineDef"
+            },
+            "title": "Pipelines",
+            "type": "array"
+          },
+          "project_name": {
+            "title": "Project Name",
+            "type": "string"
+          },
+          "standard_object_properties": {
+            "additionalProperties": {
+              "items": {
+                "$ref": "#/components/schemas/PropertyDef"
+              },
+              "type": "array"
+            },
+            "title": "Standard Object Properties",
+            "type": "object"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          },
+          "workflows": {
+            "items": {
+              "$ref": "#/components/schemas/WorkflowSuggestion"
+            },
+            "title": "Workflows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "project_name",
+          "generated_at",
+          "inputs"
+        ],
+        "title": "Blueprint",
+        "type": "object"
+      },
+      "BlueprintInput": {
+        "additionalProperties": false,
+        "description": "What the architect knows about the engagement.",
+        "properties": {
+          "currencies": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Currencies",
+            "type": "array"
+          },
+          "custom_object_keywords": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "title": "Custom Object Keywords",
+            "type": "array"
+          },
+          "custom_object_notes": {
+            "default": "",
+            "maxLength": 10000,
+            "title": "Custom Object Notes",
+            "type": "string"
+          },
+          "hubs_in_scope": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Hubs In Scope",
+            "type": "array"
+          },
+          "integrations": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "title": "Integrations",
+            "type": "array"
+          },
+          "other_integration_notes": {
+            "default": "",
+            "maxLength": 10000,
+            "title": "Other Integration Notes",
+            "type": "string"
+          },
+          "pipelines_required": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Pipelines Required",
+            "type": "array"
+          },
+          "project_name": {
+            "default": "Untitled Project",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Project Name",
+            "type": "string"
+          },
+          "record_volumes": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Record Volumes",
+            "type": "object"
+          },
+          "regions": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Regions",
+            "type": "array"
+          },
+          "standard_objects": {
+            "examples": [
+              [
+                "Contact",
+                "Company",
+                "Deal"
+              ]
+            ],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Standard Objects",
+            "type": "array"
+          }
+        },
+        "title": "BlueprintInput",
+        "type": "object"
+      },
+      "ClientExplainerRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "business_type": {
+            "default": "",
+            "maxLength": 200,
+            "title": "Business Type",
+            "type": "string"
+          },
+          "modules": {
+            "items": {
+              "enum": [
+                "Marketing Hub",
+                "Sales Hub",
+                "Service Hub",
+                "Operations Hub",
+                "Content Hub (CMS)",
+                "Commerce Hub"
+              ],
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Modules",
+            "type": "array"
+          }
+        },
+        "required": [
+          "modules"
+        ],
+        "title": "ClientExplainerRequest",
+        "type": "object"
+      },
+      "CoverageRow": {
+        "additionalProperties": false,
+        "properties": {
+          "coverage": {
+            "enum": [
+              "Covered",
+              "Not covered",
+              "Available as add-on",
+              "Client responsibility",
+              "Excluded"
+            ],
+            "title": "Coverage",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "requirement": {
+            "title": "Requirement",
+            "type": "string"
+          },
+          "scope_items": {
+            "description": "Comma-separated IDs of the scope items that cite this requirement.",
+            "title": "Scope Items",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "requirement",
+          "scope_items",
+          "coverage"
+        ],
+        "title": "CoverageRow",
+        "type": "object"
+      },
+      "CustomObjectDef": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "plural_label": {
+            "title": "Plural Label",
+            "type": "string"
+          },
+          "properties": {
+            "items": {
+              "$ref": "#/components/schemas/PropertyDef"
+            },
+            "title": "Properties",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "plural_label"
+        ],
+        "title": "CustomObjectDef",
+        "type": "object"
+      },
+      "Diagram": {
+        "additionalProperties": false,
+        "properties": {
+          "dangling_edges": {
+            "description": "Edges whose source or target isn't a node; renderers skip them.",
+            "items": {
+              "$ref": "#/components/schemas/DiagramEdge"
+            },
+            "title": "Dangling Edges",
+            "type": "array"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/DiagramEdge"
+            },
+            "title": "Edges",
+            "type": "array"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/DiagramNode"
+            },
+            "title": "Nodes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "nodes",
+          "edges"
+        ],
+        "title": "Diagram",
+        "type": "object"
+      },
+      "DiagramEdge": {
+        "additionalProperties": false,
+        "properties": {
+          "cardinality": {
+            "default": "many-to-many",
+            "title": "Cardinality",
+            "type": "string"
+          },
+          "label": {
+            "default": "",
+            "title": "Label",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "target": {
+            "title": "Target",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "target"
+        ],
+        "title": "DiagramEdge",
+        "type": "object"
+      },
+      "DiagramFromBlueprintRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "blueprint": {
+            "$ref": "#/components/schemas/Blueprint"
+          }
+        },
+        "required": [
+          "blueprint"
+        ],
+        "title": "DiagramFromBlueprintRequest",
+        "type": "object"
+      },
+      "DiagramFromSnapshotRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "findings": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Finding"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Findings"
+          },
+          "include_engagements": {
+            "default": false,
+            "description": "Include calls/emails/meetings/notes/tasks associations.",
+            "title": "Include Engagements",
+            "type": "boolean"
+          },
+          "snapshot": {
+            "$ref": "#/components/schemas/PortalSnapshot"
+          }
+        },
+        "required": [
+          "snapshot"
+        ],
+        "title": "DiagramFromSnapshotRequest",
+        "type": "object"
+      },
+      "DiagramNode": {
+        "additionalProperties": false,
+        "properties": {
+          "finding_count": {
+            "default": 0,
+            "title": "Finding Count",
+            "type": "integer"
+          },
+          "kind": {
+            "default": "Standard",
+            "enum": [
+              "Standard",
+              "Custom",
+              "Activity"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "notes": {
+            "default": "",
+            "title": "Notes",
+            "type": "string"
+          },
+          "property_count": {
+            "default": 0,
+            "title": "Property Count",
+            "type": "integer"
+          },
+          "risk": {
+            "default": "",
+            "description": "Worst finding severity for this object; empty when none.",
+            "enum": [
+              "",
+              "Low",
+              "Medium",
+              "High"
+            ],
+            "title": "Risk",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "DiagramNode",
+        "type": "object"
+      },
+      "DiagramRenderRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "diagram": {
+            "$ref": "#/components/schemas/Diagram"
+          },
+          "show_labels": {
+            "default": true,
+            "title": "Show Labels",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "diagram"
+        ],
+        "title": "DiagramRenderRequest",
+        "type": "object"
+      },
+      "DiscoveryNotes": {
+        "additionalProperties": false,
+        "properties": {
+          "business_type": {
+            "default": "",
+            "maxLength": 200,
+            "title": "Business Type",
+            "type": "string"
+          },
+          "client_name": {
+            "default": "",
+            "maxLength": 200,
+            "title": "Client Name",
+            "type": "string"
+          },
+          "sections": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/SectionNotes"
+            },
+            "description": "Keyed by section name.",
+            "title": "Sections",
+            "type": "object"
+          }
+        },
+        "title": "DiscoveryNotes",
+        "type": "object"
+      },
+      "ExportSection": {
+        "additionalProperties": false,
+        "properties": {
+          "rows": {
+            "description": "Table rows; columns come from the first row's keys.",
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "title": {
+            "maxLength": 300,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "title": "ExportSection",
+        "type": "object"
+      },
+      "Finding": {
+        "additionalProperties": false,
+        "properties": {
+          "area": {
+            "title": "Area",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "object_type": {
+            "default": "",
+            "title": "Object Type",
+            "type": "string"
+          },
+          "recommended_fix": {
+            "title": "Recommended Fix",
+            "type": "string"
+          },
+          "severity": {
+            "enum": [
+              "High",
+              "Medium",
+              "Low"
+            ],
+            "title": "Severity",
+            "type": "string"
+          }
+        },
+        "required": [
+          "area",
+          "description",
+          "severity",
+          "recommended_fix"
+        ],
+        "title": "Finding",
+        "type": "object"
+      },
+      "FindingGroup": {
+        "additionalProperties": false,
+        "properties": {
+          "area": {
+            "title": "Area",
+            "type": "string"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Finding"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "object_types": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Object Types",
+            "type": "array"
+          },
+          "severity": {
+            "title": "Severity",
+            "type": "string"
+          }
+        },
+        "required": [
+          "area",
+          "severity",
+          "count"
+        ],
+        "title": "FindingGroup",
+        "type": "object"
+      },
+      "GlossaryRow": {
+        "additionalProperties": false,
+        "properties": {
+          "definition": {
+            "default": "",
+            "title": "Definition",
+            "type": "string"
+          },
+          "term": {
+            "default": "",
+            "title": "Term",
+            "type": "string"
+          }
+        },
+        "title": "GlossaryRow",
+        "type": "object"
+      },
+      "GovernanceRow": {
+        "additionalProperties": false,
+        "properties": {
+          "cadence": {
+            "default": "",
+            "title": "Cadence",
+            "type": "string"
+          },
+          "meeting": {
+            "default": "",
+            "title": "Meeting / Report",
+            "type": "string"
+          },
+          "participants": {
+            "default": "",
+            "title": "Participants",
+            "type": "string"
+          },
+          "purpose": {
+            "default": "",
+            "title": "Purpose",
+            "type": "string"
+          }
+        },
+        "title": "GovernanceRow",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "Health": {
+        "additionalProperties": false,
+        "properties": {
+          "environment": {
+            "title": "Environment",
+            "type": "string"
+          },
+          "status": {
+            "const": "ok",
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "version",
+          "environment"
+        ],
+        "title": "Health",
+        "type": "object"
+      },
+      "JepImportRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "jep": {
+            "additionalProperties": {
+              "items": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "description": "Joint Evaluation Plan sections, as exported by that module.",
+            "title": "Jep",
+            "type": "object"
+          },
+          "proposal": {
+            "$ref": "#/components/schemas/ProposalDocument"
+          },
+          "prospect_name": {
+            "default": "",
+            "title": "Prospect Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "proposal",
+          "jep"
+        ],
+        "title": "JepImportRequest",
+        "type": "object"
+      },
+      "KpiRow": {
+        "additionalProperties": false,
+        "properties": {
+          "definition": {
+            "default": "",
+            "title": "Definition",
+            "type": "string"
+          },
+          "kpi": {
+            "default": "",
+            "title": "KPI",
+            "type": "string"
+          },
+          "target": {
+            "default": "",
+            "title": "Target",
+            "type": "string"
+          },
+          "type": {
+            "default": "Primary",
+            "enum": [
+              "Primary",
+              "Secondary"
+            ],
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "title": "KpiRow",
+        "type": "object"
+      },
+      "MarkdownExportRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "markdown": {
+            "description": "Headings (#/##/###), '-' bullets and **bold** are rendered.",
+            "maxLength": 500000,
+            "title": "Markdown",
+            "type": "string"
+          },
+          "title": {
+            "default": "",
+            "maxLength": 300,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "markdown"
+        ],
+        "title": "MarkdownExportRequest",
+        "type": "object"
+      },
+      "MethodologyRow": {
+        "additionalProperties": false,
+        "properties": {
+          "activities": {
+            "default": "",
+            "title": "Activities",
+            "type": "string"
+          },
+          "outputs": {
+            "default": "",
+            "title": "Outputs",
+            "type": "string"
+          },
+          "phase": {
+            "default": "",
+            "title": "Phase",
+            "type": "string"
+          }
+        },
+        "title": "MethodologyRow",
+        "type": "object"
+      },
+      "MilestoneRow": {
+        "additionalProperties": false,
+        "properties": {
+          "deliverables": {
+            "default": "",
+            "title": "Deliverables",
+            "type": "string"
+          },
+          "due_on_or_before": {
+            "default": "",
+            "title": "Due On or Before",
+            "type": "string"
+          },
+          "fee": {
+            "default": 0.0,
+            "minimum": 0.0,
+            "title": "Fee",
+            "type": "number"
+          },
+          "milestone": {
+            "default": "",
+            "title": "Milestone",
+            "type": "string"
+          },
+          "start_on_or_before": {
+            "default": "",
+            "title": "Start On or Before",
+            "type": "string"
+          }
+        },
+        "title": "MilestoneRow",
+        "type": "object"
+      },
+      "NameCount": {
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "count"
+        ],
+        "title": "NameCount",
+        "type": "object"
+      },
+      "ObjectAuditSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "cleanup_score": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Cleanup Score",
+            "type": "number"
+          },
+          "custom_count": {
+            "title": "Custom Count",
+            "type": "integer"
+          },
+          "keep_count": {
+            "title": "Keep Count",
+            "type": "integer"
+          },
+          "object_label": {
+            "title": "Object Label",
+            "type": "string"
+          },
+          "object_type": {
+            "title": "Object Type",
+            "type": "string"
+          },
+          "properties_count": {
+            "title": "Properties Count",
+            "type": "integer"
+          },
+          "remove_count": {
+            "title": "Remove Count",
+            "type": "integer"
+          },
+          "review_count": {
+            "title": "Review Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "object_label",
+          "object_type",
+          "properties_count",
+          "custom_count",
+          "remove_count",
+          "review_count",
+          "keep_count",
+          "cleanup_score"
+        ],
+        "title": "ObjectAuditSummary",
+        "type": "object"
+      },
+      "ObjectSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "associations": {
+            "items": {
+              "$ref": "#/components/schemas/AssociationDef"
+            },
+            "title": "Associations",
+            "type": "array"
+          },
+          "is_custom": {
+            "title": "Is Custom",
+            "type": "boolean"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "object_type": {
+            "title": "Object Type",
+            "type": "string"
+          },
+          "properties": {
+            "items": {
+              "$ref": "#/components/schemas/PortalPropertyDef"
+            },
+            "title": "Properties",
+            "type": "array"
+          },
+          "singular_label": {
+            "default": "",
+            "title": "Singular Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "object_type",
+          "label",
+          "is_custom"
+        ],
+        "title": "ObjectSchema",
+        "type": "object"
+      },
+      "ObjectSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "association_count": {
+            "default": 0,
+            "title": "Association Count",
+            "type": "integer"
+          },
+          "association_targets": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Association Targets",
+            "type": "array"
+          },
+          "is_custom": {
+            "title": "Is Custom",
+            "type": "boolean"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "object_type": {
+            "title": "Object Type",
+            "type": "string"
+          },
+          "property_count": {
+            "title": "Property Count",
+            "type": "integer"
+          },
+          "top_groups": {
+            "items": {
+              "$ref": "#/components/schemas/NameCount"
+            },
+            "title": "Top Groups",
+            "type": "array"
+          }
+        },
+        "required": [
+          "label",
+          "object_type",
+          "is_custom",
+          "property_count"
+        ],
+        "title": "ObjectSummary",
+        "type": "object"
+      },
+      "ObjectiveRow": {
+        "additionalProperties": false,
+        "properties": {
+          "objective": {
+            "default": "",
+            "title": "Objective",
+            "type": "string"
+          },
+          "success_measure": {
+            "default": "",
+            "title": "Success Measure",
+            "type": "string"
+          }
+        },
+        "title": "ObjectiveRow",
+        "type": "object"
+      },
+      "Owner": {
+        "additionalProperties": false,
+        "properties": {
+          "archived": {
+            "default": false,
+            "title": "Archived",
+            "type": "boolean"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "first_name": {
+            "title": "First Name",
+            "type": "string"
+          },
+          "last_name": {
+            "title": "Last Name",
+            "type": "string"
+          },
+          "owner_id": {
+            "title": "Owner Id",
+            "type": "string"
+          },
+          "teams": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Teams",
+            "type": "array"
+          }
+        },
+        "required": [
+          "owner_id",
+          "email",
+          "first_name",
+          "last_name"
+        ],
+        "title": "Owner",
+        "type": "object"
+      },
+      "Party": {
+        "additionalProperties": false,
+        "properties": {
+          "address": {
+            "default": "",
+            "title": "Address",
+            "type": "string"
+          },
+          "company": {
+            "default": "",
+            "title": "Company",
+            "type": "string"
+          },
+          "contact": {
+            "default": "",
+            "title": "Contact",
+            "type": "string"
+          },
+          "email": {
+            "default": "",
+            "title": "Email",
+            "type": "string"
+          },
+          "phone": {
+            "default": "",
+            "title": "Phone",
+            "type": "string"
+          }
+        },
+        "title": "Party",
+        "type": "object"
+      },
+      "PipelineDef": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "object_type": {
+            "title": "Object Type",
+            "type": "string"
+          },
+          "stages": {
+            "items": {
+              "$ref": "#/components/schemas/StageDef"
+            },
+            "title": "Stages",
+            "type": "array"
+          }
+        },
+        "required": [
+          "object_type",
+          "name"
+        ],
+        "title": "PipelineDef",
+        "type": "object"
+      },
+      "PipelineSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "object_type": {
+            "title": "Object Type",
+            "type": "string"
+          },
+          "pipeline_count": {
+            "title": "Pipeline Count",
+            "type": "integer"
+          },
+          "pipelines": {
+            "description": "Pipeline label and its stage count.",
+            "items": {
+              "$ref": "#/components/schemas/NameCount"
+            },
+            "title": "Pipelines",
+            "type": "array"
+          },
+          "total_stage_count": {
+            "title": "Total Stage Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "object_type",
+          "pipeline_count",
+          "total_stage_count"
+        ],
+        "title": "PipelineSummary",
+        "type": "object"
+      },
+      "PortalPipeline": {
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "object_type": {
+            "title": "Object Type",
+            "type": "string"
+          },
+          "pipeline_id": {
+            "title": "Pipeline Id",
+            "type": "string"
+          },
+          "stages": {
+            "items": {
+              "$ref": "#/components/schemas/PortalPipelineStage"
+            },
+            "title": "Stages",
+            "type": "array"
+          }
+        },
+        "required": [
+          "object_type",
+          "pipeline_id",
+          "label"
+        ],
+        "title": "PortalPipeline",
+        "type": "object"
+      },
+      "PortalPipelineStage": {
+        "additionalProperties": false,
+        "properties": {
+          "display_order": {
+            "default": 0,
+            "title": "Display Order",
+            "type": "integer"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "stage_id": {
+            "title": "Stage Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "stage_id",
+          "label"
+        ],
+        "title": "PortalPipelineStage",
+        "type": "object"
+      },
+      "PortalPropertyDef": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "field_type": {
+            "default": "",
+            "title": "Field Type",
+            "type": "string"
+          },
+          "group_name": {
+            "default": "",
+            "title": "Group Name",
+            "type": "string"
+          },
+          "hubspot_defined": {
+            "default": false,
+            "title": "Hubspot Defined",
+            "type": "boolean"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "options": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "label",
+          "type"
+        ],
+        "title": "PortalPropertyDef",
+        "type": "object"
+      },
+      "PortalSnapshot": {
+        "additionalProperties": false,
+        "description": "Everything pulled from one portal at ``pulled_at``. Partial pulls are\nnormal: a missing scope becomes a ``warnings`` entry, not an error.",
+        "properties": {
+          "object_schemas": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectSchema"
+            },
+            "title": "Object Schemas",
+            "type": "array"
+          },
+          "owners": {
+            "items": {
+              "$ref": "#/components/schemas/Owner"
+            },
+            "title": "Owners",
+            "type": "array"
+          },
+          "pipelines": {
+            "items": {
+              "$ref": "#/components/schemas/PortalPipeline"
+            },
+            "title": "Pipelines",
+            "type": "array"
+          },
+          "pulled_at": {
+            "title": "Pulled At",
+            "type": "string"
+          },
+          "teams": {
+            "items": {
+              "$ref": "#/components/schemas/Team"
+            },
+            "title": "Teams",
+            "type": "array"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          },
+          "workflows": {
+            "items": {
+              "$ref": "#/components/schemas/PortalWorkflow"
+            },
+            "title": "Workflows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "pulled_at"
+        ],
+        "title": "PortalSnapshot",
+        "type": "object"
+      },
+      "PortalWorkflow": {
+        "additionalProperties": false,
+        "properties": {
+          "actions": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Actions",
+            "type": "array"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "object_type": {
+            "title": "Object Type",
+            "type": "string"
+          },
+          "re_enrollment_enabled": {
+            "default": false,
+            "title": "Re Enrollment Enabled",
+            "type": "boolean"
+          },
+          "workflow_id": {
+            "title": "Workflow Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workflow_id",
+          "name",
+          "enabled",
+          "object_type"
+        ],
+        "title": "PortalWorkflow",
+        "type": "object"
+      },
+      "PricingSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "discount": {
+            "title": "Discount",
+            "type": "number"
+          },
+          "discount_pct": {
+            "title": "Discount Pct",
+            "type": "number"
+          },
+          "milestone_total": {
+            "title": "Milestone Total",
+            "type": "number"
+          },
+          "recurring": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "description": "Recurring add-on totals keyed by billing period.",
+            "title": "Recurring",
+            "type": "object"
+          },
+          "selected_addons_one_time": {
+            "title": "Selected Addons One Time",
+            "type": "number"
+          },
+          "subtotal": {
+            "title": "Subtotal",
+            "type": "number"
+          },
+          "total": {
+            "title": "Total",
+            "type": "number"
+          }
+        },
+        "required": [
+          "milestone_total",
+          "selected_addons_one_time",
+          "subtotal",
+          "discount_pct",
+          "discount",
+          "total",
+          "recurring"
+        ],
+        "title": "PricingSummary",
+        "type": "object"
+      },
+      "PropertyAuditExportRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "project_name": {
+            "default": "",
+            "maxLength": 200,
+            "title": "Project Name",
+            "type": "string"
+          },
+          "result": {
+            "$ref": "#/components/schemas/PropertyAuditResult"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "PropertyAuditExportRequest",
+        "type": "object"
+      },
+      "PropertyAuditRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "snapshot": {
+            "$ref": "#/components/schemas/PortalSnapshot"
+          }
+        },
+        "required": [
+          "snapshot"
+        ],
+        "title": "PropertyAuditRequest",
+        "type": "object"
+      },
+      "PropertyAuditResult": {
+        "additionalProperties": false,
+        "properties": {
+          "generated_at": {
+            "title": "Generated At",
+            "type": "string"
+          },
+          "object_summaries": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectAuditSummary"
+            },
+            "title": "Object Summaries",
+            "type": "array"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/PropertyAuditRow"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "sample_size": {
+            "title": "Sample Size",
+            "type": "integer"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "generated_at",
+          "sample_size"
+        ],
+        "title": "PropertyAuditResult",
+        "type": "object"
+      },
+      "PropertyAuditRow": {
+        "additionalProperties": false,
+        "properties": {
+          "assessment": {
+            "default": "",
+            "title": "Assessment",
+            "type": "string"
+          },
+          "field_type": {
+            "title": "Field Type",
+            "type": "string"
+          },
+          "fill_pct": {
+            "description": "Percent of sampled records with a value (0–100).",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Fill Pct",
+            "type": "number"
+          },
+          "internal_name": {
+            "title": "Internal Name",
+            "type": "string"
+          },
+          "is_custom": {
+            "title": "Is Custom",
+            "type": "boolean"
+          },
+          "object_label": {
+            "title": "Object Label",
+            "type": "string"
+          },
+          "object_type": {
+            "title": "Object Type",
+            "type": "string"
+          },
+          "property_label": {
+            "title": "Property Label",
+            "type": "string"
+          },
+          "rating": {
+            "enum": [
+              "Keep",
+              "Review",
+              "Remove candidate"
+            ],
+            "title": "Rating",
+            "type": "string"
+          },
+          "uses": {
+            "description": "Workflows that reference the property.",
+            "minimum": 0.0,
+            "title": "Uses",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "object_label",
+          "object_type",
+          "property_label",
+          "internal_name",
+          "field_type",
+          "is_custom",
+          "fill_pct",
+          "uses",
+          "rating"
+        ],
+        "title": "PropertyAuditRow",
+        "type": "object"
+      },
+      "PropertyDef": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "field_type": {
+            "default": "text",
+            "title": "Field Type",
+            "type": "string"
+          },
+          "group": {
+            "default": "custom_properties",
+            "title": "Group",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "options": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Options"
+          },
+          "required": {
+            "default": false,
+            "title": "Required",
+            "type": "boolean"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "label",
+          "type"
+        ],
+        "title": "PropertyDef",
+        "type": "object"
+      },
+      "ProposalAnalysis": {
+        "additionalProperties": false,
+        "description": "Everything the builder shows alongside the document, in one round trip.",
+        "properties": {
+          "coverage": {
+            "items": {
+              "$ref": "#/components/schemas/CoverageRow"
+            },
+            "title": "Coverage",
+            "type": "array"
+          },
+          "pricing": {
+            "$ref": "#/components/schemas/PricingSummary"
+          },
+          "scope_by_status": {
+            "additionalProperties": {
+              "items": {
+                "$ref": "#/components/schemas/ScopeRow"
+              },
+              "type": "array"
+            },
+            "propertyNames": {
+              "enum": [
+                "In Scope",
+                "Out of Scope",
+                "Optional Add-on",
+                "Client Responsibility"
+              ]
+            },
+            "title": "Scope By Status",
+            "type": "object"
+          },
+          "warnings": {
+            "description": "Gaps a client would ask about. Advisory; they never block generation.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "pricing",
+          "coverage",
+          "scope_by_status",
+          "warnings"
+        ],
+        "title": "ProposalAnalysis",
+        "type": "object"
+      },
+      "ProposalDocument": {
+        "additionalProperties": false,
+        "description": "A complete proposal / SOW. Start from ``GET /proposals/default``.",
+        "properties": {
+          "acceptance_process": {
+            "default": "",
+            "title": "Acceptance Process",
+            "type": "string"
+          },
+          "addons": {
+            "items": {
+              "$ref": "#/components/schemas/AddonRow"
+            },
+            "title": "Addons",
+            "type": "array"
+          },
+          "assumptions": {
+            "items": {
+              "$ref": "#/components/schemas/AssumptionRow"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "change_process": {
+            "default": "",
+            "title": "Change Process",
+            "type": "string"
+          },
+          "client": {
+            "$ref": "#/components/schemas/Party"
+          },
+          "company_overview": {
+            "default": "",
+            "title": "Company Overview",
+            "type": "string"
+          },
+          "confidentiality": {
+            "default": "",
+            "title": "Confidentiality",
+            "type": "string"
+          },
+          "currency": {
+            "default": "USD",
+            "maxLength": 3,
+            "minLength": 3,
+            "title": "Currency",
+            "type": "string"
+          },
+          "current_state": {
+            "default": "",
+            "title": "Current State",
+            "type": "string"
+          },
+          "discount_pct": {
+            "default": 0.0,
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Discount Pct",
+            "type": "number"
+          },
+          "document_type": {
+            "default": "Proposal + Statement of Work",
+            "enum": [
+              "Proposal + Statement of Work",
+              "Proposal",
+              "Statement of Work"
+            ],
+            "title": "Document Type",
+            "type": "string"
+          },
+          "effective_date": {
+            "default": "",
+            "title": "Effective Date",
+            "type": "string"
+          },
+          "executive_summary": {
+            "default": "",
+            "title": "Executive Summary",
+            "type": "string"
+          },
+          "expenses": {
+            "default": "",
+            "title": "Expenses",
+            "type": "string"
+          },
+          "expiration_date": {
+            "default": "",
+            "title": "Expiration Date",
+            "type": "string"
+          },
+          "glossary": {
+            "items": {
+              "$ref": "#/components/schemas/GlossaryRow"
+            },
+            "title": "Glossary",
+            "type": "array"
+          },
+          "governance": {
+            "items": {
+              "$ref": "#/components/schemas/GovernanceRow"
+            },
+            "title": "Governance",
+            "type": "array"
+          },
+          "issue_date": {
+            "default": "",
+            "title": "Issue Date",
+            "type": "string"
+          },
+          "kpis": {
+            "items": {
+              "$ref": "#/components/schemas/KpiRow"
+            },
+            "title": "Kpis",
+            "type": "array"
+          },
+          "methodology": {
+            "items": {
+              "$ref": "#/components/schemas/MethodologyRow"
+            },
+            "title": "Methodology",
+            "type": "array"
+          },
+          "milestones": {
+            "items": {
+              "$ref": "#/components/schemas/MilestoneRow"
+            },
+            "title": "Milestones",
+            "type": "array"
+          },
+          "objectives": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectiveRow"
+            },
+            "title": "Objectives",
+            "type": "array"
+          },
+          "payment_terms": {
+            "default": "",
+            "title": "Payment Terms",
+            "type": "string"
+          },
+          "problem_statement": {
+            "default": "",
+            "title": "Problem Statement",
+            "type": "string"
+          },
+          "rate_card": {
+            "items": {
+              "$ref": "#/components/schemas/RateCardRow"
+            },
+            "title": "Rate Card",
+            "type": "array"
+          },
+          "reference_number": {
+            "default": "",
+            "title": "Reference Number",
+            "type": "string"
+          },
+          "requirements": {
+            "items": {
+              "$ref": "#/components/schemas/RequirementRow"
+            },
+            "title": "Requirements",
+            "type": "array"
+          },
+          "risks": {
+            "items": {
+              "$ref": "#/components/schemas/RiskRow"
+            },
+            "title": "Risks",
+            "type": "array"
+          },
+          "schema_version": {
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "scope": {
+            "items": {
+              "$ref": "#/components/schemas/ScopeRow"
+            },
+            "title": "Scope",
+            "type": "array"
+          },
+          "sections": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "description": "Optional sections to include: executive_summary, company_overview, glossary, kpis, risks, addons, rate_card, signatures.",
+            "title": "Sections",
+            "type": "object"
+          },
+          "seller": {
+            "$ref": "#/components/schemas/Party"
+          },
+          "solution_overview": {
+            "default": "",
+            "title": "Solution Overview",
+            "type": "string"
+          },
+          "team": {
+            "items": {
+              "$ref": "#/components/schemas/TeamRow"
+            },
+            "title": "Team",
+            "type": "array"
+          },
+          "techniques": {
+            "items": {
+              "$ref": "#/components/schemas/TechniqueRow"
+            },
+            "title": "Techniques",
+            "type": "array"
+          },
+          "timeline": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineRow"
+            },
+            "title": "Timeline",
+            "type": "array"
+          },
+          "title": {
+            "default": "",
+            "title": "Title",
+            "type": "string"
+          },
+          "tools": {
+            "items": {
+              "$ref": "#/components/schemas/ToolRow"
+            },
+            "title": "Tools",
+            "type": "array"
+          },
+          "valid_until": {
+            "default": "",
+            "title": "Valid Until",
+            "type": "string"
+          }
+        },
+        "title": "ProposalDocument",
+        "type": "object"
+      },
+      "ProposalLibraries": {
+        "additionalProperties": false,
+        "properties": {
+          "addons": {
+            "items": {
+              "$ref": "#/components/schemas/AddonLibraryItem"
+            },
+            "title": "Addons",
+            "type": "array"
+          },
+          "scope": {
+            "items": {
+              "$ref": "#/components/schemas/ScopeLibraryItem"
+            },
+            "title": "Scope",
+            "type": "array"
+          }
+        },
+        "required": [
+          "scope",
+          "addons"
+        ],
+        "title": "ProposalLibraries",
+        "type": "object"
+      },
+      "ProposalRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "proposal": {
+            "$ref": "#/components/schemas/ProposalDocument"
+          }
+        },
+        "required": [
+          "proposal"
+        ],
+        "title": "ProposalRequest",
+        "type": "object"
+      },
+      "Question": {
+        "additionalProperties": false,
+        "properties": {
+          "hint": {
+            "default": "",
+            "title": "Hint",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "input": {
+            "enum": [
+              "text",
+              "select",
+              "multiselect",
+              "radio"
+            ],
+            "title": "Input",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "options": {
+            "description": "Common answers; the 'other' option is not included.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Options",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "input"
+        ],
+        "title": "Question",
+        "type": "object"
+      },
+      "QuestionBank": {
+        "additionalProperties": false,
+        "description": "The configured discovery questions, in asking order.",
+        "properties": {
+          "other_option": {
+            "description": "Label of the free-text fallback appended to every choice question.",
+            "title": "Other Option",
+            "type": "string"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/QuestionSection"
+            },
+            "title": "Sections",
+            "type": "array"
+          }
+        },
+        "required": [
+          "other_option",
+          "sections"
+        ],
+        "title": "QuestionBank",
+        "type": "object"
+      },
+      "QuestionSection": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/Question"
+            },
+            "title": "Questions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "questions"
+        ],
+        "title": "QuestionSection",
+        "type": "object"
+      },
+      "RateCardRow": {
+        "additionalProperties": false,
+        "properties": {
+          "hourly_rate": {
+            "default": 0.0,
+            "minimum": 0.0,
+            "title": "Hourly Rate",
+            "type": "number"
+          },
+          "role": {
+            "default": "",
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "title": "RateCardRow",
+        "type": "object"
+      },
+      "ReportContext": {
+        "additionalProperties": false,
+        "description": "Every number and grouping the executive report shows — computed\nonce, so the client and internal documents never disagree.",
+        "properties": {
+          "association_total": {
+            "title": "Association Total",
+            "type": "integer"
+          },
+          "audited": {
+            "title": "Audited",
+            "type": "boolean"
+          },
+          "custom_object_count": {
+            "title": "Custom Object Count",
+            "type": "integer"
+          },
+          "finding_groups": {
+            "items": {
+              "$ref": "#/components/schemas/FindingGroup"
+            },
+            "title": "Finding Groups",
+            "type": "array"
+          },
+          "finding_total": {
+            "title": "Finding Total",
+            "type": "integer"
+          },
+          "generated_at": {
+            "title": "Generated At",
+            "type": "string"
+          },
+          "object_summaries": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectSummary"
+            },
+            "title": "Object Summaries",
+            "type": "array"
+          },
+          "owner_archived": {
+            "title": "Owner Archived",
+            "type": "integer"
+          },
+          "owner_total": {
+            "title": "Owner Total",
+            "type": "integer"
+          },
+          "owner_unassigned": {
+            "title": "Owner Unassigned",
+            "type": "integer"
+          },
+          "pipeline_summaries": {
+            "items": {
+              "$ref": "#/components/schemas/PipelineSummary"
+            },
+            "title": "Pipeline Summaries",
+            "type": "array"
+          },
+          "project_name": {
+            "title": "Project Name",
+            "type": "string"
+          },
+          "rating": {
+            "enum": [
+              "Excellent",
+              "Good",
+              "Fair",
+              "Needs Attention",
+              "Not Yet Audited"
+            ],
+            "title": "Rating",
+            "type": "string"
+          },
+          "rating_reason": {
+            "title": "Rating Reason",
+            "type": "string"
+          },
+          "severity_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Severity Counts",
+            "type": "object"
+          },
+          "snapshot": {
+            "$ref": "#/components/schemas/PortalSnapshot"
+          },
+          "standard_object_count": {
+            "title": "Standard Object Count",
+            "type": "integer"
+          },
+          "team_empty": {
+            "title": "Team Empty",
+            "type": "integer"
+          },
+          "team_total": {
+            "title": "Team Total",
+            "type": "integer"
+          },
+          "total_pipelines": {
+            "title": "Total Pipelines",
+            "type": "integer"
+          },
+          "total_properties": {
+            "title": "Total Properties",
+            "type": "integer"
+          },
+          "total_stages": {
+            "title": "Total Stages",
+            "type": "integer"
+          },
+          "workflow_disabled": {
+            "title": "Workflow Disabled",
+            "type": "integer"
+          },
+          "workflow_enabled": {
+            "title": "Workflow Enabled",
+            "type": "integer"
+          },
+          "workflow_total": {
+            "title": "Workflow Total",
+            "type": "integer"
+          },
+          "workflow_unnamed": {
+            "title": "Workflow Unnamed",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "generated_at",
+          "project_name",
+          "snapshot",
+          "audited",
+          "standard_object_count",
+          "custom_object_count",
+          "total_properties",
+          "object_summaries",
+          "pipeline_summaries",
+          "total_pipelines",
+          "total_stages",
+          "workflow_total",
+          "workflow_enabled",
+          "workflow_disabled",
+          "workflow_unnamed",
+          "team_total",
+          "team_empty",
+          "owner_total",
+          "owner_unassigned",
+          "owner_archived",
+          "association_total",
+          "finding_total",
+          "severity_counts",
+          "finding_groups",
+          "rating",
+          "rating_reason"
+        ],
+        "title": "ReportContext",
+        "type": "object"
+      },
+      "ReportRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "findings": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Finding"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Audit findings for this snapshot; omit (null) when no audit was run — the report then says so.",
+            "title": "Findings"
+          },
+          "project_name": {
+            "default": "",
+            "maxLength": 200,
+            "title": "Project Name",
+            "type": "string"
+          },
+          "snapshot": {
+            "$ref": "#/components/schemas/PortalSnapshot"
+          }
+        },
+        "required": [
+          "snapshot"
+        ],
+        "title": "ReportRequest",
+        "type": "object"
+      },
+      "RequirementRow": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "default": "",
+            "description": "Assigned (R-01, R-02, ...) when blank.",
+            "title": "ID",
+            "type": "string"
+          },
+          "priority": {
+            "default": "Must Have",
+            "title": "Priority",
+            "type": "string"
+          },
+          "requirement": {
+            "default": "",
+            "title": "Requirement",
+            "type": "string"
+          },
+          "source": {
+            "default": "",
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "title": "RequirementRow",
+        "type": "object"
+      },
+      "RiskRow": {
+        "additionalProperties": false,
+        "properties": {
+          "impact": {
+            "default": "Medium",
+            "title": "Impact",
+            "type": "string"
+          },
+          "likelihood": {
+            "default": "Medium",
+            "title": "Likelihood",
+            "type": "string"
+          },
+          "mitigation": {
+            "default": "",
+            "title": "Mitigation",
+            "type": "string"
+          },
+          "owner": {
+            "default": "",
+            "title": "Owner",
+            "type": "string"
+          },
+          "risk": {
+            "default": "",
+            "title": "Risk",
+            "type": "string"
+          }
+        },
+        "title": "RiskRow",
+        "type": "object"
+      },
+      "ScopeLibraryItem": {
+        "additionalProperties": false,
+        "properties": {
+          "acceptance_criteria": {
+            "title": "Acceptance Criteria",
+            "type": "string"
+          },
+          "item": {
+            "title": "Item",
+            "type": "string"
+          },
+          "quantity_limit": {
+            "title": "Quantity Limit",
+            "type": "string"
+          },
+          "tools_techniques": {
+            "title": "Tools Techniques",
+            "type": "string"
+          },
+          "workstream": {
+            "title": "Workstream",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workstream",
+          "item",
+          "quantity_limit",
+          "tools_techniques",
+          "acceptance_criteria"
+        ],
+        "title": "ScopeLibraryItem",
+        "type": "object"
+      },
+      "ScopeRow": {
+        "additionalProperties": false,
+        "properties": {
+          "acceptance_criteria": {
+            "default": "",
+            "title": "Acceptance Criteria",
+            "type": "string"
+          },
+          "id": {
+            "default": "",
+            "description": "Assigned (S-01, S-02, ...) when blank.",
+            "title": "ID",
+            "type": "string"
+          },
+          "item": {
+            "default": "",
+            "title": "Item",
+            "type": "string"
+          },
+          "milestone": {
+            "default": "",
+            "title": "Milestone",
+            "type": "string"
+          },
+          "quantity_limit": {
+            "default": "",
+            "title": "Quantity / Limit",
+            "type": "string"
+          },
+          "requirement_ids": {
+            "default": "",
+            "description": "Comma-separated requirement IDs this item covers.",
+            "title": "Req. ID",
+            "type": "string"
+          },
+          "status": {
+            "default": "In Scope",
+            "enum": [
+              "In Scope",
+              "Out of Scope",
+              "Optional Add-on",
+              "Client Responsibility"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "tools_techniques": {
+            "default": "",
+            "title": "Tools / Techniques",
+            "type": "string"
+          },
+          "workstream": {
+            "default": "",
+            "title": "Workstream",
+            "type": "string"
+          }
+        },
+        "title": "ScopeRow",
+        "type": "object"
+      },
+      "SectionNotes": {
+        "additionalProperties": false,
+        "properties": {
+          "answers": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Answer"
+            },
+            "description": "Keyed by question id; missing ids are blank.",
+            "title": "Answers",
+            "type": "object"
+          },
+          "edge_cases": {
+            "default": "",
+            "maxLength": 20000,
+            "title": "Edge Cases",
+            "type": "string"
+          },
+          "notes": {
+            "default": "",
+            "maxLength": 20000,
+            "title": "Notes",
+            "type": "string"
+          }
+        },
+        "title": "SectionNotes",
+        "type": "object"
+      },
+      "SectionsExportRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/ExportSection"
+            },
+            "title": "Sections",
+            "type": "array"
+          },
+          "subtitle": {
+            "default": "",
+            "maxLength": 1000,
+            "title": "Subtitle",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 300,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "title": "SectionsExportRequest",
+        "type": "object"
+      },
+      "StageDef": {
+        "additionalProperties": false,
+        "properties": {
+          "is_closed": {
+            "default": false,
+            "title": "Is Closed",
+            "type": "boolean"
+          },
+          "is_won": {
+            "default": false,
+            "title": "Is Won",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "order": {
+            "title": "Order",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "order"
+        ],
+        "title": "StageDef",
+        "type": "object"
+      },
+      "SuggestModulesRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "business_analysis_markdown": {
+            "maxLength": 200000,
+            "title": "Business Analysis Markdown",
+            "type": "string"
+          }
+        },
+        "required": [
+          "business_analysis_markdown"
+        ],
+        "title": "SuggestModulesRequest",
+        "type": "object"
+      },
+      "SuggestModulesResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "modules": {
+            "items": {
+              "enum": [
+                "Marketing Hub",
+                "Sales Hub",
+                "Service Hub",
+                "Operations Hub",
+                "Content Hub (CMS)",
+                "Commerce Hub"
+              ],
+              "type": "string"
+            },
+            "title": "Modules",
+            "type": "array"
+          }
+        },
+        "required": [
+          "modules"
+        ],
+        "title": "SuggestModulesResponse",
+        "type": "object"
+      },
+      "Team": {
+        "additionalProperties": false,
+        "properties": {
+          "member_count": {
+            "default": 0,
+            "title": "Member Count",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "team_id": {
+            "title": "Team Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "team_id",
+          "name"
+        ],
+        "title": "Team",
+        "type": "object"
+      },
+      "TeamRow": {
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "default": "",
+            "title": "Email",
+            "type": "string"
+          },
+          "name": {
+            "default": "",
+            "title": "Name",
+            "type": "string"
+          },
+          "responsibilities": {
+            "default": "",
+            "title": "Responsibilities",
+            "type": "string"
+          },
+          "role": {
+            "default": "",
+            "title": "Role",
+            "type": "string"
+          },
+          "side": {
+            "default": "SonaMation",
+            "title": "Side",
+            "type": "string"
+          }
+        },
+        "title": "TeamRow",
+        "type": "object"
+      },
+      "TechniqueRow": {
+        "additionalProperties": false,
+        "properties": {
+          "how_applied": {
+            "default": "",
+            "title": "How It Is Applied",
+            "type": "string"
+          },
+          "technique": {
+            "default": "",
+            "title": "Technique / Procedure",
+            "type": "string"
+          }
+        },
+        "title": "TechniqueRow",
+        "type": "object"
+      },
+      "TimelineRow": {
+        "additionalProperties": false,
+        "properties": {
+          "end": {
+            "default": "",
+            "title": "End",
+            "type": "string"
+          },
+          "key_deliverables": {
+            "default": "",
+            "title": "Key Deliverables",
+            "type": "string"
+          },
+          "phase": {
+            "default": "",
+            "title": "Phase / Milestone",
+            "type": "string"
+          },
+          "start": {
+            "default": "",
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "title": "TimelineRow",
+        "type": "object"
+      },
+      "ToolRow": {
+        "additionalProperties": false,
+        "properties": {
+          "provided_by": {
+            "default": "SonaMation",
+            "title": "Provided By",
+            "type": "string"
+          },
+          "purpose": {
+            "default": "",
+            "title": "Purpose",
+            "type": "string"
+          },
+          "tool": {
+            "default": "",
+            "title": "Tool / Platform",
+            "type": "string"
+          }
+        },
+        "title": "ToolRow",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "WorkflowSuggestion": {
+        "additionalProperties": false,
+        "properties": {
+          "action_summary": {
+            "title": "Action Summary",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "object_type": {
+            "title": "Object Type",
+            "type": "string"
+          },
+          "overwrite_risk": {
+            "default": false,
+            "title": "Overwrite Risk",
+            "type": "boolean"
+          },
+          "risk_reason": {
+            "default": "",
+            "title": "Risk Reason",
+            "type": "string"
+          },
+          "trigger": {
+            "title": "Trigger",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "object_type",
+          "trigger",
+          "action_summary"
+        ],
+        "title": "WorkflowSuggestion",
+        "type": "object"
+      },
+      "WrdImportRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "proposal": {
+            "$ref": "#/components/schemas/ProposalDocument"
+          },
+          "wrd": {
+            "additionalProperties": {
+              "items": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "description": "Requirements Document sections, as exported by that module.",
+            "title": "Wrd",
+            "type": "object"
+          }
+        },
+        "required": [
+          "proposal",
+          "wrd"
+        ],
+        "title": "WrdImportRequest",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "HubSpotToken": {
+        "description": "HubSpot private app access token (read-only scopes). Never stored or logged.",
+        "in": "header",
+        "name": "X-HubSpot-Token",
+        "type": "apiKey"
+      }
+    }
+  },
+  "info": {
+    "summary": "HubSpot implementation toolkit for solutions architects. Read-only against HubSpot.",
+    "title": "ArchitectureScope API",
+    "version": "0.4.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/audits": {
+      "post": {
+        "description": "Structural checks run on the snapshot; record-level checks (fill\nrates, orphaned records) sample the live portal, read-only.",
+        "operationId": "portal_run_audit",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuditRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HubSpotToken": []
+          }
+        ],
+        "summary": "Audit a snapshot against best-practice rules",
+        "tags": [
+          "portal"
+        ]
+      }
+    },
+    "/api/v1/blueprints": {
+      "post": {
+        "description": "Objects, properties, associations, pipelines, naming conventions and\nworkflow suggestions for the engagement, following the rules in\n``config/rules.yaml``. Deterministic apart from ``generated_at``.",
+        "operationId": "architecture_generate_blueprint",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BlueprintInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Blueprint"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Generate an architecture blueprint",
+        "tags": [
+          "architecture"
+        ]
+      }
+    },
+    "/api/v1/blueprints/markdown": {
+      "post": {
+        "operationId": "architecture_blueprint_markdown",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Blueprint"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "text/markdown": {},
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Render a blueprint as Markdown",
+        "tags": [
+          "architecture"
+        ]
+      }
+    },
+    "/api/v1/diagrams/from-blueprint": {
+      "post": {
+        "operationId": "architecture_diagram_from_blueprint",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DiagramFromBlueprintRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Diagram"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Diagram a proposed architecture",
+        "tags": [
+          "architecture"
+        ]
+      }
+    },
+    "/api/v1/diagrams/from-snapshot": {
+      "post": {
+        "operationId": "architecture_diagram_from_snapshot",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DiagramFromSnapshotRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Diagram"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Diagram a live portal, with audit risk",
+        "tags": [
+          "architecture"
+        ]
+      }
+    },
+    "/api/v1/diagrams/render": {
+      "post": {
+        "operationId": "architecture_render_diagram",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "default": "png",
+              "enum": [
+                "png",
+                "dot",
+                "drawio"
+              ],
+              "title": "Format",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DiagramRenderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.jgraph.mxfile": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              },
+              "image/png": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              },
+              "text/vnd.graphviz; charset=utf-8": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Render a diagram (PNG, Graphviz DOT, or draw.io)",
+        "tags": [
+          "architecture"
+        ]
+      }
+    },
+    "/api/v1/discovery/business-analysis": {
+      "post": {
+        "operationId": "discovery_business_analysis",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DiscoveryNotes"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "text/event-stream": {}
+            },
+            "description": "Server-Sent Events: `delta`, then `done` or `error`."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Draft the business analysis (SSE)",
+        "tags": [
+          "discovery"
+        ]
+      }
+    },
+    "/api/v1/discovery/business-analysis/payload": {
+      "post": {
+        "operationId": "discovery_business_analysis_payload",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DiscoveryNotes"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisPayload"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview the exact AI request payload",
+        "tags": [
+          "discovery"
+        ]
+      }
+    },
+    "/api/v1/discovery/client-explainer": {
+      "post": {
+        "operationId": "discovery_client_explainer",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientExplainerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "text/event-stream": {}
+            },
+            "description": "Server-Sent Events: `delta`, then `done` or `error`."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Draft the client explainer (SSE)",
+        "tags": [
+          "discovery"
+        ]
+      }
+    },
+    "/api/v1/discovery/question-bank": {
+      "get": {
+        "operationId": "discovery_question_bank",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuestionBank"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "The configured discovery questions",
+        "tags": [
+          "discovery"
+        ]
+      }
+    },
+    "/api/v1/discovery/suggest-modules": {
+      "post": {
+        "operationId": "discovery_suggest_modules",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuggestModulesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuggestModulesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Hubs recommended by a business analysis",
+        "tags": [
+          "discovery"
+        ]
+      }
+    },
+    "/api/v1/exports/markdown": {
+      "post": {
+        "operationId": "exports_export_markdown",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "default": "docx",
+              "enum": [
+                "docx",
+                "pdf"
+              ],
+              "title": "Format",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkdownExportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              },
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Markdown document to Word or PDF",
+        "tags": [
+          "exports"
+        ]
+      }
+    },
+    "/api/v1/exports/sections": {
+      "post": {
+        "operationId": "exports_export_sections",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "default": "docx",
+              "enum": [
+                "docx",
+                "xlsx",
+                "csv",
+                "pdf"
+              ],
+              "title": "Format",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SectionsExportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              },
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              },
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              },
+              "text/csv; charset=utf-8": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Titled table sections to Word, Excel, CSV or PDF",
+        "tags": [
+          "exports"
+        ]
+      }
+    },
+    "/api/v1/portal/snapshot": {
+      "post": {
+        "description": "Schemas, properties, pipelines, workflows, owners and teams. A\nmissing scope degrades to a ``warnings`` entry instead of failing.",
+        "operationId": "portal_pull_snapshot",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortalSnapshot"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HubSpotToken": []
+          }
+        ],
+        "summary": "Pull a read-only snapshot of a HubSpot portal",
+        "tags": [
+          "portal"
+        ]
+      }
+    },
+    "/api/v1/portal/snapshot/document": {
+      "post": {
+        "operationId": "portal_snapshot_document",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "default": "docx",
+              "enum": [
+                "md",
+                "docx"
+              ],
+              "title": "Format",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PortalSnapshot"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              },
+              "text/markdown; charset=utf-8": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Render portal documentation (Markdown or Word)",
+        "tags": [
+          "portal"
+        ]
+      }
+    },
+    "/api/v1/property-audits": {
+      "post": {
+        "operationId": "portal_run_property_audit",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PropertyAuditRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropertyAuditResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HubSpotToken": []
+          }
+        ],
+        "summary": "Rate every property Keep / Review / Remove",
+        "tags": [
+          "portal"
+        ]
+      }
+    },
+    "/api/v1/property-audits/export": {
+      "post": {
+        "operationId": "portal_export_property_audit",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "default": "xlsx",
+              "enum": [
+                "xlsx",
+                "pdf"
+              ],
+              "title": "Format",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PropertyAuditExportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              },
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export a property audit (Excel workbook or PDF report)",
+        "tags": [
+          "portal"
+        ]
+      }
+    },
+    "/api/v1/proposals/analysis": {
+      "post": {
+        "operationId": "proposals_analyse",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalAnalysis"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Pricing, requirement coverage, scope groups and warnings",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/api/v1/proposals/default": {
+      "get": {
+        "operationId": "proposals_default_proposal",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalDocument"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "A new proposal with standard boilerplate",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/api/v1/proposals/import/jep": {
+      "post": {
+        "operationId": "proposals_import_jep",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JepImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalDocument"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Merge a Joint Evaluation Plan into the proposal",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/api/v1/proposals/import/wrd": {
+      "post": {
+        "operationId": "proposals_import_wrd",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WrdImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalDocument"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Merge a Requirements Document into the proposal",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/api/v1/proposals/libraries": {
+      "get": {
+        "operationId": "proposals_libraries",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalLibraries"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Reusable scope items and add-on services",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/api/v1/proposals/pdf": {
+      "post": {
+        "operationId": "proposals_render_pdf",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Render the branded proposal / SOW PDF",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/api/v1/proposals/scope/from-requirements": {
+      "post": {
+        "operationId": "proposals_draft_scope",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalDocument"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Draft scope items for uncovered requirements",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/api/v1/proposals/scope/library-addons": {
+      "post": {
+        "operationId": "proposals_add_library_addons",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddLibraryAddonsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalDocument"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add add-on services (as Optional scope items)",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/api/v1/proposals/scope/library-items": {
+      "post": {
+        "operationId": "proposals_add_library_items",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddLibraryItemsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalDocument"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add scope-library items",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/api/v1/proposals/template": {
+      "post": {
+        "operationId": "proposals_as_template",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalDocument"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Strip deal-specific content, keeping reusable boilerplate",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/api/v1/reports/context": {
+      "post": {
+        "operationId": "portal_report_context",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportContext"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Compute executive-report figures",
+        "tags": [
+          "portal"
+        ]
+      }
+    },
+    "/api/v1/reports/document": {
+      "post": {
+        "operationId": "portal_report_document",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "audience",
+            "required": false,
+            "schema": {
+              "default": "client",
+              "enum": [
+                "client",
+                "internal"
+              ],
+              "title": "Audience",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Render the executive report (client or internal edition)",
+        "tags": [
+          "portal"
+        ]
+      }
+    },
+    "/healthz": {
+      "get": {
+        "operationId": "health_healthz",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Liveness probe",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/readyz": {
+      "get": {
+        "description": "Ready once the domain's configuration loads. Phase 2 adds database\nand Redis checks here.",
+        "operationId": "health_readyz",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Readiness probe",
+        "tags": [
+          "health"
+        ]
+      }
+    }
+  }
+}

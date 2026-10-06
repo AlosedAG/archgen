@@ -1,0 +1,582 @@
+{
+ "client_docx": [
+  "Golden — Portal Overview & Health Report",
+  "Generated <TIMESTAMP>",
+  "This report explains, in plain language, what your HubSpot portal currently has set up, how the different pieces connect, and what's worth fixing. It's based on an automated, read-only scan of your portal — nothing was changed to produce it.",
+  "Overall health",
+  "Rating: Needs Attention",
+  "1 high-priority issue found — these can cause real data loss and should be addressed soon.",
+  "This rating is based on high- and medium-priority findings only. Low-priority items are cosmetic/data-hygiene cleanup and don't change the rating.",
+  "What's in your portal",
+  "Your portal has 1 standard object type(s) (like Contacts, Companies, Deals) and 1 custom object type(s) built specifically for this implementation, holding 3 data fields in total.",
+  "Sales & service pipelines",
+  "1 pipeline(s) across 1 object type(s), with 2 stages in total.",
+  "Deal: 1 pipeline(s), 2 stages total.",
+  "Automation",
+  "2 workflow(s) exist, 1 currently enabled and 1 turned off.",
+  "1 of these still have HubSpot's generic default name ('Unnamed workflow - <date>'), which usually means they were created by an integration or API call and never labeled — worth naming for anyone auditing or handing off the portal later.",
+  "Users & teams",
+  "2 user(s) and 2 team(s) are set up. 1 active user(s) aren't on any team, and 1 team(s) have no members — usually safe to clean up, but worth a quick confirm.",
+  "Things worth fixing",
+  "High priority (1)",
+  "These need attention soon — they can cause real data loss or broken processes.",
+  "Automation (1)",
+  "An automation that overwrites a field every time it runs — even if a person or another system already filled it in — can silently erase real data with no error or warning.",
+  "Contact: Workflow 'X' sets a property unconditionally.",
+  "Medium priority (1)",
+  "Worth fixing, but not on fire — plan these into normal cleanup work.",
+  "Users & teams (1)",
+  "Unassigned users can fall through the cracks in team-based routing and reporting; empty teams are usually leftover clutter.",
+  "Team: Team 'Empty Team' has zero members.",
+  "Low priority / cleanup (2)",
+  "Cosmetic or minor data-hygiene items. Fix opportunistically.",
+  "Naming consistency (2)",
+  "Inconsistent naming makes the system harder to search, hand off, and maintain — a housekeeping issue, not a data-risk one.",
+  "Contact: Property 'Lead_Score' naming drift.",
+  "Contact: Property 'Other_Prop' naming drift.",
+  "Recommended next steps",
+  "1. Add an 'only if blank' branch.",
+  "2. Confirm the team is still needed.",
+  "3. Rename to snake_case.",
+  "How this report was built",
+  "Generated automatically from a read-only scan of your HubSpot portal's schemas, properties, pipelines, workflows, teams, and owners, plus a sample of records for data-completeness checks. No data in your portal was changed to produce this report.",
+  "Priority | Count",
+  "High priority | 1",
+  "Medium priority | 1",
+  "Low priority / cleanup | 2",
+  "Object | Kind | Data fields | Connects to",
+  "Contact | Standard | 2 | —",
+  "Locations | Custom | 1 | Contact, Locations"
+ ],
+ "context": {
+  "association_total": 2,
+  "audited": true,
+  "custom_object_count": 1,
+  "finding_groups": [
+   {
+    "area": "Workflows",
+    "count": 1,
+    "items": [
+     {
+      "area": "Workflows",
+      "description": "Workflow 'X' sets a property unconditionally.",
+      "object_type": "Contact",
+      "recommended_fix": "Add an 'only if blank' branch.",
+      "severity": "High"
+     }
+    ],
+    "object_types": [
+     "Contact"
+    ],
+    "severity": "High"
+   },
+   {
+    "area": "Permissions",
+    "count": 1,
+    "items": [
+     {
+      "area": "Permissions",
+      "description": "Team 'Empty Team' has zero members.",
+      "object_type": "Team",
+      "recommended_fix": "Confirm the team is still needed.",
+      "severity": "Medium"
+     }
+    ],
+    "object_types": [
+     "Team"
+    ],
+    "severity": "Medium"
+   },
+   {
+    "area": "Naming",
+    "count": 2,
+    "items": [
+     {
+      "area": "Naming",
+      "description": "Property 'Lead_Score' naming drift.",
+      "object_type": "Contact",
+      "recommended_fix": "Rename to snake_case.",
+      "severity": "Low"
+     },
+     {
+      "area": "Naming",
+      "description": "Property 'Other_Prop' naming drift.",
+      "object_type": "Contact",
+      "recommended_fix": "Rename to snake_case.",
+      "severity": "Low"
+     }
+    ],
+    "object_types": [
+     "Contact"
+    ],
+    "severity": "Low"
+   }
+  ],
+  "finding_total": 4,
+  "generated_at": "<TIMESTAMP>",
+  "object_summaries": [
+   {
+    "association_count": 0,
+    "association_targets": [],
+    "is_custom": false,
+    "label": "Contact",
+    "object_type": "contacts",
+    "property_count": 2,
+    "top_groups": [
+     [
+      "Contact information",
+      2
+     ]
+    ]
+   },
+   {
+    "association_count": 2,
+    "association_targets": [
+     "Contact",
+     "Locations"
+    ],
+    "is_custom": true,
+    "label": "Locations",
+    "object_type": "2-999",
+    "property_count": 1,
+    "top_groups": [
+     [
+      "Locations information",
+      1
+     ]
+    ]
+   }
+  ],
+  "owner_archived": 0,
+  "owner_total": 2,
+  "owner_unassigned": 1,
+  "pipeline_summaries": [
+   {
+    "object_type": "Deal",
+    "pipeline_count": 1,
+    "pipelines": [
+     [
+      "Sales Pipeline",
+      2
+     ]
+    ],
+    "total_stage_count": 2
+   }
+  ],
+  "project_name": "Golden",
+  "rating": "Needs Attention",
+  "rating_reason": "1 high-priority issue found — these can cause real data loss and should be addressed soon.",
+  "severity_counts": {
+   "High": 1,
+   "Low": 2,
+   "Medium": 1
+  },
+  "snapshot": {
+   "object_schemas": [
+    {
+     "associations": [],
+     "is_custom": false,
+     "label": "Contact",
+     "object_type": "contacts",
+     "properties": [
+      {
+       "description": "",
+       "field_type": "",
+       "group_name": "contactinformation",
+       "hubspot_defined": true,
+       "label": "Email",
+       "name": "email",
+       "options": [],
+       "type": "string"
+      },
+      {
+       "description": "",
+       "field_type": "",
+       "group_name": "contactinformation",
+       "hubspot_defined": true,
+       "label": "Lifecycle Stage",
+       "name": "lifecyclestage",
+       "options": [],
+       "type": "enumeration"
+      }
+     ],
+     "singular_label": ""
+    },
+    {
+     "associations": [
+      {
+       "cardinality": "many-to-many",
+       "from_object": "Location",
+       "label": "location_to_contact",
+       "to_object": "0-1"
+      },
+      {
+       "cardinality": "many-to-many",
+       "from_object": "Location",
+       "label": "location_to_location",
+       "to_object": "2-999"
+      }
+     ],
+     "is_custom": true,
+     "label": "Locations",
+     "object_type": "2-999",
+     "properties": [
+      {
+       "description": "",
+       "field_type": "",
+       "group_name": "locations_information",
+       "hubspot_defined": false,
+       "label": "Location Name",
+       "name": "location_name",
+       "options": [],
+       "type": "string"
+      }
+     ],
+     "singular_label": "Location"
+    }
+   ],
+   "owners": [
+    {
+     "archived": false,
+     "email": "a@x.com",
+     "first_name": "A",
+     "last_name": "B",
+     "owner_id": "1",
+     "teams": []
+    },
+    {
+     "archived": false,
+     "email": "c@x.com",
+     "first_name": "C",
+     "last_name": "D",
+     "owner_id": "2",
+     "teams": [
+      "Sales"
+     ]
+    }
+   ],
+   "pipelines": [
+    {
+     "label": "Sales Pipeline",
+     "object_type": "Deal",
+     "pipeline_id": "p1",
+     "stages": [
+      {
+       "display_order": 0,
+       "label": "New",
+       "stage_id": "s1"
+      },
+      {
+       "display_order": 1,
+       "label": "Won",
+       "stage_id": "s2"
+      }
+     ]
+    }
+   ],
+   "pulled_at": "<TIMESTAMP>",
+   "teams": [
+    {
+     "member_count": 0,
+     "name": "Empty Team",
+     "team_id": "10"
+    },
+    {
+     "member_count": 3,
+     "name": "Sales",
+     "team_id": "11"
+    }
+   ],
+   "warnings": [],
+   "workflows": [
+    {
+     "actions": [],
+     "enabled": true,
+     "name": "Contact | Welcome Email",
+     "object_type": "Contact",
+     "re_enrollment_enabled": false,
+     "workflow_id": "w1"
+    },
+    {
+     "actions": [],
+     "enabled": false,
+     "name": "Unnamed workflow - Mon Jan 1 2026",
+     "object_type": "Contact",
+     "re_enrollment_enabled": false,
+     "workflow_id": "w2"
+    }
+   ]
+  },
+  "standard_object_count": 1,
+  "team_empty": 1,
+  "team_total": 2,
+  "total_pipelines": 1,
+  "total_properties": 3,
+  "total_stages": 2,
+  "workflow_disabled": 1,
+  "workflow_enabled": 1,
+  "workflow_total": 2,
+  "workflow_unnamed": 1
+ },
+ "context_unaudited": {
+  "association_total": 2,
+  "audited": false,
+  "custom_object_count": 1,
+  "finding_groups": [],
+  "finding_total": 0,
+  "generated_at": "<TIMESTAMP>",
+  "object_summaries": [
+   {
+    "association_count": 0,
+    "association_targets": [],
+    "is_custom": false,
+    "label": "Contact",
+    "object_type": "contacts",
+    "property_count": 2,
+    "top_groups": [
+     [
+      "Contact information",
+      2
+     ]
+    ]
+   },
+   {
+    "association_count": 2,
+    "association_targets": [
+     "Contact",
+     "Locations"
+    ],
+    "is_custom": true,
+    "label": "Locations",
+    "object_type": "2-999",
+    "property_count": 1,
+    "top_groups": [
+     [
+      "Locations information",
+      1
+     ]
+    ]
+   }
+  ],
+  "owner_archived": 0,
+  "owner_total": 2,
+  "owner_unassigned": 1,
+  "pipeline_summaries": [
+   {
+    "object_type": "Deal",
+    "pipeline_count": 1,
+    "pipelines": [
+     [
+      "Sales Pipeline",
+      2
+     ]
+    ],
+    "total_stage_count": 2
+   }
+  ],
+  "project_name": "Golden",
+  "rating": "Not Yet Audited",
+  "rating_reason": "Run the Portal Auditor first to get a health rating and a breakdown of issues found.",
+  "severity_counts": {
+   "High": 0,
+   "Low": 0,
+   "Medium": 0
+  },
+  "snapshot": {
+   "object_schemas": [
+    {
+     "associations": [],
+     "is_custom": false,
+     "label": "Contact",
+     "object_type": "contacts",
+     "properties": [
+      {
+       "description": "",
+       "field_type": "",
+       "group_name": "contactinformation",
+       "hubspot_defined": true,
+       "label": "Email",
+       "name": "email",
+       "options": [],
+       "type": "string"
+      },
+      {
+       "description": "",
+       "field_type": "",
+       "group_name": "contactinformation",
+       "hubspot_defined": true,
+       "label": "Lifecycle Stage",
+       "name": "lifecyclestage",
+       "options": [],
+       "type": "enumeration"
+      }
+     ],
+     "singular_label": ""
+    },
+    {
+     "associations": [
+      {
+       "cardinality": "many-to-many",
+       "from_object": "Location",
+       "label": "location_to_contact",
+       "to_object": "0-1"
+      },
+      {
+       "cardinality": "many-to-many",
+       "from_object": "Location",
+       "label": "location_to_location",
+       "to_object": "2-999"
+      }
+     ],
+     "is_custom": true,
+     "label": "Locations",
+     "object_type": "2-999",
+     "properties": [
+      {
+       "description": "",
+       "field_type": "",
+       "group_name": "locations_information",
+       "hubspot_defined": false,
+       "label": "Location Name",
+       "name": "location_name",
+       "options": [],
+       "type": "string"
+      }
+     ],
+     "singular_label": "Location"
+    }
+   ],
+   "owners": [
+    {
+     "archived": false,
+     "email": "a@x.com",
+     "first_name": "A",
+     "last_name": "B",
+     "owner_id": "1",
+     "teams": []
+    },
+    {
+     "archived": false,
+     "email": "c@x.com",
+     "first_name": "C",
+     "last_name": "D",
+     "owner_id": "2",
+     "teams": [
+      "Sales"
+     ]
+    }
+   ],
+   "pipelines": [
+    {
+     "label": "Sales Pipeline",
+     "object_type": "Deal",
+     "pipeline_id": "p1",
+     "stages": [
+      {
+       "display_order": 0,
+       "label": "New",
+       "stage_id": "s1"
+      },
+      {
+       "display_order": 1,
+       "label": "Won",
+       "stage_id": "s2"
+      }
+     ]
+    }
+   ],
+   "pulled_at": "<TIMESTAMP>",
+   "teams": [
+    {
+     "member_count": 0,
+     "name": "Empty Team",
+     "team_id": "10"
+    },
+    {
+     "member_count": 3,
+     "name": "Sales",
+     "team_id": "11"
+    }
+   ],
+   "warnings": [],
+   "workflows": [
+    {
+     "actions": [],
+     "enabled": true,
+     "name": "Contact | Welcome Email",
+     "object_type": "Contact",
+     "re_enrollment_enabled": false,
+     "workflow_id": "w1"
+    },
+    {
+     "actions": [],
+     "enabled": false,
+     "name": "Unnamed workflow - Mon Jan 1 2026",
+     "object_type": "Contact",
+     "re_enrollment_enabled": false,
+     "workflow_id": "w2"
+    }
+   ]
+  },
+  "standard_object_count": 1,
+  "team_empty": 1,
+  "team_total": 2,
+  "total_pipelines": 1,
+  "total_properties": 3,
+  "total_stages": 2,
+  "workflow_disabled": 1,
+  "workflow_enabled": 1,
+  "workflow_total": 2,
+  "workflow_unnamed": 1
+ },
+ "internal_docx": [
+  "Internal Report — Golden",
+  "Generated <TIMESTAMP>",
+  "Internal use/context only — not for client distribution.",
+  "Health rating",
+  "Needs Attention — 1 high-priority issue found — these can cause real data loss and should be addressed soon.",
+  "Portal stats",
+  "Standard objects: 1",
+  "Custom objects: 1",
+  "Total properties: 3",
+  "Total associations declared (custom object schemas): 2",
+  "Pipelines: 1 (2 stages total)",
+  "Workflows: 2 (1 enabled, 1 disabled, 1 still named 'Unnamed workflow ...')",
+  "Teams: 2 (1 with zero members)",
+  "Owners: 2 (1 unassigned to a team, 0 archived)",
+  "Object model",
+  "Pipelines",
+  "Findings — full detail",
+  "Summary by area and priority",
+  "Naming consistency",
+  "Objects, properties, workflows, and pipelines that don't follow a consistent naming pattern. Inconsistent naming makes the system harder to search, hand off, and maintain — a housekeeping issue, not a data-risk one.",
+  "Users & teams",
+  "Users not assigned to a team, and teams with nobody on them. Unassigned users can fall through the cracks in team-based routing and reporting; empty teams are usually leftover clutter.",
+  "Automation",
+  "Automations that update a record's data. An automation that overwrites a field every time it runs — even if a person or another system already filled it in — can silently erase real data with no error or warning.",
+  "Methodology notes",
+  "Read-only scan: nothing in the portal was created, updated, or deleted.",
+  "Record-level checks (unused/required properties, orphaned records) sample records rather than pulling every record — sample size is noted in each finding.",
+  "Health rating is derived from High/Medium finding counts only; Low-priority items are excluded from the rating.",
+  "Priority | Count",
+  "High | 1",
+  "Medium | 1",
+  "Low | 2",
+  "Object | Kind | object_type | Properties | Top property groups | Associations | Connects to",
+  "Contact | Standard | contacts | 2 | Contact information (2) | 0 | ",
+  "Locations | Custom | 2-999 | 1 | Locations information (1) | 2 | Contact, Locations",
+  "Object | Pipelines | Total stages | Detail",
+  "Deal | 1 | 2 | Sales Pipeline (2 stages)",
+  "Area | High | Medium | Low | Total",
+  "Naming | 0 | 0 | 2 | 2",
+  "Permissions | 0 | 1 | 0 | 1",
+  "Workflows | 1 | 0 | 0 | 1",
+  "Priority | Object | Description | Recommended Fix",
+  "Low | Contact | Property 'Lead_Score' naming drift. | Rename to snake_case.",
+  "Low | Contact | Property 'Other_Prop' naming drift. | Rename to snake_case.",
+  "Priority | Object | Description | Recommended Fix",
+  "Medium | Team | Team 'Empty Team' has zero members. | Confirm the team is still needed.",
+  "Priority | Object | Description | Recommended Fix",
+  "High | Contact | Workflow 'X' sets a property unconditionally. | Add an 'only if blank' branch."
+ ]
+}

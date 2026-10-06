@@ -27,7 +27,7 @@ from typing import Optional
 
 import streamlit as st
 
-from core.hubspot_client import get_token
+from archscope_integrations.hubspot import HubSpotClient
 
 try:  # .env support is a convenience, not a requirement
     from dotenv import load_dotenv
@@ -40,6 +40,25 @@ HUBSPOT_SESSION_KEY = "hubspot_token"
 ANTHROPIC_SESSION_KEY = "anthropic_api_key"
 ANTHROPIC_ENV_VAR = "ANTHROPIC_API_KEY"
 SETUP_URL = "/Setup"
+
+
+HUBSPOT_ENV_VAR = "HUBSPOT_TOKEN"
+
+
+def get_token() -> Optional[str]:
+    """HubSpot private-app token from ``HUBSPOT_TOKEN``, else this session.
+    Held only in ``st.session_state`` — never written to disk, never logged."""
+    env_token = os.environ.get(HUBSPOT_ENV_VAR)
+    if env_token:
+        return env_token
+    return st.session_state.get(HUBSPOT_SESSION_KEY) or None
+
+
+def hubspot_client() -> HubSpotClient:
+    """A read-only HubSpot client for the token resolved by :func:`get_token`.
+    Raises ``ValueError`` when no token is set (pages gate on
+    :func:`require_hubspot_token` first)."""
+    return HubSpotClient(get_token() or "")
 
 
 def get_anthropic_key() -> Optional[str]:

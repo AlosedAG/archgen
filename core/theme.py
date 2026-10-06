@@ -20,15 +20,18 @@ from __future__ import annotations
 
 import streamlit as st
 
-PURPLE_DARK = "#2A2058"
-PURPLE = "#3D2E7C"
-PURPLE_LIGHT = "#5B45B0"
-ORANGE = "#F7791D"
-ORANGE_HOVER = "#DD6A0F"
-TEXT_DARK = "#14121F"
-TEXT_BODY = "#3E3A4D"
-BG_ALT = "#F6F5FA"
-BORDER = "#E4E1EE"
+from archscope_domain.branding import (  # noqa: F401 — re-exported for pages
+    BG_ALT,
+    BORDER,
+    ORANGE,
+    ORANGE_HOVER,
+    PURPLE,
+    PURPLE_DARK,
+    PURPLE_LIGHT,
+    TEXT_BODY,
+    TEXT_DARK,
+)
+
 
 _CSS = f"""
 <style>
@@ -200,27 +203,6 @@ def render_page_header(title: str, caption: str = "") -> None:
     st.markdown('<div class="sm-title-underline"></div>', unsafe_allow_html=True)
     if caption:
         st.markdown(f'<div class="sm-caption">{caption}</div>', unsafe_allow_html=True)
-
-
-# ---- Audit report palette (Property Audit workbook + PDF export) --------
-# Matches examples/RPG_property_audit.xlsx and examples/RPG_HubSpot_Audit_Report.pdf
-# exactly, as (R, G, B) tuples so both openpyxl (ARGB hex) and fpdf2 (RGB
-# tuple) exporters can share one source of truth for "same palette as the
-# example" instead of two hand-copied color lists drifting apart.
-AUDIT_HEADER_BG = (42, 26, 94)  # table header row / stat-tile accents
-AUDIT_TITLE = (61, 43, 140)  # report/workbook title
-AUDIT_SUBTITLE = (106, 100, 130)  # muted captions, internal-name mono text
-AUDIT_BODY = (30, 26, 60)  # body text
-AUDIT_MUTED = (150, 145, 168)  # footers, page numbers, axis labels
-AUDIT_KEEP_BG = (222, 217, 242)  # light purple — Keep rating
-AUDIT_REVIEW_BG = (245, 228, 195)  # light gold — Review rating
-AUDIT_REMOVE_BG = (240, 210, 193)  # light peach — Remove candidate rating
-AUDIT_CUSTOM_BADGE = (193, 90, 40)  # orange — "Custom = Yes" badge text
-
-
-def argb(rgb: tuple[int, int, int]) -> str:
-    """openpyxl ARGB hex string (``'FFrrggbb'``) for a theme RGB tuple."""
-    return "FF{:02X}{:02X}{:02X}".format(*rgb)
 
 
 def render_hero(title_html: str, subtitle: str, cta_label: str, cta_href: str) -> None:

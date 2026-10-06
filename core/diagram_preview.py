@@ -7,7 +7,7 @@ live session state.
 Shared by two pages: the Project Library (browsing any saved project) and
 the Architecture Diagram page itself (so a user can pull up a previous
 save without first regenerating a blueprint or re-pulling a portal
-snapshot). Kept separate from ``core.diagram`` so that module can stay
+snapshot). Kept separate from ``archscope_domain.diagram`` so that module can stay
 plain-Python/UI-free.
 """
 
@@ -18,7 +18,7 @@ from dataclasses import asdict
 import pandas as pd
 import streamlit as st
 
-from core.diagram import nodes_edges_from_dicts, to_graphviz
+from archscope_domain.diagram import nodes_edges_from_dicts, to_graphviz
 
 
 def render_diagram_snapshot(data: dict) -> None:

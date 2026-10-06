@@ -1,4 +1,8 @@
-streamlit>=1.45
+# Streamlit app dependencies, for plain `pip install -r requirements.txt`.
+# Streamlit Community Cloud prefers uv.lock (it installs the whole workspace);
+# this file is the fallback. The workspace packages (packages/domain,
+# packages/integrations) are imported from source by Home.py when not installed.
+streamlit>=1.50
 Authlib>=1.3.2
 pandas>=2.0
 matplotlib>=3.8

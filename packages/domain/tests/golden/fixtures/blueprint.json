@@ -1,0 +1,1001 @@
+{
+ "blueprint": {
+  "associations": [
+   {
+    "cardinality": "many-to-one",
+    "from_object": "Membership",
+    "label": "Membership to Contact",
+    "to_object": "Contact"
+   },
+   {
+    "cardinality": "many-to-one",
+    "from_object": "Subscription",
+    "label": "Subscription to Contact",
+    "to_object": "Contact"
+   },
+   {
+    "cardinality": "one-to-one",
+    "from_object": "Subscription",
+    "label": "Subscription to Deal",
+    "to_object": "Deal"
+   },
+   {
+    "cardinality": "many-to-one",
+    "from_object": "Location",
+    "label": "Location to Company",
+    "to_object": "Company"
+   }
+  ],
+  "base_currency_note": "Base currency: USD. When more than one currency is in scope, always define exactly one base currency for roll-up reporting; deal/line-item currency fields should default to it.",
+  "custom_objects": [
+   {
+    "description": "Tracks an individual membership term, tied to a Contact.",
+    "name": "Membership",
+    "plural_label": "Memberships",
+    "properties": [
+     {
+      "description": "Current status of the membership term.",
+      "field_type": "select",
+      "group": "custom_properties",
+      "label": "Membership Status",
+      "name": "membership_status",
+      "options": [
+       "Active",
+       "Paused",
+       "Cancelled",
+       "Expired"
+      ],
+      "required": true,
+      "type": "enumeration"
+     },
+     {
+      "description": "Membership term start date.",
+      "field_type": "date",
+      "group": "custom_properties",
+      "label": "Start Date",
+      "name": "start_date",
+      "options": null,
+      "required": true,
+      "type": "date"
+     },
+     {
+      "description": "Membership term end date, if fixed-term.",
+      "field_type": "date",
+      "group": "custom_properties",
+      "label": "End Date",
+      "name": "end_date",
+      "options": null,
+      "required": false,
+      "type": "date"
+     }
+    ]
+   },
+   {
+    "description": "Tracks a recurring subscription/billing term, tied to a Contact and optionally a Deal.",
+    "name": "Subscription",
+    "plural_label": "Subscriptions",
+    "properties": [
+     {
+      "description": "Current status of the subscription.",
+      "field_type": "select",
+      "group": "custom_properties",
+      "label": "Subscription Status",
+      "name": "subscription_status",
+      "options": [
+       "Active",
+       "Paused",
+       "Cancelled",
+       "Past Due"
+      ],
+      "required": true,
+      "type": "enumeration"
+     },
+     {
+      "description": "How often the subscription bills.",
+      "field_type": "select",
+      "group": "custom_properties",
+      "label": "Billing Frequency",
+      "name": "billing_frequency",
+      "options": [
+       "Monthly",
+       "Quarterly",
+       "Annual"
+      ],
+      "required": true,
+      "type": "enumeration"
+     }
+    ]
+   },
+   {
+    "description": "Tracks a physical or service location, tied to a Company.",
+    "name": "Location",
+    "plural_label": "Locations",
+    "properties": [
+     {
+      "description": "Whether the location is currently operating.",
+      "field_type": "select",
+      "group": "custom_properties",
+      "label": "Location Status",
+      "name": "location_status",
+      "options": [
+       "Active",
+       "Inactive"
+      ],
+      "required": true,
+      "type": "enumeration"
+     },
+     {
+      "description": "Free-text region/territory label for the location.",
+      "field_type": "text",
+      "group": "custom_properties",
+      "label": "Region",
+      "name": "region",
+      "options": null,
+      "required": false,
+      "type": "string"
+     }
+    ]
+   }
+  ],
+  "generated_at": "<TIMESTAMP>",
+  "inputs": {
+   "currencies": [
+    "USD",
+    "CAD"
+   ],
+   "custom_object_keywords": [
+    "Membership",
+    "Subscription",
+    "Location"
+   ],
+   "custom_object_notes": "Also considering a 'Class Session' object in a later phase; out of scope for this build.",
+   "hubs_in_scope": [
+    "Marketing Hub",
+    "Sales Hub",
+    "Service Hub",
+    "Operations Hub"
+   ],
+   "integrations": [
+    "MyStudio",
+    "Sakari",
+    "Payments Provider"
+   ],
+   "other_integration_notes": "",
+   "pipelines_required": [
+    "Deal",
+    "Ticket",
+    "Membership"
+   ],
+   "project_name": "Bright Path Wellness - HubSpot Rebuild",
+   "record_volumes": {
+    "Company": 500,
+    "Contact": 45000,
+    "Deal": 12000,
+    "Membership": 8000
+   },
+   "regions": [
+    "United States",
+    "Canada"
+   ],
+   "standard_objects": [
+    "Contact",
+    "Company",
+    "Deal",
+    "Ticket"
+   ]
+  },
+  "naming_conventions": {
+   "custom_object_name": "Singular PascalCase, e.g. 'Membership' not 'Memberships' or 'membership'.",
+   "pipeline_name_pattern": "'<Object> Pipeline', e.g. 'Deal Pipeline'.",
+   "property_internal_name": "snake_case, e.g. 'membership_status'.",
+   "workflow_name_pattern": "'<Object> | <Purpose>', e.g. 'Contact | Sync MyStudio Membership Status'."
+  },
+  "pipelines": [
+   {
+    "name": "Deal Pipeline",
+    "object_type": "Deal",
+    "stages": [
+     {
+      "is_closed": false,
+      "is_won": false,
+      "name": "Appointment Scheduled",
+      "order": 0
+     },
+     {
+      "is_closed": false,
+      "is_won": false,
+      "name": "Qualified To Buy",
+      "order": 1
+     },
+     {
+      "is_closed": false,
+      "is_won": false,
+      "name": "Presentation Scheduled",
+      "order": 2
+     },
+     {
+      "is_closed": false,
+      "is_won": false,
+      "name": "Decision Maker Bought In",
+      "order": 3
+     },
+     {
+      "is_closed": false,
+      "is_won": false,
+      "name": "Contract Sent",
+      "order": 4
+     },
+     {
+      "is_closed": true,
+      "is_won": true,
+      "name": "Closed Won",
+      "order": 5
+     },
+     {
+      "is_closed": true,
+      "is_won": false,
+      "name": "Closed Lost",
+      "order": 6
+     }
+    ]
+   },
+   {
+    "name": "Ticket Pipeline",
+    "object_type": "Ticket",
+    "stages": [
+     {
+      "is_closed": false,
+      "is_won": false,
+      "name": "New",
+      "order": 0
+     },
+     {
+      "is_closed": false,
+      "is_won": false,
+      "name": "Waiting on Contact",
+      "order": 1
+     },
+     {
+      "is_closed": false,
+      "is_won": false,
+      "name": "Waiting on Us",
+      "order": 2
+     },
+     {
+      "is_closed": true,
+      "is_won": true,
+      "name": "Closed",
+      "order": 3
+     }
+    ]
+   },
+   {
+    "name": "Membership Pipeline",
+    "object_type": "Membership",
+    "stages": [
+     {
+      "is_closed": false,
+      "is_won": false,
+      "name": "New",
+      "order": 0
+     },
+     {
+      "is_closed": false,
+      "is_won": false,
+      "name": "In Progress",
+      "order": 1
+     },
+     {
+      "is_closed": true,
+      "is_won": true,
+      "name": "Completed",
+      "order": 2
+     },
+     {
+      "is_closed": true,
+      "is_won": false,
+      "name": "Cancelled",
+      "order": 3
+     }
+    ]
+   }
+  ],
+  "project_name": "Bright Path Wellness - HubSpot Rebuild",
+  "standard_object_properties": {
+   "Company": [
+    {
+     "description": "Standard HubSpot industry classification.",
+     "field_type": "select",
+     "group": "custom_properties",
+     "label": "Industry",
+     "name": "industry",
+     "options": null,
+     "required": false,
+     "type": "enumeration"
+    }
+   ],
+   "Contact": [
+    {
+     "description": "Standard HubSpot lifecycle stage; required for reporting handoffs between hubs.",
+     "field_type": "select",
+     "group": "custom_properties",
+     "label": "Lifecycle Stage",
+     "name": "lifecyclestage",
+     "options": null,
+     "required": true,
+     "type": "enumeration"
+    },
+    {
+     "description": "Tracks sales follow-up status independent of lifecycle stage.",
+     "field_type": "select",
+     "group": "custom_properties",
+     "label": "Lead Status",
+     "name": "hs_lead_status",
+     "options": null,
+     "required": false,
+     "type": "enumeration"
+    },
+    {
+     "description": "External ID linking this contact to their MyStudio member record.",
+     "field_type": "text",
+     "group": "custom_properties",
+     "label": "MyStudio Member ID",
+     "name": "mystudio_member_id",
+     "options": null,
+     "required": false,
+     "type": "string"
+    },
+    {
+     "description": "Whether the contact has opted in to SMS via Sakari.",
+     "field_type": "booleancheckbox",
+     "group": "custom_properties",
+     "label": "SMS Opt-In",
+     "name": "sms_opt_in",
+     "options": null,
+     "required": false,
+     "type": "bool"
+    },
+    {
+     "description": "Timestamp of the most recent Sakari SMS interaction.",
+     "field_type": "date",
+     "group": "custom_properties",
+     "label": "Sakari Last Message At",
+     "name": "sakari_last_message_at",
+     "options": null,
+     "required": false,
+     "type": "datetime"
+    }
+   ],
+   "Deal": [
+    {
+     "description": "Current stage within the deal pipeline.",
+     "field_type": "select",
+     "group": "custom_properties",
+     "label": "Deal Stage",
+     "name": "dealstage",
+     "options": null,
+     "required": true,
+     "type": "enumeration"
+    },
+    {
+     "description": "Deal value in the base currency unless overridden.",
+     "field_type": "number",
+     "group": "custom_properties",
+     "label": "Amount",
+     "name": "amount",
+     "options": null,
+     "required": true,
+     "type": "number"
+    },
+    {
+     "description": "Status of the associated payment from the payments provider.",
+     "field_type": "select",
+     "group": "custom_properties",
+     "label": "Payment Status",
+     "name": "payment_status",
+     "options": [
+      "Not Started",
+      "Pending",
+      "Paid",
+      "Failed",
+      "Refunded"
+     ],
+     "required": false,
+     "type": "enumeration"
+    },
+    {
+     "description": "External transaction/reference ID from the payments provider.",
+     "field_type": "text",
+     "group": "custom_properties",
+     "label": "Payment Provider Transaction ID",
+     "name": "payment_provider_id",
+     "options": null,
+     "required": false,
+     "type": "string"
+    }
+   ],
+   "Ticket": [
+    {
+     "description": "Current stage within the ticket pipeline.",
+     "field_type": "select",
+     "group": "custom_properties",
+     "label": "Pipeline Stage",
+     "name": "hs_pipeline_stage",
+     "options": null,
+     "required": true,
+     "type": "enumeration"
+    }
+   ]
+  },
+  "warnings": [
+   "Multiple currencies in scope (USD, CAD); defaulted base currency to 'USD' — confirm with finance/ops before build.",
+   "Custom object notes provided but not auto-modeled — review manually: \"Also considering a 'Class Session' object in a later phase; out of scope for this build.\""
+  ],
+  "workflows": [
+   {
+    "action_summary": "Update mystudio_member_status and mystudio_last_synced_at from the MyStudio integration payload.",
+    "name": "Contact | Sync MyStudio Membership Status",
+    "object_type": "Contact",
+    "overwrite_risk": true,
+    "risk_reason": "Sets/updates a property unconditionally — add an 'only if blank' or conditional branch.",
+    "trigger": "MyStudio member status changes (via integration)"
+   },
+   {
+    "action_summary": "Log a timeline event and update sakari_last_message_at.",
+    "name": "Contact | Log Sakari SMS Reply",
+    "object_type": "Contact",
+    "overwrite_risk": true,
+    "risk_reason": "Sets/updates a property unconditionally — add an 'only if blank' or conditional branch.",
+    "trigger": "Inbound SMS reply received in Sakari"
+   },
+   {
+    "action_summary": "Set payment_status and payment_provider_id from the incoming payment webhook.",
+    "name": "Deal | Sync Payment Status",
+    "object_type": "Deal",
+    "overwrite_risk": true,
+    "risk_reason": "Sets/updates a property unconditionally — add an 'only if blank' or conditional branch.",
+    "trigger": "Payment status changes in the payments provider"
+   },
+   {
+    "action_summary": "Notify record owner when membership_status changes",
+    "name": "Membership | Notify Owner on Status Change",
+    "object_type": "Membership",
+    "overwrite_risk": false,
+    "risk_reason": "",
+    "trigger": "Membership status property changes"
+   },
+   {
+    "action_summary": "Notify record owner when subscription_status changes",
+    "name": "Subscription | Notify Owner on Status Change",
+    "object_type": "Subscription",
+    "overwrite_risk": false,
+    "risk_reason": "",
+    "trigger": "Subscription status property changes"
+   },
+   {
+    "action_summary": "Notify record owner when location_status changes",
+    "name": "Location | Notify Owner on Status Change",
+    "object_type": "Location",
+    "overwrite_risk": false,
+    "risk_reason": "",
+    "trigger": "Location status property changes"
+   },
+   {
+    "action_summary": "Set lifecyclestage to Customer",
+    "name": "Contact | Set Lifecycle Stage to Customer",
+    "object_type": "Contact",
+    "overwrite_risk": true,
+    "risk_reason": "Sets/updates a property unconditionally — add an 'only if blank' or conditional branch.",
+    "trigger": "Associated Deal enters Closed Won stage"
+   },
+   {
+    "action_summary": "Set lead source only if blank",
+    "name": "Contact | Set Lead Source (Only If Blank)",
+    "object_type": "Contact",
+    "overwrite_risk": false,
+    "risk_reason": "",
+    "trigger": "Contact created"
+   }
+  ]
+ },
+ "json": {
+  "associations": [
+   {
+    "cardinality": "many-to-one",
+    "from_object": "Membership",
+    "label": "Membership to Contact",
+    "to_object": "Contact"
+   },
+   {
+    "cardinality": "many-to-one",
+    "from_object": "Subscription",
+    "label": "Subscription to Contact",
+    "to_object": "Contact"
+   },
+   {
+    "cardinality": "one-to-one",
+    "from_object": "Subscription",
+    "label": "Subscription to Deal",
+    "to_object": "Deal"
+   },
+   {
+    "cardinality": "many-to-one",
+    "from_object": "Location",
+    "label": "Location to Company",
+    "to_object": "Company"
+   }
+  ],
+  "base_currency_note": "Base currency: USD. When more than one currency is in scope, always define exactly one base currency for roll-up reporting; deal/line-item currency fields should default to it.",
+  "custom_objects": [
+   {
+    "description": "Tracks an individual membership term, tied to a Contact.",
+    "name": "Membership",
+    "plural_label": "Memberships",
+    "properties": [
+     {
+      "description": "Current status of the membership term.",
+      "field_type": "select",
+      "group": "custom_properties",
+      "label": "Membership Status",
+      "name": "membership_status",
+      "options": [
+       "Active",
+       "Paused",
+       "Cancelled",
+       "Expired"
+      ],
+      "required": true,
+      "type": "enumeration"
+     },
+     {
+      "description": "Membership term start date.",
+      "field_type": "date",
+      "group": "custom_properties",
+      "label": "Start Date",
+      "name": "start_date",
+      "options": null,
+      "required": true,
+      "type": "date"
+     },
+     {
+      "description": "Membership term end date, if fixed-term.",
+      "field_type": "date",
+      "group": "custom_properties",
+      "label": "End Date",
+      "name": "end_date",
+      "options": null,
+      "required": false,
+      "type": "date"
+     }
+    ]
+   },
+   {
+    "description": "Tracks a recurring subscription/billing term, tied to a Contact and optionally a Deal.",
+    "name": "Subscription",
+    "plural_label": "Subscriptions",
+    "properties": [
+     {
+      "description": "Current status of the subscription.",
+      "field_type": "select",
+      "group": "custom_properties",
+      "label": "Subscription Status",
+      "name": "subscription_status",
+      "options": [
+       "Active",
+       "Paused",
+       "Cancelled",
+       "Past Due"
+      ],
+      "required": true,
+      "type": "enumeration"
+     },
+     {
+      "description": "How often the subscription bills.",
+      "field_type": "select",
+      "group": "custom_properties",
+      "label": "Billing Frequency",
+      "name": "billing_frequency",
+      "options": [
+       "Monthly",
+       "Quarterly",
+       "Annual"
+      ],
+      "required": true,
+      "type": "enumeration"
+     }
+    ]
+   },
+   {
+    "description": "Tracks a physical or service location, tied to a Company.",
+    "name": "Location",
+    "plural_label": "Locations",
+    "properties": [
+     {
+      "description": "Whether the location is currently operating.",
+      "field_type": "select",
+      "group": "custom_properties",
+      "label": "Location Status",
+      "name": "location_status",
+      "options": [
+       "Active",
+       "Inactive"
+      ],
+      "required": true,
+      "type": "enumeration"
+     },
+     {
+      "description": "Free-text region/territory label for the location.",
+      "field_type": "text",
+      "group": "custom_properties",
+      "label": "Region",
+      "name": "region",
+      "options": null,
+      "required": false,
+      "type": "string"
+     }
+    ]
+   }
+  ],
+  "generated_at": "<TIMESTAMP>",
+  "inputs": {
+   "currencies": [
+    "USD",
+    "CAD"
+   ],
+   "custom_object_keywords": [
+    "Membership",
+    "Subscription",
+    "Location"
+   ],
+   "custom_object_notes": "Also considering a 'Class Session' object in a later phase; out of scope for this build.",
+   "hubs_in_scope": [
+    "Marketing Hub",
+    "Sales Hub",
+    "Service Hub",
+    "Operations Hub"
+   ],
+   "integrations": [
+    "MyStudio",
+    "Sakari",
+    "Payments Provider"
+   ],
+   "other_integration_notes": "",
+   "pipelines_required": [
+    "Deal",
+    "Ticket",
+    "Membership"
+   ],
+   "project_name": "Bright Path Wellness - HubSpot Rebuild",
+   "record_volumes": {
+    "Company": 500,
+    "Contact": 45000,
+    "Deal": 12000,
+    "Membership": 8000
+   },
+   "regions": [
+    "United States",
+    "Canada"
+   ],
+   "standard_objects": [
+    "Contact",
+    "Company",
+    "Deal",
+    "Ticket"
+   ]
+  },
+  "naming_conventions": {
+   "custom_object_name": "Singular PascalCase, e.g. 'Membership' not 'Memberships' or 'membership'.",
+   "pipeline_name_pattern": "'<Object> Pipeline', e.g. 'Deal Pipeline'.",
+   "property_internal_name": "snake_case, e.g. 'membership_status'.",
+   "workflow_name_pattern": "'<Object> | <Purpose>', e.g. 'Contact | Sync MyStudio Membership Status'."
+  },
+  "pipelines": [
+   {
+    "name": "Deal Pipeline",
+    "object_type": "Deal",
+    "stages": [
+     {
+      "is_closed": false,
+      "is_won": false,
+      "name": "Appointment Scheduled",
+      "order": 0
+     },
+     {
+      "is_closed": false,
+      "is_won": false,
+      "name": "Qualified To Buy",
+      "order": 1
+     },
+     {
+      "is_closed": false,
+      "is_won": false,
+      "name": "Presentation Scheduled",
+      "order": 2
+     },
+     {
+      "is_closed": false,
+      "is_won": false,
+      "name": "Decision Maker Bought In",
+      "order": 3
+     },
+     {
+      "is_closed": false,
+      "is_won": false,
+      "name": "Contract Sent",
+      "order": 4
+     },
+     {
+      "is_closed": true,
+      "is_won": true,
+      "name": "Closed Won",
+      "order": 5
+     },
+     {
+      "is_closed": true,
+      "is_won": false,
+      "name": "Closed Lost",
+      "order": 6
+     }
+    ]
+   },
+   {
+    "name": "Ticket Pipeline",
+    "object_type": "Ticket",
+    "stages": [
+     {
+      "is_closed": false,
+      "is_won": false,
+      "name": "New",
+      "order": 0
+     },
+     {
+      "is_closed": false,
+      "is_won": false,
+      "name": "Waiting on Contact",
+      "order": 1
+     },
+     {
+      "is_closed": false,
+      "is_won": false,
+      "name": "Waiting on Us",
+      "order": 2
+     },
+     {
+      "is_closed": true,
+      "is_won": true,
+      "name": "Closed",
+      "order": 3
+     }
+    ]
+   },
+   {
+    "name": "Membership Pipeline",
+    "object_type": "Membership",
+    "stages": [
+     {
+      "is_closed": false,
+      "is_won": false,
+      "name": "New",
+      "order": 0
+     },
+     {
+      "is_closed": false,
+      "is_won": false,
+      "name": "In Progress",
+      "order": 1
+     },
+     {
+      "is_closed": true,
+      "is_won": true,
+      "name": "Completed",
+      "order": 2
+     },
+     {
+      "is_closed": true,
+      "is_won": false,
+      "name": "Cancelled",
+      "order": 3
+     }
+    ]
+   }
+  ],
+  "project_name": "Bright Path Wellness - HubSpot Rebuild",
+  "standard_object_properties": {
+   "Company": [
+    {
+     "description": "Standard HubSpot industry classification.",
+     "field_type": "select",
+     "group": "custom_properties",
+     "label": "Industry",
+     "name": "industry",
+     "options": null,
+     "required": false,
+     "type": "enumeration"
+    }
+   ],
+   "Contact": [
+    {
+     "description": "Standard HubSpot lifecycle stage; required for reporting handoffs between hubs.",
+     "field_type": "select",
+     "group": "custom_properties",
+     "label": "Lifecycle Stage",
+     "name": "lifecyclestage",
+     "options": null,
+     "required": true,
+     "type": "enumeration"
+    },
+    {
+     "description": "Tracks sales follow-up status independent of lifecycle stage.",
+     "field_type": "select",
+     "group": "custom_properties",
+     "label": "Lead Status",
+     "name": "hs_lead_status",
+     "options": null,
+     "required": false,
+     "type": "enumeration"
+    },
+    {
+     "description": "External ID linking this contact to their MyStudio member record.",
+     "field_type": "text",
+     "group": "custom_properties",
+     "label": "MyStudio Member ID",
+     "name": "mystudio_member_id",
+     "options": null,
+     "required": false,
+     "type": "string"
+    },
+    {
+     "description": "Whether the contact has opted in to SMS via Sakari.",
+     "field_type": "booleancheckbox",
+     "group": "custom_properties",
+     "label": "SMS Opt-In",
+     "name": "sms_opt_in",
+     "options": null,
+     "required": false,
+     "type": "bool"
+    },
+    {
+     "description": "Timestamp of the most recent Sakari SMS interaction.",
+     "field_type": "date",
+     "group": "custom_properties",
+     "label": "Sakari Last Message At",
+     "name": "sakari_last_message_at",
+     "options": null,
+     "required": false,
+     "type": "datetime"
+    }
+   ],
+   "Deal": [
+    {
+     "description": "Current stage within the deal pipeline.",
+     "field_type": "select",
+     "group": "custom_properties",
+     "label": "Deal Stage",
+     "name": "dealstage",
+     "options": null,
+     "required": true,
+     "type": "enumeration"
+    },
+    {
+     "description": "Deal value in the base currency unless overridden.",
+     "field_type": "number",
+     "group": "custom_properties",
+     "label": "Amount",
+     "name": "amount",
+     "options": null,
+     "required": true,
+     "type": "number"
+    },
+    {
+     "description": "Status of the associated payment from the payments provider.",
+     "field_type": "select",
+     "group": "custom_properties",
+     "label": "Payment Status",
+     "name": "payment_status",
+     "options": [
+      "Not Started",
+      "Pending",
+      "Paid",
+      "Failed",
+      "Refunded"
+     ],
+     "required": false,
+     "type": "enumeration"
+    },
+    {
+     "description": "External transaction/reference ID from the payments provider.",
+     "field_type": "text",
+     "group": "custom_properties",
+     "label": "Payment Provider Transaction ID",
+     "name": "payment_provider_id",
+     "options": null,
+     "required": false,
+     "type": "string"
+    }
+   ],
+   "Ticket": [
+    {
+     "description": "Current stage within the ticket pipeline.",
+     "field_type": "select",
+     "group": "custom_properties",
+     "label": "Pipeline Stage",
+     "name": "hs_pipeline_stage",
+     "options": null,
+     "required": true,
+     "type": "enumeration"
+    }
+   ]
+  },
+  "warnings": [
+   "Multiple currencies in scope (USD, CAD); defaulted base currency to 'USD' — confirm with finance/ops before build.",
+   "Custom object notes provided but not auto-modeled — review manually: \"Also considering a 'Class Session' object in a later phase; out of scope for this build.\""
+  ],
+  "workflows": [
+   {
+    "action_summary": "Update mystudio_member_status and mystudio_last_synced_at from the MyStudio integration payload.",
+    "name": "Contact | Sync MyStudio Membership Status",
+    "object_type": "Contact",
+    "overwrite_risk": true,
+    "risk_reason": "Sets/updates a property unconditionally — add an 'only if blank' or conditional branch.",
+    "trigger": "MyStudio member status changes (via integration)"
+   },
+   {
+    "action_summary": "Log a timeline event and update sakari_last_message_at.",
+    "name": "Contact | Log Sakari SMS Reply",
+    "object_type": "Contact",
+    "overwrite_risk": true,
+    "risk_reason": "Sets/updates a property unconditionally — add an 'only if blank' or conditional branch.",
+    "trigger": "Inbound SMS reply received in Sakari"
+   },
+   {
+    "action_summary": "Set payment_status and payment_provider_id from the incoming payment webhook.",
+    "name": "Deal | Sync Payment Status",
+    "object_type": "Deal",
+    "overwrite_risk": true,
+    "risk_reason": "Sets/updates a property unconditionally — add an 'only if blank' or conditional branch.",
+    "trigger": "Payment status changes in the payments provider"
+   },
+   {
+    "action_summary": "Notify record owner when membership_status changes",
+    "name": "Membership | Notify Owner on Status Change",
+    "object_type": "Membership",
+    "overwrite_risk": false,
+    "risk_reason": "",
+    "trigger": "Membership status property changes"
+   },
+   {
+    "action_summary": "Notify record owner when subscription_status changes",
+    "name": "Subscription | Notify Owner on Status Change",
+    "object_type": "Subscription",
+    "overwrite_risk": false,
+    "risk_reason": "",
+    "trigger": "Subscription status property changes"
+   },
+   {
+    "action_summary": "Notify record owner when location_status changes",
+    "name": "Location | Notify Owner on Status Change",
+    "object_type": "Location",
+    "overwrite_risk": false,
+    "risk_reason": "",
+    "trigger": "Location status property changes"
+   },
+   {
+    "action_summary": "Set lifecyclestage to Customer",
+    "name": "Contact | Set Lifecycle Stage to Customer",
+    "object_type": "Contact",
+    "overwrite_risk": true,
+    "risk_reason": "Sets/updates a property unconditionally — add an 'only if blank' or conditional branch.",
+    "trigger": "Associated Deal enters Closed Won stage"
+   },
+   {
+    "action_summary": "Set lead source only if blank",
+    "name": "Contact | Set Lead Source (Only If Blank)",
+    "object_type": "Contact",
+    "overwrite_risk": false,
+    "risk_reason": "",
+    "trigger": "Contact created"
+   }
+  ]
+ },
+ "markdown": "# Architecture Blueprint: Bright Path Wellness - HubSpot Rebuild\n\n_Generated at <TIMESTAMP>_\n\n## Warnings\n- Multiple currencies in scope (USD, CAD); defaulted base currency to 'USD' — confirm with finance/ops before build.\n- Custom object notes provided but not auto-modeled — review manually: \"Also considering a 'Class Session' object in a later phase; out of scope for this build.\"\n\n## Custom Objects\n| Name | Plural Label | Description |\n|---|---|---|\n| Membership | Memberships | Tracks an individual membership term, tied to a Contact. |\n| Subscription | Subscriptions | Tracks a recurring subscription/billing term, tied to a Contact and optionally a Deal. |\n| Location | Locations | Tracks a physical or service location, tied to a Company. |\n\n## Data Dictionary\n| Object | Property | Label | Type | Required | Options | Description |\n|---|---|---|---|---|---|---|\n| Contact | lifecyclestage | Lifecycle Stage | enumeration | True |  | Standard HubSpot lifecycle stage; required for reporting handoffs between hubs. |\n| Contact | hs_lead_status | Lead Status | enumeration | False |  | Tracks sales follow-up status independent of lifecycle stage. |\n| Contact | mystudio_member_id | MyStudio Member ID | string | False |  | External ID linking this contact to their MyStudio member record. |\n| Contact | sms_opt_in | SMS Opt-In | bool | False |  | Whether the contact has opted in to SMS via Sakari. |\n| Contact | sakari_last_message_at | Sakari Last Message At | datetime | False |  | Timestamp of the most recent Sakari SMS interaction. |\n| Company | industry | Industry | enumeration | False |  | Standard HubSpot industry classification. |\n| Deal | dealstage | Deal Stage | enumeration | True |  | Current stage within the deal pipeline. |\n| Deal | amount | Amount | number | True |  | Deal value in the base currency unless overridden. |\n| Deal | payment_status | Payment Status | enumeration | False | Not Started, Pending, Paid, Failed, Refunded | Status of the associated payment from the payments provider. |\n| Deal | payment_provider_id | Payment Provider Transaction ID | string | False |  | External transaction/reference ID from the payments provider. |\n| Ticket | hs_pipeline_stage | Pipeline Stage | enumeration | True |  | Current stage within the ticket pipeline. |\n| Membership | membership_status | Membership Status | enumeration | True | Active, Paused, Cancelled, Expired | Current status of the membership term. |\n| Membership | start_date | Start Date | date | True |  | Membership term start date. |\n| Membership | end_date | End Date | date | False |  | Membership term end date, if fixed-term. |\n| Subscription | subscription_status | Subscription Status | enumeration | True | Active, Paused, Cancelled, Past Due | Current status of the subscription. |\n| Subscription | billing_frequency | Billing Frequency | enumeration | True | Monthly, Quarterly, Annual | How often the subscription bills. |\n| Location | location_status | Location Status | enumeration | True | Active, Inactive | Whether the location is currently operating. |\n| Location | region | Region | string | False |  | Free-text region/territory label for the location. |\n\n## Association Model\n| From | To | Label | Cardinality |\n|---|---|---|---|\n| Membership | Contact | Membership to Contact | many-to-one |\n| Subscription | Contact | Subscription to Contact | many-to-one |\n| Subscription | Deal | Subscription to Deal | one-to-one |\n| Location | Company | Location to Company | many-to-one |\n\n## Pipelines & Stages\n### Deal Pipeline (Deal)\n| Order | Stage | Closed | Won |\n|---|---|---|---|\n| 0 | Appointment Scheduled | False | False |\n| 1 | Qualified To Buy | False | False |\n| 2 | Presentation Scheduled | False | False |\n| 3 | Decision Maker Bought In | False | False |\n| 4 | Contract Sent | False | False |\n| 5 | Closed Won | True | True |\n| 6 | Closed Lost | True | False |\n\n### Ticket Pipeline (Ticket)\n| Order | Stage | Closed | Won |\n|---|---|---|---|\n| 0 | New | False | False |\n| 1 | Waiting on Contact | False | False |\n| 2 | Waiting on Us | False | False |\n| 3 | Closed | True | True |\n\n### Membership Pipeline (Membership)\n| Order | Stage | Closed | Won |\n|---|---|---|---|\n| 0 | New | False | False |\n| 1 | In Progress | False | False |\n| 2 | Completed | True | True |\n| 3 | Cancelled | True | False |\n\n## Naming Conventions\n- **custom_object_name**: Singular PascalCase, e.g. 'Membership' not 'Memberships' or 'membership'.\n- **property_internal_name**: snake_case, e.g. 'membership_status'.\n- **workflow_name_pattern**: '<Object> | <Purpose>', e.g. 'Contact | Sync MyStudio Membership Status'.\n- **pipeline_name_pattern**: '<Object> Pipeline', e.g. 'Deal Pipeline'.\n\n## Base Currency\nBase currency: USD. When more than one currency is in scope, always define exactly one base currency for roll-up reporting; deal/line-item currency fields should default to it.\n\n## Suggested Workflows\n| Name | Object | Trigger | Action | Overwrite Risk | Risk Reason |\n|---|---|---|---|---|---|\n| Contact | Sync MyStudio Membership Status | Contact | MyStudio member status changes (via integration) | Update mystudio_member_status and mystudio_last_synced_at from the MyStudio integration payload. | **YES** | Sets/updates a property unconditionally — add an 'only if blank' or conditional branch. |\n| Contact | Log Sakari SMS Reply | Contact | Inbound SMS reply received in Sakari | Log a timeline event and update sakari_last_message_at. | **YES** | Sets/updates a property unconditionally — add an 'only if blank' or conditional branch. |\n| Deal | Sync Payment Status | Deal | Payment status changes in the payments provider | Set payment_status and payment_provider_id from the incoming payment webhook. | **YES** | Sets/updates a property unconditionally — add an 'only if blank' or conditional branch. |\n| Membership | Notify Owner on Status Change | Membership | Membership status property changes | Notify record owner when membership_status changes | No |  |\n| Subscription | Notify Owner on Status Change | Subscription | Subscription status property changes | Notify record owner when subscription_status changes | No |  |\n| Location | Notify Owner on Status Change | Location | Location status property changes | Notify record owner when location_status changes | No |  |\n| Contact | Set Lifecycle Stage to Customer | Contact | Associated Deal enters Closed Won stage | Set lifecyclestage to Customer | **YES** | Sets/updates a property unconditionally — add an 'only if blank' or conditional branch. |\n| Contact | Set Lead Source (Only If Blank) | Contact | Contact created | Set lead source only if blank | No |  |\n"
+}

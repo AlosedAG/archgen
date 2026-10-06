@@ -44,7 +44,7 @@ with help_tab:
 with downloads_tab:
     st.caption("Printable manuals. The in-app guide above is the most up to date.")
     for filename, label in [
-        ("ArchitectureScope_User_Guide.pdf", "ArchitectureScope user guide (PDF)"),
+        ("ArchitectureScope_User_Guide_v2.pdf", "ArchitectureScope user guide (PDF)"),
         ("Proposal_SOW_Builder_Manual.pdf", "Proposal & SOW Builder manual (PDF)"),
     ]:
         path = DOCS_DIR / filename

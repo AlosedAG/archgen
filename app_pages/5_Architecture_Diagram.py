@@ -24,7 +24,7 @@ from datetime import datetime, timezone
 import pandas as pd
 import streamlit as st
 
-from core.diagram import (
+from archscope_domain.diagram import (
     DiagramEdge,
     DiagramNode,
     dangling_edges,
@@ -40,7 +40,7 @@ from core.diagram import (
 from core import project_store
 from core.diagram_preview import render_diagram_snapshot
 from core.doc_export_ui import save_to_library_button
-from core.exporters import sections_to_csv, sections_to_xlsx
+from archscope_domain.exporters import sections_to_csv, sections_to_xlsx
 from core.project_store import project_name_input
 from core.theme import inject_global_css, render_page_header
 

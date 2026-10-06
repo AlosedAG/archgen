@@ -7,11 +7,11 @@ from pathlib import Path
 
 import streamlit as st
 
-from core.blueprint import BlueprintGenerator, blueprint_to_json, blueprint_to_markdown
+from archscope_domain.blueprint import BlueprintGenerator, blueprint_to_json, blueprint_to_markdown
 from core.doc_export_ui import save_to_library_button
-from core.models import BlueprintInput
+from archscope_domain.models import BlueprintInput
 from core.theme import inject_global_css, render_page_header
-from rules.engine import RulesEngine
+from archscope_domain.rules import RulesEngine
 
 st.set_page_config(page_title="Architecture Generator", layout="wide")
 inject_global_css()

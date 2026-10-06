@@ -15,6 +15,9 @@ HOME = str(Path(__file__).resolve().parent.parent / "Home.py")
 @pytest.fixture(autouse=True)
 def _auth_enabled(monkeypatch):
     monkeypatch.delenv("AUTH_DISABLED", raising=False)
+    # A developer's local .env (often AUTH_DISABLED=1) would otherwise be
+    # re-loaded by modules first imported during the AppTest run.
+    monkeypatch.setattr("dotenv.load_dotenv", lambda *args, **kwargs: False)
 
 
 def _home(**secrets) -> AppTest:

@@ -20,11 +20,13 @@ Before anything else, ``core.auth.require_login`` shows the sign-in
 screen (Google and/or username + password) and stops the script until a
 user is signed in.
 
-Two things run on every page, before the page itself:
+Three things run on every page, before the page itself:
 
 - the page's own section of the user guide (``docs/user_guide.md``) is
   shown at the bottom of the sidebar, so instructions are always one click
   away without leaving the page;
+- the floating **Feedback** button (``core/feedback_ui.py``) is added, so
+  users can email a bug report or idea with screenshots from any page;
 - Discovery Call Assistant notes (``disc_*`` keys) are re-saved, because
   Streamlit otherwise drops a widget's value as soon as the user switches
   to a page that doesn't render it — and losing live call notes mid-call
@@ -33,9 +35,25 @@ Two things run on every page, before the page itself:
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# The shared business logic lives in this repo's workspace packages
+# (packages/domain, packages/integrations). Locally and on Streamlit Cloud's
+# uv.lock install they're installed; if a deployment only installed
+# requirements.txt, fall back to importing them straight from source so the
+# app never breaks because of how its host installed dependencies.
+try:
+    import archscope_domain  # noqa: F401
+    import archscope_integrations  # noqa: F401
+except ImportError:  # pragma: no cover - depends on the hosting install
+    _root = Path(__file__).resolve().parent
+    sys.path[:0] = [str(_root / "packages" / "domain" / "src"), str(_root / "packages" / "integrations" / "src")]
+
 import streamlit as st
 
 from core.auth import require_login
+from core.feedback_ui import render_feedback_widget
 from core.guide import page_guide
 
 require_login()
@@ -98,5 +116,8 @@ if _guide:
         with st.expander("📖 Guide for this page"):
             st.markdown(_guide)
             st.page_link(user_guide, label="Open the full user guide")
+
+# Floating Feedback button (bottom-right) on every page, for signed-in users.
+render_feedback_widget(pg.title)
 
 pg.run()

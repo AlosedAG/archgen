@@ -13,7 +13,7 @@ API key (Setup page, or ``ANTHROPIC_API_KEY``). Notes themselves are typed
 and kept locally with no key at all — only the Generate buttons need one.
 
 Questions, their input type (dropdown / multiselect / radio / text), and
-their options come from ``config/discovery_options.yaml`` — edit that, not
+their options come from ``packages/domain/src/archscope_domain/config/discovery_options.yaml`` — edit that, not
 this page, to change what's asked. Each choice question also gets an
 "Other (specify)" box, a shorthand notes line, and a "Flag for follow-up"
 checkbox.
@@ -32,7 +32,7 @@ import anthropic
 import streamlit as st
 
 from core.connections import SETUP_URL, get_anthropic_key
-from core.discovery import (
+from archscope_domain.discovery import (
     HUBSPOT_MODULES,
     DiscoveryError,
     answered_count,
@@ -44,9 +44,9 @@ from core.discovery import (
     stream_document,
     suggest_modules,
 )
-from core.discovery_config import INPUT_MULTISELECT, INPUT_SELECT, DiscoveryConfigError, Question
+from archscope_domain.discovery_config import INPUT_MULTISELECT, INPUT_SELECT, DiscoveryConfigError, Question
 from core.doc_export_ui import render_export_footer
-from core.exporters import markdown_to_docx, markdown_to_pdf
+from archscope_domain.exporters import markdown_to_docx, markdown_to_pdf
 from core.project_store import project_name_input
 from core.theme import inject_global_css, render_page_header
 
@@ -108,7 +108,7 @@ def _all_note_keys() -> list[str]:
 
 def _collect_answer(section: str, question: Question) -> dict:
     """One question's widgets, read back as a structured answer (see
-    :func:`core.discovery.empty_answer`)."""
+    :func:`archscope_domain.discovery.empty_answer`)."""
     value = st.session_state.get(_field_key(section, question.key))
     flagged = bool(st.session_state.get(_part_key(section, question, "flag"), False))
     if not question.is_choice:

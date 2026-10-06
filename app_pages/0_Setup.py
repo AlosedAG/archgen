@@ -11,9 +11,9 @@ from __future__ import annotations
 import anthropic
 import streamlit as st
 
-from core.connections import anthropic_key_input, get_anthropic_key, hubspot_token_input
-from core.discovery import model_id
-from core.hubspot_client import HubSpotAPIError, HubSpotClient, HubSpotScopeError, get_token
+from core.connections import anthropic_key_input, get_anthropic_key, get_token, hubspot_client, hubspot_token_input
+from archscope_domain.discovery import model_id
+from archscope_integrations.hubspot import HubSpotAPIError, HubSpotScopeError
 from core.theme import inject_global_css, render_hero, render_page_header
 
 st.set_page_config(page_title="ArchitectureScope — Setup", layout="wide")
@@ -73,7 +73,7 @@ with hs_col:
         hubspot_token_input()
         if get_token() and st.button("Test connection", key="test_hubspot"):
             try:
-                HubSpotClient().get_properties("contacts")
+                hubspot_client().get_properties("contacts")
                 st.success("HubSpot token works — the portal's contact properties are readable.")
             except HubSpotScopeError as exc:
                 st.error(f"Missing scope or invalid token: {exc}")

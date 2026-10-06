@@ -84,7 +84,7 @@ Use it **live, during the discovery call**.
 
 - Notes survive switching pages, but not closing the tab. Use **Back up, restore, or reset call notes** to download a backup mid-call; restore it from the same place.
 - **Start a new call** clears every note and draft before the next client.
-- The questions and dropdown options come from `config/discovery_options.yaml` — ask whoever maintains the app to add or change an option.
+- The questions and dropdown options come from `packages/domain/src/archscope_domain/config/discovery_options.yaml` — ask whoever maintains the app to add or change an option.
 - The business analysis's **Preliminary Scope Signals** section is written as input for the Proposal & SOW Builder.
 - Needs an Anthropic API key (Setup). Notes are sent to Anthropic only when you click a Generate button.
 
@@ -192,6 +192,8 @@ Everything saved from any page, organized by project and document type, each fil
 Files are stored locally in the `project_library/` folder.
 
 ## Troubleshooting
+
+- **Found a bug or have an idea?** Click the orange **Feedback** button in the bottom-right corner of any page, describe it, attach screenshots with the **+** button, and press send. It goes straight to the app owner.
 
 - **"Missing scope or invalid token"** — the HubSpot private app lacks a read scope, or the token was mistyped. Compare against the scope table on the Setup page.
 - **"The Anthropic API key was rejected"** — re-copy the key from console.anthropic.com and paste it again on Setup.

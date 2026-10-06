@@ -1,0 +1,280 @@
+{
+ "pdf": [
+  "HubSpot Property Health Audit\nEvery object and property, rated Keep / Review / Remove candidate - Golden\nPrepared <TODAY> - sampled up to 100 records per object\n3\nProperties audited\n1\nKeep\n1\nReview\n1\nRemove candidate\n67%\nFlagged\n1\nObjects\nRating mix by object\nKeep Review Remove candidate\nContact 1 1 1 3\nEvery custom property received a rating from its fill rate and workflow references. Keep = in active use (or a native HubSpot\nfield, always kept). Review = ambiguous - a human should decide. Remove candidate = under 5% filled and referenced by no\nworkflow - safe to delete after a final check.\nHubSpot Property Health Audit - Golden Page 1",
+  "HubSpot Property Health Audit - Golden\nKey findings\n- 2 custom properties were audited across 1 object(s); 1 are under 5% filled with no workflow referencing them -\nsafe removes after a final check - and 1 more need a human decision.\n- Lowest cleanup scores: Contact (25/100) - start there for the biggest impact.\n- \"Uses\" only counts references found in this portal's workflow actions - forms, lists, reports, and dashboards\naren't read by this tool, so real usage of a property may be higher than shown here.\nRatings by object\nObject Total Keep Review Remove % flagged Score\nContact 3 1 1 1 67% 25\nTOTAL 3 1 1 1 67% 25\nPercentages are of that object's own property count. \"% flagged\" = Review + Remove candidate.\nHubSpot Property Health Audit - Golden Page 2",
+  "HubSpot Property Health Audit - Golden\nMethod & how to read the workbook\nWhat \"used\" means\nTwo signals decide a custom property's rating: Fill % (the share of a sampled batch of records that have a value set)\nand Uses (the number of this portal's workflows whose actions reference the property). This tool is read-only and only\npulls workflows - forms, lists, reports, and dashboards aren't read, so Uses can undercount a property that's only\nreferenced there. Native HubSpot properties are always Keep; only custom properties are ever flagged.\nRating rules\n- Remove candidate - custom, under 5% filled, referenced by no workflow.\n- Review - custom, and either (a) referenced by a workflow but under 25% filled, or (b) 5%+ filled but referenced by no\nworkflow.\n- Keep - native property (always), or custom with 25%+ fill and at least one workflow reference.\nWorkbook tabs\n- Summary - per-object counts and cleanup score, worst-first.\n- All Properties - every one of the 3 properties, one row each, with blank Notes/Tag columns to fill in.\n- Flagged for Action - the 2 custom properties rated Remove candidate or Review, worst first.\nHubSpot Property Health Audit - Golden Page 3",
+  "HubSpot Property Health Audit - Golden\nBreakdown by object\nContact\n3\nTotal\n1\nKeep\n1\nReview\n1\nRemove\n2 custom properties, cleanup score 25/100. Clearest removes: Dead Prop (0% filled).\nHubSpot Property Health Audit - Golden Page 4"
+ ],
+ "result": {
+  "generated_at": "<TIMESTAMP>",
+  "object_summaries": [
+   {
+    "cleanup_score": 25,
+    "custom_count": 2,
+    "keep_count": 1,
+    "object_label": "Contact",
+    "object_type": "contacts",
+    "properties_count": 3,
+    "remove_count": 1,
+    "review_count": 1
+   }
+  ],
+  "rows": [
+   {
+    "assessment": "",
+    "field_type": "string",
+    "fill_pct": 100.0,
+    "internal_name": "email",
+    "is_custom": false,
+    "object_label": "Contact",
+    "object_type": "contacts",
+    "property_label": "Email",
+    "rating": "Keep",
+    "uses": 0
+   },
+   {
+    "assessment": "Custom · 0% filled · 0 workflows reference it — safe to delete after a final check.",
+    "field_type": "string",
+    "fill_pct": 0.0,
+    "internal_name": "dead_prop",
+    "is_custom": true,
+    "object_label": "Contact",
+    "object_type": "contacts",
+    "property_label": "Dead Prop",
+    "rating": "Remove candidate",
+    "uses": 0
+   },
+   {
+    "assessment": "Custom · only 10% filled though 1 workflow references it — review.",
+    "field_type": "string",
+    "fill_pct": 10.0,
+    "internal_name": "referenced_prop",
+    "is_custom": true,
+    "object_label": "Contact",
+    "object_type": "contacts",
+    "property_label": "Referenced Prop",
+    "rating": "Review",
+    "uses": 1
+   }
+  ],
+  "sample_size": 100,
+  "warnings": []
+ },
+ "xlsx": {
+  "All Properties": [
+   [
+    "Object",
+    "Property",
+    "Internal name",
+    "Type",
+    "Custom",
+    "Fill %",
+    "Uses",
+    "Rating",
+    "Assessment",
+    "Notes",
+    "Tag"
+   ],
+   [
+    "Contact",
+    "Email",
+    "email",
+    "string",
+    "No",
+    100,
+    0,
+    "Keep",
+    null,
+    null,
+    null
+   ],
+   [
+    "Contact",
+    "Dead Prop",
+    "dead_prop",
+    "string",
+    "Yes",
+    0,
+    0,
+    "Remove candidate",
+    "Custom · 0% filled · 0 workflows reference it — safe to delete after a final check.",
+    null,
+    null
+   ],
+   [
+    "Contact",
+    "Referenced Prop",
+    "referenced_prop",
+    "string",
+    "Yes",
+    10,
+    1,
+    "Review",
+    "Custom · only 10% filled though 1 workflow references it — review.",
+    null,
+    null
+   ]
+  ],
+  "Flagged for Action": [
+   [
+    "Object",
+    "Property",
+    "Internal name",
+    "Type",
+    "Fill %",
+    "Uses",
+    "Rating",
+    "Assessment",
+    "Notes",
+    "Tag"
+   ],
+   [
+    "Contact",
+    "Dead Prop",
+    "dead_prop",
+    "string",
+    0,
+    0,
+    "Remove candidate",
+    "Custom · 0% filled · 0 workflows reference it — safe to delete after a final check.",
+    null,
+    null
+   ],
+   [
+    "Contact",
+    "Referenced Prop",
+    "referenced_prop",
+    "string",
+    10,
+    1,
+    "Review",
+    "Custom · only 10% filled though 1 workflow references it — review.",
+    null,
+    null
+   ]
+  ],
+  "How to use": [
+   [
+    "How to use this workbook",
+    null
+   ],
+   [
+    null,
+    null
+   ],
+   [
+    "Summary",
+    "Per-object counts and cleanup score. Sorted worst-first. Score recalculates if you edit the counts."
+   ],
+   [
+    "All Properties",
+    "Every one of the 3 properties, one row each. Filter/sort by Fill %, Uses, Custom, or Rating. Write in Notes and Tag."
+   ],
+   [
+    "Flagged for Action",
+    "The 2 custom properties rated Remove candidate or Review, worst first — the actual cleanup worklist."
+   ],
+   [
+    null,
+    null
+   ],
+   [
+    "Custom = Yes",
+    "A custom (non-default) property. Only custom properties are ever flagged; native HubSpot properties are always Keep."
+   ],
+   [
+    "Fill %",
+    "Share of a sample of up to 100 records that have a value for this property. 0.0 = never populated in the sample."
+   ],
+   [
+    "Uses",
+    "Number of this portal's workflows whose actions reference the property. This tool only reads workflows — forms, lists, reports, and dashboards aren't pulled, so a property used only in one of those will still show 0 here."
+   ],
+   [
+    null,
+    null
+   ],
+   [
+    "Rating key",
+    null
+   ],
+   [
+    "Keep",
+    "Native property, or custom and healthy (well filled and/or referenced by a workflow) — leave it."
+   ],
+   [
+    "Review",
+    "Custom, partially filled or referenced — decide case by case."
+   ],
+   [
+    "Remove candidate",
+    "Custom, under 5% filled and referenced by no workflow — safe to delete after a final check."
+   ]
+  ],
+  "Summary": [
+   [
+    "HubSpot Property Health Audit",
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   [
+    "Custom-property cleanup, ranked by usage — Golden",
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   [
+    "Generated <TODAY> · sampled up to 100 records per object · Cleanup score = 100 × (1 − (Remove + ½·Review) ÷ Custom)",
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   [
+    "Object",
+    "Properties",
+    "Custom",
+    "Remove candidate",
+    "Review",
+    "Keep",
+    "Cleanup score"
+   ],
+   [
+    "Contact",
+    3,
+    2,
+    1,
+    1,
+    1,
+    25
+   ],
+   [
+    "TOTAL",
+    3,
+    2,
+    1,
+    1,
+    1,
+    25
+   ]
+  ]
+ }
+}

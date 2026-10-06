@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import streamlit as st
 
-from core.docgen import DocumentationGenerator, snapshot_to_docx, snapshot_to_markdown
+from archscope_domain.docgen import DocumentationGenerator, snapshot_to_docx, snapshot_to_markdown
 from core.doc_export_ui import save_to_library_button
-from core.connections import require_hubspot_token
-from core.hubspot_client import HubSpotAPIError, HubSpotClient, HubSpotScopeError
+from core.connections import hubspot_client, require_hubspot_token
+from archscope_integrations.hubspot import HubSpotAPIError, HubSpotScopeError
 from core.project_store import project_name_input
 from core.theme import inject_global_css, render_page_header
 
@@ -30,7 +30,7 @@ button_label = "Refresh from portal" if has_snapshot else "Pull from portal"
 
 if st.button(button_label, type="primary"):
     try:
-        client = HubSpotClient()
+        client = hubspot_client()
         generator = DocumentationGenerator(client)
         with st.spinner("Pulling schemas, properties, pipelines, workflows, owners, and teams..."):
             st.session_state["portal_snapshot"] = generator.build_snapshot()
