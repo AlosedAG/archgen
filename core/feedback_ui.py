@@ -109,7 +109,7 @@ def render_feedback_widget(page_title: str) -> None:
             with st.container(key="feedback_panel"):
                 st.markdown("**Something not working? Have an idea?**")
                 st.caption(
-                    f"Tell us what happened and attach screenshots with the paperclip. "
+                    f"Tell us what happened and attach screenshots with the + button. "
                     f"It goes straight to Aylin — we add the page you're on ({page_title}) automatically."
                 )
                 kind = st.segmented_control(

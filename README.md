@@ -450,7 +450,7 @@ cases, so the business-analysis prompt itself is unchanged.
 
 Every page has an orange **Feedback** button in the bottom-right corner.
 It opens a small chat where users pick **Bug / Idea / Question**, describe
-what happened, attach up to 5 screenshots or PDFs (paperclip), and press
+what happened, attach up to 5 screenshots or PDFs (the + button), and press
 send. The app emails it to the owner with the page name, time and the
 signed-in user's address (set as Reply-To, so answering is one click).
 
