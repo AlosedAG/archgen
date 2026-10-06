@@ -7,7 +7,8 @@ import streamlit as st
 from core.audit import PortalAuditor, findings_to_csv, findings_to_markdown
 from core.docgen import DocumentationGenerator
 from core.doc_export_ui import save_to_library_button
-from core.hubspot_client import HubSpotAPIError, HubSpotClient, HubSpotScopeError, get_token
+from core.connections import require_hubspot_token
+from core.hubspot_client import HubSpotAPIError, HubSpotClient, HubSpotScopeError
 from core.project_store import project_name_input
 from core.theme import inject_global_css, render_page_header
 from rules.engine import RulesEngine
@@ -31,46 +32,7 @@ st.caption(
 
 project_name_input(label="Project name (for saving results to the library)")
 
-if not get_token():
-    with st.expander("How do I get a HubSpot API key?"):
-        st.markdown(
-            "1. In HubSpot, go to **Settings → Integrations → Private Apps**.\n"
-            "2. Click **Create a private app**, give it a name (e.g. \"ArchitectureScope Audit\") "
-            "on the **Basic Info** tab.\n"
-            "3. On the **Scopes** tab, add the read scopes below — this tool never writes to "
-            "your portal, so no write scopes are needed.\n"
-            "4. Click **Create app**, confirm, then copy the generated **access token** "
-            "(shown once) and paste it below.\n\n"
-            "Full walkthrough: "
-            "[developers.hubspot.com/docs/api/private-apps](https://developers.hubspot.com/docs/api/private-apps)."
-        )
-        st.markdown(
-            "**Required scopes** (exact names occasionally shift in HubSpot's scope picker — "
-            "if a pull fails with a scope error, the app will tell you which one's likely missing):\n\n"
-            "| Used for | Scopes |\n"
-            "|---|---|\n"
-            "| Standard object schemas & properties | `crm.schemas.contacts.read`, "
-            "`crm.schemas.companies.read`, `crm.schemas.deals.read`, `tickets` |\n"
-            "| Custom object schemas & properties | `crm.schemas.custom.read` |\n"
-            "| Record sampling (unused/required property & orphan checks) | "
-            "`crm.objects.contacts.read`, `crm.objects.companies.read`, `crm.objects.deals.read`, "
-            "`crm.objects.tickets.read`, `crm.objects.custom.read` |\n"
-            "| Pipelines | covered by the object read scopes above |\n"
-            "| Workflows (legacy Automation API) | `automation` |\n"
-            "| Owners | `crm.objects.owners.read` |\n"
-            "| Teams | `settings.users.teams.read` |\n\n"
-            "You can grant a subset — the audit will report what it couldn't pull as a warning "
-            "rather than failing outright."
-        )
-    st.text_input(
-        "HubSpot private app access token",
-        type="password",
-        key="hubspot_token",
-        help="Stored only in this session's memory — never written to disk or logged. "
-        "You can also set the HUBSPOT_TOKEN environment variable instead.",
-    )
-else:
-    st.success("HubSpot token detected.")
+require_hubspot_token()
 
 has_snapshot = "portal_snapshot" in st.session_state
 pull_col, audit_col = st.columns(2)

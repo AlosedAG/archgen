@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import csv
 import io
+import re
 
 import pandas as pd
 from docx import Document
@@ -192,4 +193,115 @@ def sections_to_pdf(title: str, subtitle: str, sections: list[Section]) -> bytes
                     data_row.cell(_pdf_safe(str(row.get(col, "") or "")))
         pdf.ln(3)
 
+    return bytes(pdf.output())
+
+
+# ---- Markdown documents (AI-drafted output, e.g. Discovery Call Assistant) ----
+#
+# Deliberately a small subset of Markdown — '#'/'##'/'###' headings, '-'/'*'
+# and '1.' list items, **bold**, and plain paragraphs — which is exactly what
+# the Discovery prompt asks the model to produce. Anything else (a stray
+# table row, a code fence) falls through as a plain paragraph rather than
+# failing the export.
+
+_MD_HEADING = re.compile(r"^(#{1,6})\s+(.*)$")
+_MD_BULLET = re.compile(r"^(\s*)[-*•]\s+(.*)$")
+_MD_NUMBERED = re.compile(r"^(\s*)\d+[.)]\s+(.*)$")
+_MD_BOLD = re.compile(r"\*\*(.+?)\*\*")
+
+
+def _md_blocks(markdown: str) -> list[tuple[str, int, str]]:
+    """``(kind, level, text)`` per line: kind is heading/bullet/numbered/para;
+    level is the heading depth or the list indent depth."""
+    blocks: list[tuple[str, int, str]] = []
+    for raw in markdown.splitlines():
+        line = raw.rstrip()
+        if not line.strip() or line.strip() in {"---", "***", "___"}:
+            continue
+        if m := _MD_HEADING.match(line.strip()):
+            blocks.append(("heading", len(m.group(1)), m.group(2).strip().strip("*").strip()))
+        elif m := _MD_BULLET.match(line):
+            blocks.append(("bullet", len(m.group(1)) // 2, m.group(2)))
+        elif m := _MD_NUMBERED.match(line):
+            blocks.append(("numbered", len(m.group(1)) // 2, m.group(2)))
+        else:
+            blocks.append(("para", 0, line.strip()))
+    return blocks
+
+
+def _add_md_runs(paragraph, text: str) -> None:
+    """Add ``text`` to a python-docx paragraph, rendering **bold** spans."""
+    pos = 0
+    for m in _MD_BOLD.finditer(text):
+        if m.start() > pos:
+            paragraph.add_run(text[pos : m.start()])
+        paragraph.add_run(m.group(1)).bold = True
+        pos = m.end()
+    if pos < len(text):
+        paragraph.add_run(text[pos:])
+
+
+def markdown_to_docx(markdown: str, *, title: str = "") -> io.BytesIO:
+    """Word document from Markdown. If the Markdown has no '#' title of its
+    own, ``title`` is added as one."""
+    doc = Document()
+    blocks = _md_blocks(markdown)
+    if title and not (blocks and blocks[0][0] == "heading" and blocks[0][1] == 1):
+        doc.add_heading(title, level=0)
+    for kind, level, text in blocks:
+        if kind == "heading":
+            doc.add_heading(text, level=0 if level == 1 else min(level - 1, 4))
+            continue
+        if kind in ("bullet", "numbered"):
+            style = "List Bullet" if kind == "bullet" else "List Number"
+            if level >= 1:
+                style += " 2"
+            paragraph = doc.add_paragraph(style=style)
+        else:
+            paragraph = doc.add_paragraph()
+        _add_md_runs(paragraph, text)
+    buffer = io.BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    return buffer
+
+
+def markdown_to_pdf(markdown: str, *, title: str = "") -> bytes:
+    """Portrait PDF from Markdown, using fpdf2's own ``**bold**`` markup."""
+    pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.set_margins(18, 18, 18)
+    pdf.add_page()
+
+    def _write(text: str, height: float, *, indent: float = 0.0, markdown_text: bool = True) -> None:
+        pdf.set_x(pdf.l_margin + indent)
+        pdf.multi_cell(
+            pdf.epw - indent, height, _pdf_safe(text), markdown=markdown_text, new_x=XPos.LMARGIN, new_y=YPos.NEXT
+        )
+
+    blocks = _md_blocks(markdown)
+    if title and not (blocks and blocks[0][0] == "heading" and blocks[0][1] == 1):
+        blocks.insert(0, ("heading", 1, title))
+
+    heading_sizes = {1: 18, 2: 14, 3: 12}
+    numbers: dict[int, int] = {}
+    for kind, level, text in blocks:
+        if kind != "numbered":
+            numbers.clear()
+        if kind == "heading":
+            pdf.ln(3 if level > 1 else 0)
+            pdf.set_font("Helvetica", "B", heading_sizes.get(level, 11))
+            _write(text, 8 if level <= 2 else 6, markdown_text=False)
+            pdf.ln(1)
+            continue
+        pdf.set_font("Helvetica", "", 10)
+        indent = 5.0 * (level + 1)
+        if kind == "bullet":
+            _write(f"-  {text}", 5.5, indent=indent)
+        elif kind == "numbered":
+            numbers[level] = numbers.get(level, 0) + 1
+            _write(f"{numbers[level]}.  {text}", 5.5, indent=indent)
+        else:
+            _write(text, 5.5)
+            pdf.ln(1.5)
     return bytes(pdf.output())

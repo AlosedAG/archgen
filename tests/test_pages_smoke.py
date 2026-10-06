@@ -18,6 +18,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from streamlit.testing.v1 import AppTest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -275,3 +276,97 @@ def test_router_can_reach_every_page():
         at.switch_page(f"app_pages/{page_path.name}")
         at.run(timeout=20)
         assert not at.exception, f"{page_path.name}: {[str(e) for e in at.exception]}"
+
+
+# ---- Setup, User guide, Discovery Call Assistant ---------------------------
+
+
+def test_sidebar_starts_with_setup_and_lists_pages_in_process_order():
+    """The first sidebar entry must be the API-key Setup page (and the
+    default landing page), followed by the guide and then the numbered steps."""
+    source = (REPO_ROOT / "Home.py").read_text(encoding="utf-8")
+    nav = source[source.index("st.navigation(") :]
+    order = [
+        "setup",
+        "user_guide",
+        "discovery_assistant",
+        "requirements_document",
+        "joint_evaluation_plan",
+        "portal_auditor",
+        "architecture_generator",
+        "proposal_builder",
+        "test_case_document",
+        "project_library",
+    ]
+    positions = [nav.index(name) for name in order]
+    assert positions == sorted(positions)
+    assert 'url_path="Setup", default=True' in source
+
+
+def test_router_lands_on_setup_page():
+    at = AppTest.from_file(str(REPO_ROOT / "Home.py"))
+    at.run(timeout=20)
+    assert not at.exception, [str(e) for e in at.exception]
+    assert any("Connect your API keys" in m.value for m in at.markdown)
+
+
+def test_router_shows_page_guide_in_sidebar():
+    at = AppTest.from_file(str(REPO_ROOT / "Home.py"))
+    at.run(timeout=20)
+    at.switch_page("app_pages/2_Portal_Auditor.py")
+    at.run(timeout=20)
+    assert not at.exception, [str(e) for e in at.exception]
+    assert "📖 Guide for this page" in [e.label for e in at.sidebar.expander]
+
+
+def test_pasted_key_survives_switching_pages():
+    at = AppTest.from_file(str(REPO_ROOT / "Home.py"))
+    at.run(timeout=20)
+    key_inputs = [t for t in at.text_input if t.label == "Anthropic API key"]
+    if not key_inputs:
+        pytest.skip("ANTHROPIC_API_KEY is set in this environment, so there's no input to paste into")
+    key_inputs[0].input("sk-ant-test-1234").run(timeout=20)
+    at.switch_page("app_pages/6_Requirements_Document.py")
+    at.run(timeout=20)
+    assert at.session_state["anthropic_api_key"] == "sk-ant-test-1234"
+
+
+def test_user_guide_page_renders():
+    _run("12_User_Guide.py")
+
+
+def test_discovery_page_renders_with_no_state():
+    _run("11_Discovery_Call_Assistant.py")
+
+
+def test_discovery_notes_survive_switching_pages():
+    at = AppTest.from_file(str(REPO_ROOT / "Home.py"))
+    at.run(timeout=20)
+    at.switch_page("app_pages/11_Discovery_Call_Assistant.py")
+    at.run(timeout=20)
+    kpi = [t for t in at.text_area if t.label == "KPIs — how will they measure success?"][0]
+    kpi.input("lead-to-patient rate").run(timeout=20)
+    at.switch_page("app_pages/6_Requirements_Document.py")
+    at.run(timeout=20)
+    at.switch_page("app_pages/11_Discovery_Call_Assistant.py")
+    at.run(timeout=20)
+    assert not at.exception, [str(e) for e in at.exception]
+    kpi = [t for t in at.text_area if t.label == "KPIs — how will they measure success?"][0]
+    assert kpi.value == "lead-to-patient rate"
+
+
+def test_discovery_page_renders_and_exports_a_generated_document(monkeypatch, tmp_path):
+    monkeypatch.setenv("PROJECT_LIBRARY_DIR", str(tmp_path))
+    md = "# Discovery\n## Executive Summary\nA **dental** group.\n## Recommended HubSpot Modules\n- Sales Hub — pipelines\n"
+    at = _run(
+        "11_Discovery_Call_Assistant.py",
+        timeout=20,
+        disc_ba_output=md,
+        report_project_name="Bright Smiles",
+    )
+    labels = [b.label for b in at.button]
+    assert "Use the hubs recommended in the business analysis" in labels
+    save = [b for b in at.button if b.label == "Save to Project Library"][0]
+    at = save.click().run(timeout=20)
+    assert not at.exception, [str(e) for e in at.exception]
+    assert {d.filename.rsplit(".", 1)[-1] for d in list_documents("Bright Smiles")} == {"docx", "pdf", "md"}
