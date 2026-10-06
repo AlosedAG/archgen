@@ -18,6 +18,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from streamlit.testing.v1 import AppTest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -275,3 +276,136 @@ def test_router_can_reach_every_page():
         at.switch_page(f"app_pages/{page_path.name}")
         at.run(timeout=20)
         assert not at.exception, f"{page_path.name}: {[str(e) for e in at.exception]}"
+
+
+# ---- Setup, User guide, Discovery Call Assistant ---------------------------
+
+
+def test_sidebar_starts_with_setup_and_lists_pages_in_process_order():
+    """The first sidebar entry must be the API-key Setup page (and the
+    default landing page), followed by the guide and then the numbered steps."""
+    source = (REPO_ROOT / "Home.py").read_text(encoding="utf-8")
+    nav = source[source.index("st.navigation(") :]
+    order = [
+        "setup",
+        "user_guide",
+        "discovery_assistant",
+        "requirements_document",
+        "joint_evaluation_plan",
+        "portal_auditor",
+        "architecture_generator",
+        "proposal_builder",
+        "test_case_document",
+        "project_library",
+    ]
+    positions = [nav.index(name) for name in order]
+    assert positions == sorted(positions)
+    assert 'url_path="Setup", default=True' in source
+
+
+def test_router_lands_on_setup_page():
+    at = AppTest.from_file(str(REPO_ROOT / "Home.py"))
+    at.run(timeout=20)
+    assert not at.exception, [str(e) for e in at.exception]
+    assert any("Connect your API keys" in m.value for m in at.markdown)
+
+
+def test_router_shows_page_guide_in_sidebar():
+    at = AppTest.from_file(str(REPO_ROOT / "Home.py"))
+    at.run(timeout=20)
+    at.switch_page("app_pages/2_Portal_Auditor.py")
+    at.run(timeout=20)
+    assert not at.exception, [str(e) for e in at.exception]
+    assert "📖 Guide for this page" in [e.label for e in at.sidebar.expander]
+
+
+def test_pasted_key_survives_switching_pages():
+    at = AppTest.from_file(str(REPO_ROOT / "Home.py"))
+    at.run(timeout=20)
+    key_inputs = [t for t in at.text_input if t.label == "Anthropic API key"]
+    if not key_inputs:
+        pytest.skip("ANTHROPIC_API_KEY is set in this environment, so there's no input to paste into")
+    key_inputs[0].input("sk-ant-test-1234").run(timeout=20)
+    at.switch_page("app_pages/6_Requirements_Document.py")
+    at.run(timeout=20)
+    assert at.session_state["anthropic_api_key"] == "sk-ant-test-1234"
+
+
+def test_user_guide_page_renders():
+    _run("12_User_Guide.py")
+
+
+def test_discovery_page_renders_with_no_state():
+    _run("11_Discovery_Call_Assistant.py")
+
+
+def test_discovery_notes_survive_switching_pages():
+    at = AppTest.from_file(str(REPO_ROOT / "Home.py"))
+    at.run(timeout=20)
+    at.switch_page("app_pages/11_Discovery_Call_Assistant.py")
+    at.run(timeout=20)
+    kpi = [m for m in at.multiselect if m.label == "KPIs — how will they measure success?"][0]
+    kpi.select("Win rate").select("Other (specify)").run(timeout=20)
+    at.text_input(key="disc_goals_kpis__other").input("demo-to-close").run(timeout=20)
+    at.text_input(key="disc_goals_kpis__notes").input("target 25%").run(timeout=20)
+    at.checkbox(key="disc_goals_timeline__flag").check().run(timeout=20)
+    at.text_area(key="disc_goals_long_term_goals").input("open 3 clinics").run(timeout=20)
+    at.switch_page("app_pages/6_Requirements_Document.py")
+    at.run(timeout=20)
+    at.switch_page("app_pages/11_Discovery_Call_Assistant.py")
+    at.run(timeout=20)
+    assert not at.exception, [str(e) for e in at.exception]
+    assert at.multiselect(key="disc_goals_kpis").value == ["Win rate", "Other (specify)"]
+    assert at.text_input(key="disc_goals_kpis__other").value == "demo-to-close"
+    assert at.text_input(key="disc_goals_kpis__notes").value == "target 25%"
+    assert at.checkbox(key="disc_goals_timeline__flag").value is True
+    assert at.text_area(key="disc_goals_long_term_goals").value == "open 3 clinics"
+    assert any("Flagged for follow-up (1)" in m.value for m in at.markdown)
+
+
+def test_discovery_old_free_text_and_stale_options_are_kept():
+    """Free-text answers from a pre-dropdown notes backup, and selections of
+    options since removed from the YAML, must render without error and
+    without losing what the specialist typed."""
+    at = _run(
+        "11_Discovery_Call_Assistant.py",
+        timeout=20,
+        disc_goals_kpis="lead-to-patient rate",
+        disc_data_compliance=["HIPAA", "An option removed from the YAML"],
+        disc_goals_timeline=["1–3 months", "3–6 months"],
+    )
+    assert at.multiselect(key="disc_goals_kpis").value == []
+    assert at.text_input(key="disc_goals_kpis__notes").value == "lead-to-patient rate"
+    assert at.multiselect(key="disc_data_compliance").value == ["HIPAA", "Other (specify)"]
+    assert at.text_input(key="disc_data_compliance__other").value == "An option removed from the YAML"
+    assert at.selectbox(key="disc_goals_timeline").value == "1–3 months"
+    assert at.text_input(key="disc_goals_timeline__notes").value == "3–6 months"
+
+
+def test_discovery_page_renders_and_exports_a_generated_document(monkeypatch, tmp_path):
+    monkeypatch.setenv("PROJECT_LIBRARY_DIR", str(tmp_path))
+    md = "# Discovery\n## Executive Summary\nA **dental** group.\n## Recommended HubSpot Modules\n- Sales Hub — pipelines\n"
+    at = _run(
+        "11_Discovery_Call_Assistant.py",
+        timeout=20,
+        disc_ba_output=md,
+        report_project_name="Bright Smiles",
+    )
+    labels = [b.label for b in at.button]
+    assert "Use the hubs recommended in the business analysis" in labels
+    save = [b for b in at.button if b.label == "Save to Project Library"][0]
+    at = save.click().run(timeout=20)
+    assert not at.exception, [str(e) for e in at.exception]
+    assert {d.filename.rsplit(".", 1)[-1] for d in list_documents("Bright Smiles")} == {"docx", "pdf", "md"}
+
+
+def test_discovery_page_explains_a_broken_question_bank(monkeypatch, tmp_path):
+    import core.discovery_config
+
+    bad = tmp_path / "discovery_options.yaml"
+    bad.write_text("sections:\n  Goals:\n    - {id: kpis, label: KPIs, input: dropdown}\n", encoding="utf-8")
+    monkeypatch.setattr(core.discovery_config, "DEFAULT_OPTIONS_PATH", bad)
+    at = _run("11_Discovery_Call_Assistant.py", timeout=20)
+    assert any("question bank" in e.value for e in at.error)
+    assert any("Goals › kpis" in m.value for m in at.markdown)
+    assert not at.multiselect

@@ -1,15 +1,30 @@
 # ArchitectureScope
 
 A HubSpot architecture generator, portal auditor, documentation tool, and
-project-documentation suite for implementation specialists. Ten modules,
+project-documentation suite for implementation specialists. Eleven modules,
 one Streamlit app, loosely modeled on HubSpot's own solutions-architecture
 methodology (Written Requirements Document → ERD → Test Case Document).
 
-The sidebar groups modules by what they do, not just by number: **Architecture
-& Planning** (design a new build), **Auditing** (assess a live portal),
-**Documentation** (generate hand-off records), and **Library**. `Home.py` is
-a thin router built on `st.navigation`/`st.Page` — the sections live there,
-not in the individual page files under `app_pages/`.
+The sidebar follows the order a project actually runs in, so a new user
+can work top to bottom:
+
+| Sidebar section | Pages |
+|---|---|
+| **Start here** | Setup & API keys (landing page), User guide |
+| **Step 1 · Discover** | Discovery Call Assistant, Requirements Document, Joint Evaluation Plan |
+| **Step 2 · Assess current portal** | Portal Auditor, Property Audit, Documentation Generator, Executive Report |
+| **Step 3 · Design** | Architecture Generator, Architecture Diagram |
+| **Step 4 · Propose** | Proposal & SOW Builder |
+| **Step 5 · Deliver & test** | Test Case Document |
+| **Library** | Project Library |
+
+`Home.py` is a thin router built on `st.navigation`/`st.Page` — the order
+and sections live there, not in the page files under `app_pages/` (whose
+file names keep their original module numbers). The router also shows each
+page's own section of the in-app guide ([`docs/user_guide.md`](docs/user_guide.md))
+under **Guide for this page** in the sidebar; the **User guide** page shows
+the whole guide plus the PDF manuals as downloads. When adding a page, add a
+`## <page title>` section to the guide (`tests/test_guide.py` enforces it).
 
 1. **Architecture Generator** — turn a project's requirements into a proposed
    HubSpot architecture blueprint. No API access needed.
@@ -59,6 +74,21 @@ not in the individual page files under `app_pages/`.
     Work PDF: Technical, Management, and Cost volumes, plus a "Scope at a
     Glance" page listing what is included, excluded, available as an
     add-on, or the client's responsibility.
+11. **Discovery Call Assistant** — filled in live during a discovery call.
+    Shorthand notes under Goals / Data / Processes / Solutions Design become
+    (a) a structured business-analysis document — executive summary, current
+    state, requirements, preliminary scope signals for the SOW, and a
+    specific follow-up list for every question left blank — and (b) a
+    plain-language explainer of the HubSpot hubs the client needs. Answers
+    are dropdowns / multiselects with an "Other (specify)" fallback, a
+    shorthand notes line, and a "Flag for follow-up" checkbox per question;
+    the questions and options live in
+    [`config/discovery_options.yaml`](config/discovery_options.yaml) (see
+    [Discovery question bank](#discovery-question-bank)). Drafted by Claude
+    (`core/discovery.py` holds the system prompt); exports `.docx`, `.pdf`, and `.md`. The only module that needs an
+    Anthropic API key, and the only one that sends anything outside your
+    machine besides HubSpot reads — notes go to Anthropic only when a
+    Generate button is clicked.
 
 Modules 6-8 are pure documentation/tracking — no HubSpot API calls, no
 generated logic, no approval gating, and no dependency on any other
@@ -81,22 +111,44 @@ pip install -r requirements.txt
 streamlit run Home.py
 ```
 
-The app opens with a **Home** page and one page per module in the sidebar.
+The app opens on **Setup & API keys**, with every page listed in process order in the sidebar.
+
+### Sign-in
+
+Every page sits behind a sign-in screen (`core/auth.py`): **Sign in with
+Google** and/or **username + password**, configured in
+`.streamlit/secrets.toml` (locally) or the app's **Secrets** box on
+Streamlit Community Cloud. See `.streamlit/secrets.toml.example`:
+
+- `[auth]` enables Google sign-in (Streamlit's built-in OIDC). Only emails in
+  `[access] allowed_emails` or domains in `allowed_domains` get in.
+- `[passwords]` enables username + password. Generate a password hash with
+  `python -m core.auth`.
+
+With neither configured the app refuses to open. For local development
+without sign-in, set `AUTH_DISABLED=1` in `.env`.
 
 ## Authentication
 
-Modules 2 and 3 need a HubSpot [private app](https://developers.hubspot.com/docs/api/private-apps)
-access token. Provide it one of two ways:
+The **Setup & API keys** page (first in the sidebar, and the landing page)
+is where both keys go:
 
-- **Environment variable** (recommended for local dev): copy `.env.example`
-  to `.env`, fill in `HUBSPOT_TOKEN`, and export it before running Streamlit
-  (or use a tool like `python-dotenv` / `direnv` to load it automatically).
-- **In the UI**: paste the token into the password-masked field on the
-  Portal Auditor or Documentation Generator page. It's held only in
-  `st.session_state` for that session — never written to disk, never
-  logged, never sent anywhere but HubSpot's API.
+- **HubSpot private app token** — Portal Auditor, Property Audit,
+  Documentation Generator. See [private apps](https://developers.hubspot.com/docs/api/private-apps)
+  and the scope table below.
+- **Anthropic API key** — Discovery Call Assistant only. Create one at
+  [console.anthropic.com](https://console.anthropic.com). The model defaults
+  to `claude-opus-5-5`; override with `ANTHROPIC_MODEL`.
 
-The Architecture Generator (Module 1) needs no token at all.
+Provide each one of two ways:
+
+- **Environment / `.env`** (recommended for regular use): copy `.env.example`
+  to `.env` and fill in `HUBSPOT_TOKEN` / `ANTHROPIC_API_KEY`; the app loads
+  `.env` at startup.
+- **In the UI**: paste into the password-masked fields on the Setup page
+  (the portal pages also offer the HubSpot field inline if no token is set).
+  Held only in `st.session_state` for that session — never written to disk,
+  never logged, never sent anywhere but HubSpot's / Anthropic's API.
 
 `.env` and `.streamlit/secrets.toml` are already in `.gitignore` — don't
 commit real tokens.
@@ -363,6 +415,36 @@ file, or delete one. Purely local files, no database, consistent with the
 rest of the app never touching anything but HubSpot (read-only) and the
 local filesystem.
 
+## Discovery question bank
+
+[`config/discovery_options.yaml`](config/discovery_options.yaml) is the
+single source of truth for every question the Discovery Call Assistant
+asks: its section (Goals, Data, Processes, Solutions Design), its label,
+its input type, and its standard answer options. Edit it to standardize
+options across the team, reword or reorder questions, or add new ones —
+no code changes needed.
+
+- **Input types:** `multiselect` (any number of options), `select`
+  (one, as a dropdown), `radio` (one, shown inline — best for five
+  options or fewer), or `text` (free text, no options).
+- **"Other (specify)"** is appended to every option list automatically
+  (rename it with the top-level `other_option:` key), along with a free-text
+  box for it, a notes line, and a follow-up flag. Don't list those in the YAML.
+- **Ids** are snake_case and unique across all sections. Saved notes
+  refer to questions by id, so rename the `label`, not the `id`, when
+  rewording.
+- **Editing safely:** changes are picked up on the next page refresh. If
+  the file has a mistake, the page lists each bad entry instead of
+  showing the form; `pytest tests/test_discovery_config.py` checks the
+  same thing. Removing an option doesn't lose answers that used it — they
+  move into that question's "Other" text.
+
+The file is loaded and validated by
+[`core/discovery_config.py`](core/discovery_config.py). Answers are sent
+to the AI as one readable line per question (selections, "Other" text,
+then notes), and flagged questions are listed with the section's edge
+cases, so the business-analysis prompt itself is unchanged.
+
 ## Caching
 
 Modules 2 and 3 cache the pulled portal snapshot in
@@ -420,6 +502,8 @@ architecturescope/
 │   ├── 9_Project_Library.py
 │   └── 10_Proposal_SOW_Builder.py
 ├── core/
+│   ├── discovery.py        # Module 11: answers -> AI payload, system prompt, streaming
+│   ├── discovery_config.py # loads + validates config/discovery_options.yaml
 │   ├── models.py           # shared dataclasses for all modules
 │   ├── hubspot_client.py   # read-only API client: pagination, 429 backoff, scope errors
 │   ├── blueprint.py        # Module 1 generation + Markdown/JSON export
@@ -434,6 +518,8 @@ architecturescope/
 │   ├── proposal_pdf.py     # Module 10: SonaMation-branded proposal/SOW PDF
 │   ├── theme.py             # brand CSS + the audit .xlsx/PDF color palette (matches examples/)
 │   └── project_store.py    # Module 9's filesystem-backed save/list/delete
+├── config/
+│   └── discovery_options.yaml  # Discovery Call Assistant questions + dropdown options (editable)
 ├── rules/
 │   ├── rules.yaml         # editable best-practice rules
 │   └── engine.py          # loads rules.yaml, exposes naming/risk checks
