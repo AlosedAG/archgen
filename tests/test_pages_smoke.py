@@ -38,7 +38,12 @@ from archscope_domain.rules import RulesEngine
 PAGES_DIR = Path(__file__).resolve().parent.parent / "app_pages"
 
 
-def _run(page_name: str, *, timeout: float | None = None, **session_state) -> AppTest:
+# AppTest's default per-run timeout is 3s; a page's first (cold) run imports
+# pandas/matplotlib/the HubSpot SDK and can take longer than that on CI runners.
+APPTEST_TIMEOUT = 30
+
+
+def _run(page_name: str, *, timeout: float = APPTEST_TIMEOUT, **session_state) -> AppTest:
     at = AppTest.from_file(str(PAGES_DIR / page_name))
     for key, value in session_state.items():
         at.session_state[key] = value
@@ -187,7 +192,7 @@ def test_wrd_save_to_library_generates_all_four_formats(monkeypatch, tmp_path):
 
     save_buttons = [b for b in at.button if b.label == "Save to Project Library"]
     assert save_buttons, "expected a Save to Project Library button"
-    at = save_buttons[0].click().run()
+    at = save_buttons[0].click().run(timeout=APPTEST_TIMEOUT)
     assert not at.exception, [str(e) for e in at.exception]
 
     docs = list_documents("Acme Corp")
@@ -201,7 +206,7 @@ def test_test_case_document_loads_requirements_from_wrd_snapshot(monkeypatch, tm
 
     load_buttons = [b for b in at.button if "Load requirements" in b.label]
     assert load_buttons and not load_buttons[0].disabled
-    at = load_buttons[0].click().run()
+    at = load_buttons[0].click().run(timeout=APPTEST_TIMEOUT)
     assert not at.exception, [str(e) for e in at.exception]
 
     seed = at.session_state["tcd_rows_seed"]
