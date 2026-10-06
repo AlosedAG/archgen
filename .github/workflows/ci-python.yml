@@ -62,5 +62,13 @@ jobs:
       - name: Legacy Streamlit app (smoke)
         env:
           AUTH_DISABLED: "1"
-        run: uv run --frozen pytest tests -q
+        shell: bash
+        # Failures are re-emitted as annotations so they show on the run summary.
+        run: |
+          set +e
+          uv run --frozen pytest tests -q -rfE --tb=line 2>&1 | tee pytest.log
+          status=${PIPESTATUS[0]}
+          grep -E "^(FAILED|ERROR) " pytest.log | cut -c1-900 | sed 's/^/::error title=pytest::/'
+          grep -E "^(E  |.*Error:)" pytest.log | head -20 | cut -c1-900 | sed 's/^/::error title=detail::/'
+          exit $status
 
