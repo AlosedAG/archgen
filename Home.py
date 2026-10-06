@@ -35,6 +35,21 @@ Three things run on every page, before the page itself:
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# The shared business logic lives in this repo's workspace packages
+# (packages/domain, packages/integrations). Locally and on Streamlit Cloud's
+# uv.lock install they're installed; if a deployment only installed
+# requirements.txt, fall back to importing them straight from source so the
+# app never breaks because of how its host installed dependencies.
+try:
+    import archscope_domain  # noqa: F401
+    import archscope_integrations  # noqa: F401
+except ImportError:  # pragma: no cover - depends on the hosting install
+    _root = Path(__file__).resolve().parent
+    sys.path[:0] = [str(_root / "packages" / "domain" / "src"), str(_root / "packages" / "integrations" / "src")]
+
 import streamlit as st
 
 from core.auth import require_login

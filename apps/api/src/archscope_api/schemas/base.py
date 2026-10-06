@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, TypeVar
 
 from pydantic import BaseModel, ConfigDict, TypeAdapter
+
+_D = TypeVar("_D")
 
 
 class ApiModel(BaseModel):
@@ -24,9 +26,9 @@ def _adapter(cls: type[Any]) -> TypeAdapter[Any]:
     return _ADAPTERS[cls]
 
 
-def to_domain[D](model: BaseModel, cls: type[D], **overrides: Any) -> D:
+def to_domain(model: BaseModel, cls: type[_D], **overrides: Any) -> _D:
     """Build a (nested) domain dataclass from an API model. Pydantic
     validates straight into stdlib dataclasses, so nested objects come out
     as the real domain types rather than dicts."""
-    result: D = _adapter(cls).validate_python({**model.model_dump(), **overrides})
+    result: _D = _adapter(cls).validate_python({**model.model_dump(), **overrides})
     return result

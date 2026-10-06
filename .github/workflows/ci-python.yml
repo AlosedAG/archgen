@@ -21,7 +21,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
-          python-version: "3.12"
+          python-version: "3.11"
       - name: Install workspace (locked)
         run: uv sync --all-packages --frozen
       - name: Ruff lint
@@ -46,7 +46,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ["3.12", "3.13"]
+        python: ["3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -64,16 +64,3 @@ jobs:
           AUTH_DISABLED: "1"
         run: uv run --frozen pytest tests -q
 
-  domain-py311:
-    name: Domain on Python 3.11 (legacy deploy compatibility)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
-        with:
-          enable-cache: true
-      - name: Domain + integrations tests on 3.11
-        run: >
-          uv run --python 3.11 --isolated --no-project
-          --with ./packages/domain --with ./packages/integrations --with pytest
-          python -m pytest packages/domain/tests packages/integrations/tests -q

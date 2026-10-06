@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable
-from typing import Annotated, Any
+from typing import Annotated, Any, ParamSpec, TypeVar
 
 import anthropic
 from fastapi import Depends, Response
@@ -19,8 +19,11 @@ from ..settings import Settings, get_settings
 
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 
+_P = ParamSpec("_P")
+_R = TypeVar("_R")
 
-async def offload[**P, R](fn: Callable[P, R], *args: P.args, **kwargs: P.kwargs) -> R:
+
+async def offload(fn: Callable[_P, _R], *args: _P.args, **kwargs: _P.kwargs) -> _R:
     """Run blocking / CPU-bound domain work in the threadpool so the event
     loop keeps serving other requests (SSE streams, health checks)."""
     return await run_in_threadpool(fn, *args, **kwargs)
