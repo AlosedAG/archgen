@@ -15,7 +15,7 @@ from fastapi.routing import APIRoute
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from .problems import install_problem_handlers
-from .routers import health
+from .routers import auth, health
 from .routers.v1 import api_router
 from .settings import Settings, get_settings
 
@@ -55,6 +55,8 @@ def _operation_id(route: APIRoute) -> str:
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
+    if not settings.is_dev and settings.secret_key is None:
+        raise RuntimeError("ARCHSCOPE_SECRET_KEY must be set outside local/test (it encrypts stored credentials).")
     logging.basicConfig(level=settings.log_level, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 
     app = FastAPI(
@@ -70,13 +72,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         CORSMiddleware,
         allow_origins=settings.cors_origins,
         allow_credentials=True,
-        allow_methods=["GET", "POST"],
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
         allow_headers=["Content-Type", "X-HubSpot-Token", REQUEST_ID_HEADER],
         expose_headers=[REQUEST_ID_HEADER, "Content-Disposition"],
     )
     app.add_middleware(RequestIdMiddleware)
     install_problem_handlers(app)
     app.include_router(health.router)
+    app.include_router(auth.router)
     app.include_router(api_router)
     return app
 

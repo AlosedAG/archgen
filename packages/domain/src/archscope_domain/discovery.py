@@ -1,5 +1,6 @@
 """Discovery Call Assistant — question bank, request building, and the
-Claude call that turns raw live-call notes into finished documents.
+model call (Claude, or Gemini for free-tier testing) that turns raw
+live-call notes into finished documents.
 
 Two modes, matching the system prompt below:
 
@@ -11,7 +12,9 @@ Two modes, matching the system prompt below:
   hubs for a non-technical client.
 
 The questions themselves (labels, input types, dropdown options) live in
-``config/discovery_options.yaml``, loaded by :mod:`archscope_domain.discovery_config`.
+``config/discovery_options.yaml``, loaded by :mod:`archscope_domain.discovery_config`;
+the conditional follow-ups and required tasks they trigger live in
+``config/discovery_rules.yaml``, loaded by :mod:`archscope_domain.discovery_rules`.
 
 Kept free of Streamlit so it's unit-testable with a fake Anthropic client:
 the page (``app_pages/11_Discovery_Call_Assistant.py``) only collects
@@ -26,7 +29,10 @@ import re
 from collections.abc import Iterator
 from typing import Any
 
+from archscope_domain.discovery_build_order import BuildOrderConfig, load_build_order_config
+from archscope_domain.discovery_checklist import ChecklistConfig, load_checklist_config
 from archscope_domain.discovery_config import Question, QuestionBank, load_question_bank
+from archscope_domain.discovery_rules import DiscoveryRules, Evaluation, load_discovery_rules
 
 DEFAULT_MODEL = "claude-opus-5-5"
 # Server-side refusal fallback: if a safety classifier declines the request,
@@ -34,6 +40,27 @@ DEFAULT_MODEL = "claude-opus-5-5"
 # call instead of returning an empty document.
 FALLBACK_BETA = "server-side-fallback-2026-07-01"
 MAX_TOKENS = 32000
+
+# Gemini, for testing on Google's free tier. Tried in order: when a model's
+# free quota is used up (or it isn't available to the key) the next one is
+# used, so a day of testing gets more runs. Most accurate first:
+# gemini-3.8-flash is the strongest model on the free tier (Gemini 3.1 Pro
+# isn't free); gemini-2.5-pro is the free Pro model, with its own quota;
+# gemini-3.6-flash is the previous-generation Flash. ``GEMINI_MODELS``
+# (comma-separated) overrides the list.
+DEFAULT_GEMINI_MODELS = ("gemini-3.8-flash", "gemini-2.5-pro", "gemini-3.6-flash")
+# Gemini counts thinking tokens against the output limit, so leave room for
+# both the reasoning and a long document.
+GEMINI_MAX_OUTPUT_TOKENS = 65536
+_GEMINI_INCOMPLETE = {
+    "MAX_TOKENS": "The document was cut off before it finished. Try generating again.",
+    "SAFETY": "The model declined to produce this document. Review the notes and try again.",
+    "PROHIBITED_CONTENT": "The model declined to produce this document. Review the notes and try again.",
+    "BLOCKLIST": "The model declined to produce this document. Review the notes and try again.",
+    "SPII": "The model stopped because the notes contain sensitive personal data. Remove it and try again.",
+    "RECITATION": "The model stopped to avoid reproducing copyrighted text. Try generating again.",
+    "OTHER": "The model stopped before the document was finished. Try generating again.",
+}
 
 MODE_BUSINESS_ANALYSIS = "business_analysis"
 MODE_CLIENT_EXPLAINER = "client_explainer"
@@ -44,11 +71,43 @@ def model_id() -> str:
     return os.environ.get("ANTHROPIC_MODEL") or DEFAULT_MODEL
 
 
+def gemini_models() -> tuple[str, ...]:
+    """``GEMINI_MODELS`` env override (comma-separated), else the defaults, most accurate first."""
+    override = [m.strip() for m in os.environ.get("GEMINI_MODELS", "").split(",") if m.strip()]
+    return tuple(override) or DEFAULT_GEMINI_MODELS
+
+
 def question_bank() -> QuestionBank:
     """The discovery question bank from ``config/discovery_options.yaml``
     (re-read when the file changes). Raises
     :class:`~archscope_domain.discovery_config.DiscoveryConfigError` if it's invalid."""
     return load_question_bank()
+
+
+def discovery_rules() -> DiscoveryRules:
+    """The follow-up rules from ``config/discovery_rules.yaml``, validated
+    against the question bank (re-read when either file changes). Raises
+    :class:`~archscope_domain.discovery_config.DiscoveryConfigError` if
+    either is invalid."""
+    return load_discovery_rules(question_bank())
+
+
+def discovery_checklist() -> ChecklistConfig:
+    """The required-tasks checklist config from
+    ``config/discovery_checklist.yaml``, validated against the rules and
+    question bank (re-read when any of them changes). Raises
+    :class:`~archscope_domain.discovery_config.DiscoveryConfigError` if
+    any is invalid."""
+    return load_checklist_config(discovery_rules())
+
+
+def discovery_build_order() -> BuildOrderConfig:
+    """The build-order config from ``config/discovery_build_order.yaml``,
+    validated against the checklist, rules, and question bank (re-read
+    when any of them changes). Raises
+    :class:`~archscope_domain.discovery_config.DiscoveryConfigError` if
+    any is invalid."""
+    return load_build_order_config(discovery_checklist())
 
 
 def sections() -> dict[str, list[Question]]:
@@ -179,6 +238,11 @@ class DiscoveryError(RuntimeError):
 # new payload field so the verbatim system prompt still describes the
 # input exactly — it already tells the model to surface edge cases.
 FOLLOW_UP_PREFIX = "Specialist flagged for follow-up (confirm before scoping): "
+# Likewise, required tasks flagged by discovery_rules.yaml go in the
+# section's edge_cases, and revealed follow-up questions are sent as
+# extra answers labelled with this prefix.
+REQUIRED_TASKS_PREFIX = "Required tasks triggered by the client's answers: "
+FOLLOW_UP_LABEL_PREFIX = "Follow-up: "
 
 
 def empty_answer() -> dict[str, Any]:
@@ -227,8 +291,13 @@ def empty_notes() -> dict[str, dict[str, Any]]:
     }
 
 
-def answered_count(section_notes: dict[str, Any]) -> int:
-    return sum(1 for v in section_notes.get("answers", {}).values() if format_answer(v))
+def answered_count(section_notes: dict[str, Any], question_ids: list[str] | None = None) -> int:
+    """Answers with anything captured — across all of the section's
+    answers, or only ``question_ids`` (e.g. to leave follow-ups out)."""
+    answers = section_notes.get("answers", {})
+    if question_ids is not None:
+        answers = {k: answers.get(k) for k in question_ids}
+    return sum(1 for v in answers.values() if format_answer(v))
 
 
 def flagged_keys(section_notes: dict[str, Any]) -> list[str]:
@@ -256,18 +325,29 @@ def build_business_analysis_input(
     Structured answers are flattened to one line each (see
     :func:`format_answer`), and questions flagged for follow-up are listed
     in the section's ``edge_cases``, so the payload keeps the shape the
-    system prompt describes."""
+    system prompt describes.
+
+    Follow-up questions revealed by ``discovery_rules.yaml`` are sent right
+    after the question that revealed them (blank ones too — they're gaps);
+    hidden follow-ups are left out even if they were answered before being
+    hidden. Tasks the rules flagged are listed in ``edge_cases``."""
     bank = question_bank()
+    rules = discovery_rules()
+    evaluation = rules.evaluate(notes)
     payload_sections: dict[str, Any] = {}
     for section, questions in bank.sections.items():
         section_notes = notes.get(section, {})
         answers = section_notes.get("answers", {})
         edge_cases = str(section_notes.get("edge_cases", "") or "").strip()
-        flagged = [q.label for q in questions if as_answer(answers.get(q.key))["flagged"]]
+        asked = _with_follow_ups(questions, section, rules, evaluation)
+        flagged = [label for q, label in asked if as_answer(answers.get(q.key))["flagged"]]
         if flagged:
             edge_cases = "\n".join(filter(None, [edge_cases, FOLLOW_UP_PREFIX + "; ".join(flagged)]))
+        required = [t.task.label for t in evaluation.tasks if t.section == section]
+        if required:
+            edge_cases = "\n".join(filter(None, [edge_cases, REQUIRED_TASKS_PREFIX + "; ".join(required)]))
         payload_sections[section] = {
-            "answers": {q.label: format_answer(answers.get(q.key), other_option=bank.other_option) for q in questions},
+            "answers": {label: format_answer(answers.get(q.key), other_option=bank.other_option) for q, label in asked},
             "notes": str(section_notes.get("notes", "") or "").strip(),
             "edge_cases": edge_cases,
         }
@@ -276,6 +356,32 @@ def build_business_analysis_input(
         "client": {"name": client_name.strip(), "business_type": business_type.strip()},
         "sections": payload_sections,
     }
+
+
+def _with_follow_ups(
+    questions: list[Question], section: str, rules: DiscoveryRules, evaluation: Evaluation
+) -> list[tuple[Question, str]]:
+    """A section's questions as ``(question, label sent to the model)``,
+    each revealed follow-up stored in this section placed right after the
+    question that revealed it (recursively, for chained follow-ups)."""
+    asked: list[tuple[Question, str]] = []
+    placed: set[str] = set()
+
+    def add(question: Question, label: str) -> None:
+        asked.append((question, label))
+        placed.add(question.key)
+        for follow_up in evaluation.follow_ups.get(question.key, []):
+            if rules.home_sections.get(follow_up.key) == section:
+                add(follow_up, FOLLOW_UP_LABEL_PREFIX + follow_up.label)
+
+    for question in questions:
+        add(question, question.label)
+    # Revealed from another section's question but stored in this one.
+    for follow_ups in evaluation.follow_ups.values():
+        for follow_up in follow_ups:
+            if follow_up.key not in placed and rules.home_sections.get(follow_up.key) == section:
+                add(follow_up, FOLLOW_UP_LABEL_PREFIX + follow_up.label)
+    return asked
 
 
 def build_client_explainer_input(modules: list[str], *, business_type: str = "") -> dict[str, Any]:
@@ -316,6 +422,54 @@ def stream_document(client: Any, payload: dict[str, Any], *, model: str | None =
         raise DiscoveryError("The model declined to produce this document. Review the notes and try again.")
     if final.stop_reason == "max_tokens":
         raise DiscoveryError("The document was cut off before it finished. Try generating again.")
+
+
+def build_gemini_request(payload: dict[str, Any], *, model: str) -> dict[str, Any]:
+    """Keyword arguments for ``client.models.generate_content_stream`` (the
+    google-genai SDK) — the same system prompt and input as the Claude
+    request. Plain dicts, so this module stays free of the SDK."""
+    thinking: dict[str, Any] = (
+        # Gemini 3 models take a level; high = the most careful reasoning
+        # over fragmentary notes (accuracy over speed while testing).
+        {"thinking_level": "high"}
+        if not model.startswith("gemini-2")
+        # Gemini 2.5 takes a token budget; -1 = let the model decide.
+        else {"thinking_budget": -1}
+    )
+    return {
+        "model": model,
+        "contents": json.dumps(payload, ensure_ascii=False, indent=2) + "\n\n" + _FORMAT_NOTE,
+        "config": {
+            "system_instruction": SYSTEM_PROMPT,
+            "max_output_tokens": GEMINI_MAX_OUTPUT_TOKENS,
+            "thinking_config": thinking,
+        },
+    }
+
+
+def _name(value: Any) -> str:
+    """An SDK enum (or plain string) as its name, e.g. FinishReason.STOP -> "STOP"."""
+    return str(getattr(value, "name", value) or "").rsplit(".", 1)[-1].upper()
+
+
+def stream_document_gemini(client: Any, payload: dict[str, Any], *, model: str) -> Iterator[str]:
+    """Like :func:`stream_document`, on a google-genai ``Client``: yield the
+    answer's text as it streams (never the model's thoughts), then raise
+    :class:`DiscoveryError` if the response was blocked or cut off."""
+    finish = ""
+    for chunk in client.models.generate_content_stream(**build_gemini_request(payload, model=model)):
+        feedback = getattr(chunk, "prompt_feedback", None)
+        if feedback is not None and getattr(feedback, "block_reason", None):
+            raise DiscoveryError(_GEMINI_INCOMPLETE["SAFETY"])
+        for candidate in getattr(chunk, "candidates", None) or []:
+            content = getattr(candidate, "content", None)
+            for part in getattr(content, "parts", None) or []:
+                if getattr(part, "text", None) and not getattr(part, "thought", False):
+                    yield part.text
+            if getattr(candidate, "finish_reason", None):
+                finish = _name(candidate.finish_reason)
+    if finish and finish != "STOP":
+        raise DiscoveryError(_GEMINI_INCOMPLETE.get(finish, _GEMINI_INCOMPLETE["OTHER"]))
 
 
 def suggest_modules(business_analysis_md: str) -> list[str]:

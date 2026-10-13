@@ -93,3 +93,16 @@ def test_load_reports_missing_file_and_bad_yaml_and_reloads_on_edit(tmp_path):
     stat = path.stat()
     os.utime(path, ns=(stat.st_atime_ns, stat.st_mtime_ns + 1_000_000_000))
     assert load_question_bank(path).sections["Goals"][0].label == "Renamed"
+
+
+def test_section_descriptions_are_loaded_and_validated():
+    bank = load_question_bank()
+    assert set(bank.descriptions) == set(bank.sections)
+    with pytest.raises(DiscoveryConfigError) as exc:
+        parse_question_bank(
+            {"sections": {"Goals": [{"id": "q", "label": "x"}]}, "section_descriptions": {"Nope": "x", "Goals": " "}}
+        )
+    assert exc.value.problems == [
+        "section_descriptions › Nope: no section by that name",
+        "section_descriptions › Goals: must be non-empty text",
+    ]

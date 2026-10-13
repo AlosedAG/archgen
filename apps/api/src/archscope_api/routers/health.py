@@ -32,4 +32,5 @@ async def readyz(settings: SettingsDep) -> Health:
 
     await offload(architecture.rules_engine)
     await offload(discovery.question_bank)
+    await offload(discovery.discovery_rules)
     return Health(status="ok", version=_version(), environment=settings.environment)

@@ -1,0 +1,158 @@
+# Discovery Call Assistant — "gotcha" rules.
+#
+# Conditional follow-ups: when an answer in discovery_options.yaml (or in
+# a follow-up below) matches a rule's trigger, the page shows the rule's
+# follow-up questions inline under that question and adds the rule's
+# tasks to the "Required tasks" checklist. Edit this file to add rules,
+# follow-ups, or tasks — no code changes needed. Loaded and validated by
+# archscope_domain/discovery_rules.py together with the question bank;
+# edits are picked up on the next page refresh, and an invalid file shows
+# exactly which entry is wrong instead of rendering the form.
+#
+# follow_ups:  extra questions, keyed by id. Same format as a question in
+#              discovery_options.yaml (label / input / options / hint).
+#              Ids must be snake_case and not reuse a question-bank id.
+#              A follow-up's answer is saved under the section of the
+#              first rule that reveals it, so renaming its id orphans
+#              saved notes, as with regular questions.
+# tasks:       required tasks, keyed by id:
+#                label:  the checklist item
+#                detail: optional — shown under the item
+# rules:       a list; each rule has
+#                trigger:
+#                  question_id: a question-bank or follow-up id, which
+#                               must be a choice question (not text)
+#                  value:       one option, or a list of options — the
+#                               rule fires when ANY of them is selected.
+#                               Must match the option text exactly.
+#                reveals: [follow-up ids]   (optional)
+#                flags:   [task ids]        (optional; at least one of
+#                                            reveals / flags is required)
+#
+# Rules can chain: a trigger may point at a follow-up, and fires only
+# while that follow-up is showing. Several rules may reveal the same
+# follow-up or flag the same task; each is shown once.
+
+follow_ups:
+  gdpr_lawful_basis:
+    label: "GDPR — lawful basis for processing EU / UK contacts' data"
+    input: multiselect
+    hint: "Usually consent for marketing email; legitimate interest is common for B2B sales outreach"
+    options:
+      - Consent (opt-in)
+      - Legitimate interest
+      - Performance of a contract
+      - Not sure yet — legal to confirm
+
+  gdpr_consent_capture:
+    label: "GDPR — how is consent captured and stored today?"
+    input: multiselect
+    options:
+      - Consent checkbox on forms
+      - Double opt-in email
+      - Recorded in current CRM / email tool
+      - Captured offline (events, phone)
+      - Not tracked today
+
+  data_residency:
+    label: "Must EU / UK data be hosted in the EU?"
+    input: radio
+    hint: "A HubSpot account's data-hosting region is chosen when the account is created"
+    options:
+      - Yes — legal or contractual requirement
+      - Preferred, not required
+      - "No"
+      - Unknown — legal to confirm
+
+  location_list:
+    label: "Which locations / regions, and how many?"
+    input: text
+
+  location_ownership:
+    label: "Who owns records in each location / region?"
+    input: select
+    options:
+      - One central team owns everything
+      - Each location / region owns its own records
+      - Mixed — depends on the object
+      - Not defined yet
+
+  location_routing:
+    label: "How should leads and tickets route between locations / regions?"
+    input: multiselect
+    options:
+      - By country / state field
+      - By territory or postal code
+      - To the nearest location
+      - Round-robin within a region
+      - Manual assignment
+      - Not defined yet
+
+  region_differences:
+    label: "What differs between regions?"
+    input: multiselect
+    options:
+      - Multiple currencies
+      - Multiple languages
+      - Multiple time zones
+      - Different sales processes
+      - Nothing significant
+
+tasks:
+  gdpr_consent_setup:
+    label: "Set up GDPR consent / subscription types"
+    detail: "Turn on GDPR tools, define subscription types, and add consent checkboxes to every form"
+  gdpr_lawful_basis_tracking:
+    label: "Record the lawful basis for processing on contacts"
+  gdpr_data_residency:
+    label: "Configure data residency considerations"
+    detail: "Confirm where EU / UK data must live, and document it before the account is created"
+  eu_data_hosting:
+    label: "Create the HubSpot account in the EU data center"
+    detail: "Can't be changed after creation — confirm before provisioning"
+  location_teams:
+    label: "Set up teams and record ownership per location / region"
+  location_routing_rules:
+    label: "Build lead and ticket routing per location / region"
+  location_reporting:
+    label: "Add a location / region property and per-location reporting"
+  multi_currency:
+    label: "Configure multi-currency with one base currency"
+  multi_language:
+    label: "Plan multi-language email, forms, and pages"
+
+rules:
+  # EU / UK contacts → GDPR.
+  - trigger: {question_id: data_regions, value: "EU / UK"}
+    reveals: [gdpr_lawful_basis, gdpr_consent_capture, data_residency]
+    flags: [gdpr_consent_setup, gdpr_lawful_basis_tracking, gdpr_data_residency]
+
+  - trigger: {question_id: compliance, value: GDPR}
+    reveals: [gdpr_lawful_basis, gdpr_consent_capture]
+    flags: [gdpr_consent_setup, gdpr_lawful_basis_tracking]
+
+  - trigger: {question_id: compliance, value: Data residency requirements}
+    reveals: [data_residency]
+    flags: [gdpr_data_residency]
+
+  - trigger: {question_id: data_residency, value: "Yes — legal or contractual requirement"}
+    flags: [eu_data_hosting]
+
+  # More than one location → per-location ownership and routing.
+  - trigger:
+      question_id: org_structure
+      value:
+        - Multiple locations (same country)
+        - Multi-region / international
+        - Franchise model
+    reveals: [location_list, location_ownership, location_routing]
+    flags: [location_teams, location_routing_rules, location_reporting]
+
+  - trigger: {question_id: org_structure, value: Multi-region / international}
+    reveals: [region_differences]
+
+  - trigger: {question_id: region_differences, value: Multiple currencies}
+    flags: [multi_currency]
+
+  - trigger: {question_id: region_differences, value: Multiple languages}
+    flags: [multi_language]

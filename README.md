@@ -84,7 +84,14 @@ the whole guide plus the PDF manuals as downloads. When adding a page, add a
     shorthand notes line, and a "Flag for follow-up" checkbox per question;
     the questions and options live in
     [`packages/domain/src/archscope_domain/config/discovery_options.yaml`](packages/domain/src/archscope_domain/config/discovery_options.yaml) (see
-    [Discovery question bank](#discovery-question-bank)). Drafted by Claude
+    [Discovery question bank](#discovery-question-bank)). Answers like EU / UK
+    contacts or multiple locations reveal follow-up questions and add
+    required tasks to a checklist, driven by `discovery_rules.yaml` (see
+    [Discovery "gotcha" rules](#discovery-gotcha-rules)), and those tasks plus
+    the scope captured export as a required-tasks checklist (see
+    [Discovery required-tasks checklist](#discovery-required-tasks-checklist)) and
+    as a categorized build order with reusable-template items tagged (see
+    [Discovery build order](#discovery-build-order)). Drafted by Claude
     (`packages/domain/src/archscope_domain/discovery.py` holds the system prompt); exports `.docx`, `.pdf`, and `.md`. The only module that needs an
     Anthropic API key, and the only one that sends anything outside your
     machine besides HubSpot reads — notes go to Anthropic only when a
@@ -431,6 +438,8 @@ no code changes needed.
 - **"Other (specify)"** is appended to every option list automatically
   (rename it with the top-level `other_option:` key), along with a free-text
   box for it, a notes line, and a follow-up flag. Don't list those in the YAML.
+- **Section intros:** the optional top-level `section_descriptions:` maps a
+  section name to the one-line intro shown under its heading (both apps).
 - **Ids** are snake_case and unique across all sections. Saved notes
   refer to questions by id, so rename the `label`, not the `id`, when
   rewording.
@@ -445,6 +454,150 @@ The file is loaded and validated by
 to the AI as one readable line per question (selections, "Other" text,
 then notes), and flagged questions are listed with the section's edge
 cases, so the business-analysis prompt itself is unchanged.
+
+### Discovery "gotcha" rules
+
+[`packages/domain/src/archscope_domain/config/discovery_rules.yaml`](packages/domain/src/archscope_domain/config/discovery_rules.yaml)
+holds the conditional follow-ups: when a specific answer is picked, the
+page reveals extra questions inline under it (marked **↳ Follow-up**)
+and adds required tasks to a **Required tasks** checklist above the
+sections. Each rule is
+
+```yaml
+- trigger: {question_id: data_regions, value: "EU / UK"}   # value: one option, or a list (any of)
+  reveals: [gdpr_lawful_basis, data_residency]              # ids under follow_ups:
+  flags: [gdpr_consent_setup, gdpr_data_residency]          # ids under tasks:
+```
+
+with the follow-up questions (same format as the question bank) and the
+tasks (`label`, optional `detail`) defined in the same file. Shipped
+rules cover EU / UK contacts or GDPR (lawful basis, consent capture,
+data residency) and more than one location (per-location ownership and
+routing). A trigger can point at a follow-up, so rules chain — e.g.
+multi-region → "What differs between regions?" → multiple currencies →
+a multi-currency task.
+
+Every reference is checked against the question bank on load: an
+unknown id, or a trigger `value` that isn't exactly one of the
+question's options, is listed on the page instead of the rule silently
+never firing (`pytest packages/domain/tests/test_discovery_rules.py`
+checks the same). Revealed follow-ups are sent to the AI right after the
+question that revealed them — blank ones become gaps — and required
+tasks are listed with the section's edge cases. Loaded by
+[`packages/domain/src/archscope_domain/discovery_rules.py`](packages/domain/src/archscope_domain/discovery_rules.py).
+
+### Discovery required-tasks checklist
+
+The Discovery Call Assistant's **3 · Required-tasks checklist** tab turns
+the call into a checklist with two parts: **Required tasks** (everything
+the gotcha rules flagged) and **Scope items** (one row per option picked
+on selected questions — each integration, must-have feature, automation,
+custom data element). Every row has the task, why it's required (the
+answer that triggered it), and an empty **Status / Notes** column. It
+exports as `.docx`, `.xlsx`, `.csv`, and `.pdf`, and **Save to Project
+Library** files it under the client as "Discovery Checklist".
+
+Which questions produce scope items is set in
+[`packages/domain/src/archscope_domain/config/discovery_checklist.yaml`](packages/domain/src/archscope_domain/config/discovery_checklist.yaml):
+
+```yaml
+scope_items:
+  - question_id: integrations      # a choice question or follow-up id
+    name: "Integration"            # optional item prefix -> "Integration: Salesforce"
+  - question_id: custom_data
+    name: "Custom data"
+    exclude: [None identified]     # optional options that aren't scope
+```
+
+A picked "Other (specify)" becomes an item with the typed text. Like the
+other discovery files it's validated on load (unknown ids, text
+questions, and `exclude` options that don't match exactly are listed on
+the page). Loaded by
+[`packages/domain/src/archscope_domain/discovery_checklist.py`](packages/domain/src/archscope_domain/discovery_checklist.py).
+
+### Deal Stage Planner (pre-call template + import)
+
+The **Deal Stage Planner** page (Step 1) exports SonaMation's HubSpot Deal
+Stage Planner as a pre-call template (.xlsx: Instructions + Planner tabs,
+one column per stage) and imports a client's filled-out copy. The import is
+parsed (`packages/domain/src/archscope_domain/stage_planner.py`), shown for
+review and editing, and only applied on request — with a confirmation
+before replacing earlier work — to:
+
+- **Discovery** — Processes › "Sales pipeline stages" (stages in order with
+  win %) and a `[Deal Stage Planner]` block in the Processes notes;
+- **Architecture Generator** — the deal pipeline (stage order, Forecast % as
+  stage probability, Entry / Exit criteria as stage descriptions), every
+  "Field to Fill Out" as a deal property tagged with the stage(s) that
+  require it, and one suggested workflow per Automations item;
+- **Build order** — the pipeline, each new deal property, each automation
+  and desired action, and the deal record page.
+
+Parsing is defensive: rows are matched by their column-A label (with
+aliases), not position; any number of stage columns and field rows;
+blank, "Stage name" and "N/A" cells skipped; forecasts as 40, "40%" or 0.4;
+everything skipped or guessed at is listed as a warning. Read-only against
+HubSpot — nothing deploys. `POST /api/v1/stage-planner/import` and
+`GET /api/v1/stage-planner/template` expose the same for the web app.
+
+Everything about the format is in
+[`packages/domain/src/archscope_domain/config/stage_planner.yaml`](packages/domain/src/archscope_domain/config/stage_planner.yaml):
+`rows` (each row's `key`, template `label`, and `aliases` accepted on
+import), `fields_section` (header label / aliases, `Field {n}` row label),
+`placeholders` and `empty_markers` (cells read as blank), `item_separators`
+(how Actions / Automations split into items), `template` (title,
+instructions, the example stages written to the blank template), and
+`mapping` (Closed Won / Lost detection, the Discovery question, property
+types by keyword, labels mapped to HubSpot's own deal properties, and the
+build-order item names). Edit it to change the template or what an import
+produces — no code changes; it's validated on load.
+
+### Discovery build order
+
+The **4 · Build order** tab turns the confirmed scope into "[Client] —
+[Project Type] — Build Order" for the implementation team: checkable
+items grouped under configurable sections (shipped: Assets to be
+created, Segments / Lists, Properties, Pipelines, Record-page updates),
+each with its source (the required task, scope item, or answer it came
+from) and a status. Items deployable from a reusable template (e.g. the
+GDPR asset bundle) are tagged **♻ Template** and listed first in their
+section; the rest are marked **Build from scratch**. It exports as
+`.docx`, `.xlsx`, `.csv`, `.pdf`, and `.json`, and saves to the Project
+Library under the client as "Discovery Build Order".
+
+The `.json` is the build order as structured data
+(`BuildOrder.to_dict()`, schema `archscope.build_order/v1`: sections →
+items with id, name, sources, template, status, done), so it can later
+be pushed to a task tool such as ClickUp. No such integration exists —
+nothing is sent anywhere, and HubSpot stays read-only.
+
+Everything is set in
+[`packages/domain/src/archscope_domain/config/discovery_build_order.yaml`](packages/domain/src/archscope_domain/config/discovery_build_order.yaml):
+`project_types` (for the title), `statuses` and `done_status`,
+`sections` (`id` + header `title` — rename or reorder freely),
+`templates` (`id: label`), and `items`:
+
+```yaml
+- id: gdpr_form_consent            # stable id (tick-marks and JSON use it)
+  section: assets
+  name: "Consent checkboxes on every form"
+  template: gdpr_bundle            # optional: tag as a template item
+  task: gdpr_consent_setup         # trigger: a discovery_rules.yaml task...
+- id: integration_setup
+  section: assets
+  name: "Integration: {option}"    # ...or one item per scope item picked
+  scope: integrations              #    (a discovery_checklist.yaml question)
+- id: sales_pipeline
+  section: pipelines
+  name: "Sales deal pipeline and stages"
+  answer: {question_id: priority_features, value: Deal pipelines}   # ...or an answer
+```
+
+Items with the same section and name merge into one listing every
+source. The file is validated on load against the other discovery
+files (unknown sections, templates, tasks, scope questions, or options
+are listed on the page). Loaded by
+[`packages/domain/src/archscope_domain/discovery_build_order.py`](packages/domain/src/archscope_domain/discovery_build_order.py).
 
 ## In-app feedback
 
@@ -525,13 +678,17 @@ architecturescope/
 │   │   │   ├── report.py             Module 4 report figures + client/internal .docx
 │   │   │   ├── diagram.py            Module 5 node/edge model + DOT/.drawio/PNG
 │   │   │   ├── proposal.py, proposal_pdf.py   Module 10 model, pricing/scope logic, branded PDF
-│   │   │   ├── discovery.py, discovery_config.py   Module 11 payloads, system prompt, question bank
+│   │   │   ├── discovery*.py              Module 11 payloads, system prompt, question bank, follow-up rules, checklist, build order
+│   │   │   ├── stage_planner.py      Deal Stage Planner template export + import / mapping
 │   │   │   ├── exporters.py          sections/Markdown -> .docx/.xlsx/.csv/.pdf
 │   │   │   ├── branding.py           brand palette shared by every renderer
-│   │   │   └── config/               rules.yaml, discovery_options.yaml (editable, no code changes)
+│   │   │   └── config/               rules.yaml, discovery_options/_rules/_checklist/_build_order.yaml, stage_planner.yaml (editable, no code changes)
 │   │   └── tests/                    unit tests + golden/ parity fixtures
 │   └── integrations/                 archscope_integrations — HubSpotClient (read-only PortalReader adapter)
 ├── apps/
+│   ├── web/                          Next.js front end (Discovery so far) — see "Web app"
+│   │   ├── src/app/, src/components/ pages, shell, animated discovery UI (Framer Motion)
+│   │   └── src/lib/                  typed API client (api-types.ts generated from openapi.json)
 │   └── api/                          archscope_api — FastAPI service
 │       ├── src/archscope_api/
 │       │   ├── main.py               app factory, middleware, routers
@@ -546,22 +703,32 @@ architecturescope/
 ├── sample_inputs/example_project.json
 ├── examples/                         reference audit workbook + PDF the exports are matched to
 ├── pyproject.toml, uv.lock           uv workspace, tooling config, architecture contracts
-└── .github/workflows/ci-python.yml
+└── .github/workflows/          ci-python.yml, ci-web.yml
 ```
 
 ## Platform (rebuild)
 
-Target: Next.js (TypeScript) web app → FastAPI → PostgreSQL/Redis, with the
-domain package at the core. Phase 1 (done): domain extraction and the
-stateless API. Next: persistence and auth (Phase 2), then the web app
-starting with Discovery (Phase 3).
+Target: Next.js (TypeScript) web app → FastAPI → PostgreSQL, with the
+domain package at the core; the Streamlit app is being retired page by
+page. Phase 1 (done): domain extraction and the stateless API. Phase 2
+(done): accounts and sign-in, workspaces, client projects with saved
+per-module state, the project library, and encrypted stored credentials.
+Phase 3 (in progress): the web app — Discovery, Projects, Project
+Library and Setup are live; the remaining pages are being ported in
+workflow order (Stage Planner, Requirements Document, Joint Evaluation
+Plan → Portal Auditor, Property Audit, Documentation, Executive Report →
+Architecture Generator and Diagram → Proposal & SOW → Test Cases → User
+guide). Google sign-in is next on the auth side.
 
 **Local development** (Python 3.12+, [uv](https://docs.astral.sh/uv/)):
 
 ```bash
 uv sync --all-packages                          # workspace + dev tools, from uv.lock
+uv run python -m archscope_api.cli migrate      # create / upgrade the database (var/archscope.db)
+uv run python -m archscope_api.cli create-user --email you@company.com --name "You" --workspace SonaMation --role owner
 uv run uvicorn archscope_api.main:app --reload  # API at http://localhost:8000/docs
-uv run streamlit run Home.py                    # legacy app, same domain code
+cd apps/web && npm ci && npm run dev            # web app at http://localhost:3000 (sign in there)
+uv run streamlit run Home.py                    # legacy app, same domain code (being retired)
 ```
 
 **Checks** (exactly what CI runs):
@@ -573,6 +740,82 @@ uv run lint-imports               # architecture contracts (see pyproject.toml)
 uv run pytest                     # domain + golden parity, API, Streamlit smoke
 uv run python -m archscope_api.openapi   # regenerate the contract after API changes
 ```
+
+### Web app
+
+[`apps/web`](apps/web) is the Next.js (React, TypeScript) front end:
+sign-in and self sign-up, **Projects** (each client engagement), every
+module for a project — Discovery Call Assistant, Deal Stage Planner,
+Requirements Document, Joint Evaluation Plan, Portal Auditor, Property
+Audit, Documentation Generator, Executive Report, Architecture Generator,
+Architecture Diagram, Proposal & SOW Builder, Test Case Document, Project
+Library — plus **Setup & API keys** and the **User guide** (its text lives
+in `apps/web/src/lib/guide.ts`, which also feeds each page's sidebar
+guide). The web app never links to Streamlit. Motion uses
+[Framer Motion](https://motion.dev) and honors the OS "reduce motion"
+setting.
+
+The browser only talks to the web app: `/api/*` is proxied to the API
+(`API_URL` in `apps/web/.env.local`, default `http://localhost:8000`), so
+the session cookie is first-party and no CORS is involved.
+
+- **No rule logic in the browser.** The page renders from
+  `GET /api/v1/discovery/config` and asks `POST /api/v1/discovery/evaluate`
+  (debounced as you type) which follow-ups, required tasks, checklist rows
+  and build-order items the notes trigger — so the YAML files above stay
+  the single source of truth. Exports go through `/api/v1/exports/*`.
+- **Typed against the contract.** `src/lib/api-types.ts` is generated from
+  `apps/api/openapi.json` (`npm run gen:api`); CI fails if it's stale
+  (`npm run check:api`), then type-checks and builds
+  (`.github/workflows/ci-web.yml`).
+- **Saved per project.** Each module's work autosaves to the project
+  (`PUT /api/v1/projects/{id}/state/{module}`) with a version number, so
+  two people editing at once get a "changed elsewhere — reload" prompt
+  instead of silently overwriting each other. Exports can be downloaded or
+  saved to the project library. The read-only HubSpot snapshot is pulled
+  once per project and shared (module `portal`): the Portal Auditor,
+  Property Audit, Documentation Generator, Executive Report and the
+  live-portal Architecture Diagram all read it, and audit findings saved
+  there are highlighted in the report and the diagram.
+
+### Accounts, data and configuration (API)
+
+- **Sign-in:** email + password (PBKDF2, 600k iterations). The session is
+  an HttpOnly, SameSite=Lax cookie (Secure outside local development);
+  only a SHA-256 of its token is stored, and signing out kills it.
+  Every `/api/v1` route requires a session. Admins can also create
+  accounts with `python -m archscope_api.cli create-user`; `set-password`
+  resets one.
+- **Self sign-up:** "Create an account" on the sign-in page asks for name,
+  email and password (at least 10 characters), then emails a 6-digit code;
+  the account exists only once the code is confirmed. Codes are stored as
+  an HMAC, expire after 15 minutes, allow 5 attempts, and can be re-sent
+  once a minute. "Forgot password?" uses the same code flow. Responses never
+  reveal whether an email already has an account. A new user joins the
+  workspace whose sign-up domains match their email
+  (`python -m archscope_api.cli signup-domains --workspace "<name>" sonamation.com`),
+  otherwise gets a workspace of their own as its owner. Turn sign-up off
+  with `ARCHSCOPE_SIGNUP_ENABLED=false`.
+- **Email:** set `ARCHSCOPE_SMTP_HOST`, `_PORT` (587), `_USERNAME`,
+  `_PASSWORD`, `ARCHSCOPE_SMTP_SECURITY` (`starttls` / `ssl` / `none`) and
+  `ARCHSCOPE_MAIL_FROM`; the legacy `FEEDBACK_SMTP_*` / `FEEDBACK_FROM`
+  variables work too. Without SMTP, local and test environments write each
+  email to `var/outbox/` (and log the code) instead of sending it; staging
+  and production turn sign-up off until SMTP is configured.
+- **Tenancy:** users belong to workspaces with a role (owner / admin /
+  member); projects, documents and credentials are scoped to the
+  workspace.
+- **Credentials:** the HubSpot token and Anthropic key are set on the
+  Setup page, stored encrypted (Fernet, `ARCHSCOPE_SECRET_KEY`), and never
+  returned — only "connected" and the last 4 characters.
+- **Storage:** SQLAlchemy 2.0 + Alembic migrations
+  (`src/archscope_api/migrations`; `python -m archscope_api.cli migrate`).
+  SQLite locally and in tests, PostgreSQL in staging / production. Saved
+  documents' bytes go to a blob store (a directory today, `ARCHSCOPE_BLOB_DIR`).
+- **Environment** (prefix `ARCHSCOPE_`): `DATABASE_URL`
+  (`postgresql+psycopg://…` in production), `SECRET_KEY` (required outside
+  local/test — `python -m archscope_api.cli secret-key`), `BLOB_DIR`,
+  `SESSION_DAYS`, `ENVIRONMENT`.
 
 **Golden parity.** `packages/domain/tests/golden/` pins every domain output
 (structured results, and the extracted text of every .docx/.xlsx/.pdf) to
@@ -588,8 +831,20 @@ import the API; API services may not import HTTP schemas.
 **API configuration** (environment, prefix `ARCHSCOPE_`): `ENVIRONMENT`
 (`local`/`test`/`staging`/`production`; docs are off in production),
 `CORS_ORIGINS`, `LOG_LEVEL`; plus `ANTHROPIC_API_KEY` / `ANTHROPIC_MODEL`
-for discovery drafting. HubSpot tokens are sent per request in the
-`X-HubSpot-Token` header until Phase 2 adds encrypted stored credentials.
+for discovery drafting (a workspace key saved on the Setup page takes
+precedence).
+
+**Gemini for testing (free tier).** When a Gemini key is set — "Gemini API
+key" on the Setup page, or `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) in the
+environment — discovery drafting uses Google Gemini instead of Claude; remove
+the key to switch back. Get a free key at https://aistudio.google.com/apikey.
+Models are tried most accurate first, each with its own free quota:
+`gemini-3.8-flash` (the strongest model on the free tier — Gemini 3.1 Pro
+isn't free), then `gemini-2.5-pro`, then `gemini-3.6-flash`. A model whose
+free quota is used up (or that the key can't use) is skipped before any text
+streams, so one document always comes from one model. Override the list with
+`GEMINI_MODELS` (comma-separated). Free quotas reset at midnight Pacific. HubSpot calls use the workspace's stored token; an
+`X-HubSpot-Token` request header overrides it for scripts.
 
 ## Known limitations (MVP scope)
 

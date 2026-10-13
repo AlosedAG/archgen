@@ -1,6 +1,20 @@
 {
   "components": {
     "schemas": {
+      "Accepted": {
+        "additionalProperties": false,
+        "properties": {
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "title": "Accepted",
+        "type": "object"
+      },
       "AddLibraryAddonsRequest": {
         "additionalProperties": false,
         "properties": {
@@ -289,6 +303,46 @@
         "title": "AuditResult",
         "type": "object"
       },
+      "AuthConfig": {
+        "additionalProperties": false,
+        "description": "Which sign-in methods the server offers.",
+        "properties": {
+          "email_delivery": {
+            "default": "none",
+            "description": "\"smtp\", \"outbox\" (local development: codes are logged), or \"none\".",
+            "title": "Email Delivery",
+            "type": "string"
+          },
+          "google": {
+            "default": false,
+            "title": "Google",
+            "type": "boolean"
+          },
+          "min_password_length": {
+            "default": 10,
+            "title": "Min Password Length",
+            "type": "integer"
+          },
+          "password": {
+            "default": true,
+            "title": "Password",
+            "type": "boolean"
+          },
+          "password_reset": {
+            "default": false,
+            "title": "Password Reset",
+            "type": "boolean"
+          },
+          "signup": {
+            "default": false,
+            "description": "People can create their own account (email confirmed with a code).",
+            "title": "Signup",
+            "type": "boolean"
+          }
+        },
+        "title": "AuthConfig",
+        "type": "object"
+      },
       "Blueprint": {
         "additionalProperties": false,
         "description": "A generated HubSpot architecture: objects, properties, associations,\npipelines, naming conventions, and workflow suggestions (each flagged\nfor overwrite risk).",
@@ -374,6 +428,25 @@
         "additionalProperties": false,
         "description": "What the architect knows about the engagement.",
         "properties": {
+          "additional_properties": {
+            "additionalProperties": {
+              "items": {
+                "$ref": "#/components/schemas/PropertyDef"
+              },
+              "type": "array"
+            },
+            "description": "Extra properties per object, e.g. a Stage Planner's deal fields.",
+            "title": "Additional Properties",
+            "type": "object"
+          },
+          "additional_workflows": {
+            "items": {
+              "$ref": "#/components/schemas/WorkflowSuggestion"
+            },
+            "maxItems": 500,
+            "title": "Additional Workflows",
+            "type": "array"
+          },
           "currencies": {
             "items": {
               "type": "string"
@@ -417,6 +490,17 @@
             "maxLength": 10000,
             "title": "Other Integration Notes",
             "type": "string"
+          },
+          "pipeline_overrides": {
+            "additionalProperties": {
+              "items": {
+                "$ref": "#/components/schemas/StageDef"
+              },
+              "type": "array"
+            },
+            "description": "Imported pipelines used instead of the defaults: object type -> stages in order.",
+            "title": "Pipeline Overrides",
+            "type": "object"
           },
           "pipelines_required": {
             "items": {
@@ -467,6 +551,199 @@
         "title": "BlueprintInput",
         "type": "object"
       },
+      "BuildItem": {
+        "additionalProperties": false,
+        "properties": {
+          "done": {
+            "title": "Done",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "template": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template"
+          },
+          "template_label": {
+            "title": "Template Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "sources",
+          "template",
+          "template_label",
+          "status",
+          "done"
+        ],
+        "title": "BuildItem",
+        "type": "object"
+      },
+      "BuildOrder": {
+        "additionalProperties": false,
+        "description": "The structured build order (``schema`` names the layout version) —\nthe shape a later task-tool push would consume.",
+        "properties": {
+          "client": {
+            "title": "Client",
+            "type": "string"
+          },
+          "generated_on": {
+            "title": "Generated On",
+            "type": "string"
+          },
+          "project_type": {
+            "title": "Project Type",
+            "type": "string"
+          },
+          "schema": {
+            "title": "Schema",
+            "type": "string"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/BuildSection"
+            },
+            "title": "Sections",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema",
+          "title",
+          "client",
+          "project_type",
+          "generated_on",
+          "sections"
+        ],
+        "title": "BuildOrder",
+        "type": "object"
+      },
+      "BuildOrderSettings": {
+        "additionalProperties": false,
+        "properties": {
+          "done_status": {
+            "description": "Status a ticked item gets.",
+            "title": "Done Status",
+            "type": "string"
+          },
+          "project_types": {
+            "description": "Choices for the title; the first is the default.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Project Types",
+            "type": "array"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/BuildSectionInfo"
+            },
+            "title": "Sections",
+            "type": "array"
+          },
+          "statuses": {
+            "description": "Item statuses; the first is every new item's status.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Statuses",
+            "type": "array"
+          },
+          "templates": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Reusable template id -> label.",
+            "title": "Templates",
+            "type": "object"
+          }
+        },
+        "required": [
+          "project_types",
+          "statuses",
+          "done_status",
+          "sections",
+          "templates"
+        ],
+        "title": "BuildOrderSettings",
+        "type": "object"
+      },
+      "BuildSection": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/BuildItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "items"
+        ],
+        "title": "BuildSection",
+        "type": "object"
+      },
+      "BuildSectionInfo": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title"
+        ],
+        "title": "BuildSectionInfo",
+        "type": "object"
+      },
       "ClientExplainerRequest": {
         "additionalProperties": false,
         "properties": {
@@ -497,6 +774,30 @@
           "modules"
         ],
         "title": "ClientExplainerRequest",
+        "type": "object"
+      },
+      "CodeConfirm": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "maxLength": 6,
+            "minLength": 6,
+            "pattern": "^\\d{6}$",
+            "title": "Code",
+            "type": "string"
+          },
+          "email": {
+            "maxLength": 320,
+            "minLength": 3,
+            "title": "Email",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "code"
+        ],
+        "title": "CodeConfirm",
         "type": "object"
       },
       "CoverageRow": {
@@ -744,6 +1045,40 @@
         "title": "DiagramRenderRequest",
         "type": "object"
       },
+      "DiscoveryConfig": {
+        "additionalProperties": false,
+        "description": "Everything the discovery form needs to render: the question bank,\nthe follow-up questions rules can reveal, the tasks they can flag, and\nthe build-order settings. The rules themselves stay server-side — the\nclient asks ``/discovery/evaluate`` what its notes trigger.",
+        "properties": {
+          "build_order": {
+            "$ref": "#/components/schemas/BuildOrderSettings"
+          },
+          "follow_ups": {
+            "items": {
+              "$ref": "#/components/schemas/FollowUpQuestion"
+            },
+            "title": "Follow Ups",
+            "type": "array"
+          },
+          "question_bank": {
+            "$ref": "#/components/schemas/QuestionBank"
+          },
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/RequiredTask"
+            },
+            "title": "Tasks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "question_bank",
+          "follow_ups",
+          "tasks",
+          "build_order"
+        ],
+        "title": "DiscoveryConfig",
+        "type": "object"
+      },
       "DiscoveryNotes": {
         "additionalProperties": false,
         "properties": {
@@ -769,6 +1104,188 @@
           }
         },
         "title": "DiscoveryNotes",
+        "type": "object"
+      },
+      "Document": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "document_type": {
+            "title": "Document Type",
+            "type": "string"
+          },
+          "filename": {
+            "title": "Filename",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "media_type": {
+            "title": "Media Type",
+            "type": "string"
+          },
+          "size_bytes": {
+            "title": "Size Bytes",
+            "type": "integer"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "document_type",
+          "title",
+          "filename",
+          "media_type",
+          "size_bytes",
+          "created_at"
+        ],
+        "title": "Document",
+        "type": "object"
+      },
+      "EmailOnly": {
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "maxLength": 320,
+            "minLength": 3,
+            "title": "Email",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "title": "EmailOnly",
+        "type": "object"
+      },
+      "EvaluateRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "business_type": {
+            "default": "",
+            "maxLength": 200,
+            "title": "Business Type",
+            "type": "string"
+          },
+          "client_name": {
+            "default": "",
+            "maxLength": 200,
+            "title": "Client Name",
+            "type": "string"
+          },
+          "done_build_items": {
+            "description": "Ids of build-order items ticked as done.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Done Build Items",
+            "type": "array"
+          },
+          "project_type": {
+            "default": "",
+            "description": "Build-order project type; blank for the default.",
+            "maxLength": 200,
+            "title": "Project Type",
+            "type": "string"
+          },
+          "sections": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/SectionNotes"
+            },
+            "description": "Keyed by section name.",
+            "title": "Sections",
+            "type": "object"
+          },
+          "stage_planner": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PlannedStage"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "An applied Deal Stage Planner's stages; adds its build-order items.",
+            "title": "Stage Planner"
+          }
+        },
+        "title": "EvaluateRequest",
+        "type": "object"
+      },
+      "Evaluation": {
+        "additionalProperties": false,
+        "description": "What a set of notes triggers, for every tab of the discovery page.",
+        "properties": {
+          "build_order": {
+            "$ref": "#/components/schemas/BuildOrder"
+          },
+          "build_order_sections": {
+            "description": "The build order as export sections.",
+            "items": {
+              "$ref": "#/components/schemas/ExportSection"
+            },
+            "title": "Build Order Sections",
+            "type": "array"
+          },
+          "checklist": {
+            "description": "Required tasks and scope items, ready for /exports/sections.",
+            "items": {
+              "$ref": "#/components/schemas/ExportSection"
+            },
+            "title": "Checklist",
+            "type": "array"
+          },
+          "follow_ups": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "description": "Question id -> ids of the follow-ups revealed under it, in order.",
+            "title": "Follow Ups",
+            "type": "object"
+          },
+          "revealed_by": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "description": "Follow-up id -> the selected options that revealed it.",
+            "title": "Revealed By",
+            "type": "object"
+          },
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/FlaggedTask"
+            },
+            "title": "Tasks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "follow_ups",
+          "revealed_by",
+          "tasks",
+          "checklist",
+          "build_order",
+          "build_order_sections"
+        ],
+        "title": "Evaluation",
         "type": "object"
       },
       "ExportSection": {
@@ -872,6 +1389,82 @@
           "count"
         ],
         "title": "FindingGroup",
+        "type": "object"
+      },
+      "FlaggedTask": {
+        "additionalProperties": false,
+        "properties": {
+          "reasons": {
+            "description": "Why it's required — one per rule that flagged it.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "section": {
+            "title": "Section",
+            "type": "string"
+          },
+          "task": {
+            "$ref": "#/components/schemas/RequiredTask"
+          }
+        },
+        "required": [
+          "task",
+          "section",
+          "reasons"
+        ],
+        "title": "FlaggedTask",
+        "type": "object"
+      },
+      "FollowUpQuestion": {
+        "additionalProperties": false,
+        "properties": {
+          "hint": {
+            "default": "",
+            "title": "Hint",
+            "type": "string"
+          },
+          "home_section": {
+            "description": "Section the follow-up's answer is stored under in DiscoveryNotes.",
+            "title": "Home Section",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "input": {
+            "enum": [
+              "text",
+              "select",
+              "multiselect",
+              "radio"
+            ],
+            "title": "Input",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "options": {
+            "description": "Common answers; the 'other' option is not included.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Options",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "input",
+          "home_section"
+        ],
+        "title": "FollowUpQuestion",
         "type": "object"
       },
       "GlossaryRow": {
@@ -1042,6 +1635,51 @@
         "title": "MarkdownExportRequest",
         "type": "object"
       },
+      "Me": {
+        "additionalProperties": false,
+        "description": "The signed-in user and their workspace.",
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "is_admin": {
+            "title": "Is Admin",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          },
+          "workspace_id": {
+            "title": "Workspace Id",
+            "type": "string"
+          },
+          "workspace_name": {
+            "title": "Workspace Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "email",
+          "name",
+          "workspace_id",
+          "workspace_name",
+          "role",
+          "is_admin"
+        ],
+        "title": "Me",
+        "type": "object"
+      },
       "MethodologyRow": {
         "additionalProperties": false,
         "properties": {
@@ -1095,6 +1733,66 @@
           }
         },
         "title": "MilestoneRow",
+        "type": "object"
+      },
+      "ModuleState": {
+        "additionalProperties": false,
+        "description": "A module's saved working state for a project. Send back the\n``version`` you loaded when saving; a newer saved version is a 409.",
+        "properties": {
+          "data": {
+            "additionalProperties": true,
+            "title": "Data",
+            "type": "object"
+          },
+          "module": {
+            "title": "Module",
+            "type": "string"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "version": {
+            "default": 0,
+            "description": "0 = nothing saved yet.",
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "module"
+        ],
+        "title": "ModuleState",
+        "type": "object"
+      },
+      "ModuleStateSave": {
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "additionalProperties": true,
+            "title": "Data",
+            "type": "object"
+          },
+          "version": {
+            "description": "The version this edit was based on.",
+            "minimum": 0.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "data",
+          "version"
+        ],
+        "title": "ModuleStateSave",
         "type": "object"
       },
       "NameCount": {
@@ -1348,6 +2046,37 @@
         "title": "Party",
         "type": "object"
       },
+      "PasswordResetConfirm": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "maxLength": 6,
+            "minLength": 6,
+            "pattern": "^\\d{6}$",
+            "title": "Code",
+            "type": "string"
+          },
+          "email": {
+            "maxLength": 320,
+            "minLength": 3,
+            "title": "Email",
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "code",
+          "password"
+        ],
+        "title": "PasswordResetConfirm",
+        "type": "object"
+      },
       "PipelineDef": {
         "additionalProperties": false,
         "properties": {
@@ -1404,6 +2133,128 @@
           "total_stage_count"
         ],
         "title": "PipelineSummary",
+        "type": "object"
+      },
+      "PlannedProperty": {
+        "additionalProperties": false,
+        "properties": {
+          "definition": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PropertyDef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "existing": {
+            "default": "",
+            "description": "HubSpot's own property it maps to (not created), if any.",
+            "title": "Existing",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "stages": {
+            "description": "Stages that require it.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Stages",
+            "type": "array"
+          }
+        },
+        "required": [
+          "label",
+          "stages"
+        ],
+        "title": "PlannedProperty",
+        "type": "object"
+      },
+      "PlannedStage": {
+        "additionalProperties": false,
+        "properties": {
+          "actions": {
+            "default": "",
+            "title": "Actions",
+            "type": "string"
+          },
+          "automations": {
+            "default": "",
+            "title": "Automations",
+            "type": "string"
+          },
+          "entry_criteria": {
+            "default": "",
+            "title": "Entry Criteria",
+            "type": "string"
+          },
+          "exit_criteria": {
+            "default": "",
+            "title": "Exit Criteria",
+            "type": "string"
+          },
+          "fields": {
+            "description": "Deal properties required at this stage.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Fields",
+            "type": "array"
+          },
+          "forecast": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Win probability as a percentage, 0–100.",
+            "title": "Forecast"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "PlannedStage",
+        "type": "object"
+      },
+      "PlannerBuildItem": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "section": {
+            "title": "Section",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "section",
+          "name",
+          "source"
+        ],
+        "title": "PlannerBuildItem",
         "type": "object"
       },
       "PortalPipeline": {
@@ -1657,6 +2508,117 @@
           "recurring"
         ],
         "title": "PricingSummary",
+        "type": "object"
+      },
+      "Project": {
+        "additionalProperties": false,
+        "properties": {
+          "archived": {
+            "title": "Archived",
+            "type": "boolean"
+          },
+          "client_name": {
+            "title": "Client Name",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "document_count": {
+            "default": 0,
+            "title": "Document Count",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "client_name",
+          "archived",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "Project",
+        "type": "object"
+      },
+      "ProjectCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "client_name": {
+            "default": "",
+            "maxLength": 200,
+            "title": "Client Name",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "ProjectCreate",
+        "type": "object"
+      },
+      "ProjectUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "archived": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Archived"
+          },
+          "client_name": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Name"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "title": "ProjectUpdate",
         "type": "object"
       },
       "PropertyAuditExportRequest": {
@@ -2259,6 +3221,12 @@
       "QuestionSection": {
         "additionalProperties": false,
         "properties": {
+          "description": {
+            "default": "",
+            "description": "Optional one-line intro shown under the section heading.",
+            "title": "Description",
+            "type": "string"
+          },
           "name": {
             "title": "Name",
             "type": "string"
@@ -2488,6 +3456,30 @@
         "title": "ReportRequest",
         "type": "object"
       },
+      "RequiredTask": {
+        "additionalProperties": false,
+        "properties": {
+          "detail": {
+            "default": "",
+            "title": "Detail",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label"
+        ],
+        "title": "RequiredTask",
+        "type": "object"
+      },
       "RequirementRow": {
         "additionalProperties": false,
         "properties": {
@@ -2642,6 +3634,65 @@
         "title": "ScopeRow",
         "type": "object"
       },
+      "SecretSet": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "maxLength": 2000,
+            "minLength": 8,
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "SecretSet",
+        "type": "object"
+      },
+      "SecretStatus": {
+        "additionalProperties": false,
+        "description": "A stored credential's status — never its value.",
+        "properties": {
+          "configured": {
+            "title": "Configured",
+            "type": "boolean"
+          },
+          "hint": {
+            "default": "",
+            "description": "Last 4 characters, to recognise which key is stored.",
+            "title": "Hint",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "required": [
+          "name",
+          "label",
+          "configured"
+        ],
+        "title": "SecretStatus",
+        "type": "object"
+      },
       "SectionNotes": {
         "additionalProperties": false,
         "properties": {
@@ -2697,9 +3748,67 @@
         "title": "SectionsExportRequest",
         "type": "object"
       },
+      "SignInRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "maxLength": 320,
+            "minLength": 3,
+            "title": "Email",
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "SignInRequest",
+        "type": "object"
+      },
+      "SignUpRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "maxLength": 320,
+            "minLength": 3,
+            "title": "Email",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "password"
+        ],
+        "title": "SignUpRequest",
+        "type": "object"
+      },
       "StageDef": {
         "additionalProperties": false,
         "properties": {
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
           "is_closed": {
             "default": false,
             "title": "Is Closed",
@@ -2717,6 +3826,20 @@
           "order": {
             "title": "Order",
             "type": "integer"
+          },
+          "probability": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Win probability, 0–1.",
+            "title": "Probability"
           }
         },
         "required": [
@@ -2724,6 +3847,112 @@
           "order"
         ],
         "title": "StageDef",
+        "type": "object"
+      },
+      "StagePlannerImport": {
+        "additionalProperties": false,
+        "description": "A parsed planner plus what it would populate — for review before\nanything is applied.",
+        "properties": {
+          "build_items": {
+            "items": {
+              "$ref": "#/components/schemas/PlannerBuildItem"
+            },
+            "title": "Build Items",
+            "type": "array"
+          },
+          "discovery_answer": {
+            "description": "The Discovery Processes 'Sales pipeline stages' answer.",
+            "title": "Discovery Answer",
+            "type": "string"
+          },
+          "discovery_notes": {
+            "description": "Block for the Processes notes, between [Deal Stage Planner] markers.",
+            "title": "Discovery Notes",
+            "type": "string"
+          },
+          "pipeline": {
+            "$ref": "#/components/schemas/PipelineDef"
+          },
+          "properties": {
+            "items": {
+              "$ref": "#/components/schemas/PlannedProperty"
+            },
+            "title": "Properties",
+            "type": "array"
+          },
+          "source": {
+            "description": "The sheet that was read.",
+            "title": "Source",
+            "type": "string"
+          },
+          "stages": {
+            "items": {
+              "$ref": "#/components/schemas/PlannedStage"
+            },
+            "title": "Stages",
+            "type": "array"
+          },
+          "warnings": {
+            "description": "Columns / rows skipped or guessed at while parsing.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          },
+          "workflows": {
+            "items": {
+              "$ref": "#/components/schemas/WorkflowSuggestion"
+            },
+            "title": "Workflows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "stages",
+          "warnings",
+          "source",
+          "discovery_answer",
+          "discovery_notes",
+          "pipeline",
+          "properties",
+          "workflows",
+          "build_items"
+        ],
+        "title": "StagePlannerImport",
+        "type": "object"
+      },
+      "StagePlannerPreviewRequest": {
+        "additionalProperties": false,
+        "description": "Reviewed (possibly edited) stages to map again.",
+        "properties": {
+          "source": {
+            "default": "",
+            "maxLength": 300,
+            "title": "Source",
+            "type": "string"
+          },
+          "stages": {
+            "items": {
+              "$ref": "#/components/schemas/PlannedStage"
+            },
+            "maxItems": 100,
+            "title": "Stages",
+            "type": "array"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 200,
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "stages"
+        ],
+        "title": "StagePlannerPreviewRequest",
         "type": "object"
       },
       "SuggestModulesRequest": {
@@ -3002,6 +4231,11 @@
         "in": "header",
         "name": "X-HubSpot-Token",
         "type": "apiKey"
+      },
+      "SessionCookie": {
+        "in": "cookie",
+        "name": "archscope_session",
+        "type": "apiKey"
       }
     }
   },
@@ -3050,12 +4284,322 @@
         },
         "security": [
           {
+            "SessionCookie": []
+          },
+          {
             "HubSpotToken": []
           }
         ],
         "summary": "Audit a snapshot against best-practice rules",
         "tags": [
           "portal"
+        ]
+      }
+    },
+    "/api/v1/auth/config": {
+      "get": {
+        "operationId": "auth_config",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthConfig"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Sign-in methods offered",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "operationId": "auth_me",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "The signed-in user",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/password-reset": {
+      "post": {
+        "operationId": "auth_password_reset",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailOnly"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Accepted"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Email a password-reset code",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/password-reset/confirm": {
+      "post": {
+        "operationId": "auth_password_reset_confirm",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetConfirm"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set a new password with the emailed code; signs in",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/sign-in": {
+      "post": {
+        "operationId": "auth_sign_in",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignInRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Sign in with email and password",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/sign-out": {
+      "post": {
+        "operationId": "auth_sign_out",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Sign out of this browser",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/sign-up": {
+      "post": {
+        "operationId": "auth_sign_up",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignUpRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Accepted"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start creating an account (emails a code)",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/sign-up/resend": {
+      "post": {
+        "operationId": "auth_resend",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailOnly"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Accepted"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Send a new sign-up code",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/sign-up/verify": {
+      "post": {
+        "operationId": "auth_verify",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CodeConfirm"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Confirm the emailed code; creates the account and signs in",
+        "tags": [
+          "auth"
         ]
       }
     },
@@ -3095,6 +4639,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
         "summary": "Generate an architecture blueprint",
         "tags": [
           "architecture"
@@ -3137,6 +4686,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
         "summary": "Render a blueprint as Markdown",
         "tags": [
           "architecture"
@@ -3178,6 +4732,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
         "summary": "Diagram a proposed architecture",
         "tags": [
           "architecture"
@@ -3219,6 +4778,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
         "summary": "Diagram a live portal, with audit risk",
         "tags": [
           "architecture"
@@ -3290,6 +4854,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
         "summary": "Render a diagram (PNG, Graphviz DOT, or draw.io)",
         "tags": [
           "architecture"
@@ -3327,6 +4896,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
         "summary": "Draft the business analysis (SSE)",
         "tags": [
           "discovery"
@@ -3368,6 +4942,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
         "summary": "Preview the exact AI request payload",
         "tags": [
           "discovery"
@@ -3405,7 +4984,84 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
         "summary": "Draft the client explainer (SSE)",
+        "tags": [
+          "discovery"
+        ]
+      }
+    },
+    "/api/v1/discovery/config": {
+      "get": {
+        "operationId": "discovery_config",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiscoveryConfig"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Questions, follow-ups, tasks and build-order settings",
+        "tags": [
+          "discovery"
+        ]
+      }
+    },
+    "/api/v1/discovery/evaluate": {
+      "post": {
+        "operationId": "discovery_evaluate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvaluateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Evaluation"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Follow-ups, required tasks, checklist and build order",
         "tags": [
           "discovery"
         ]
@@ -3426,6 +5082,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
         "summary": "The configured discovery questions",
         "tags": [
           "discovery"
@@ -3467,6 +5128,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
         "summary": "Hubs recommended by a business analysis",
         "tags": [
           "discovery"
@@ -3531,6 +5197,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
         "summary": "Markdown document to Word or PDF",
         "tags": [
           "exports"
@@ -3609,6 +5280,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
         "summary": "Titled table sections to Word, Excel, CSV or PDF",
         "tags": [
           "exports"
@@ -3632,6 +5308,9 @@
           }
         },
         "security": [
+          {
+            "SessionCookie": []
+          },
           {
             "HubSpotToken": []
           }
@@ -3700,9 +5379,568 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
         "summary": "Render portal documentation (Markdown or Word)",
         "tags": [
           "portal"
+        ]
+      }
+    },
+    "/api/v1/projects": {
+      "get": {
+        "operationId": "projects_list_projects",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include_archived",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Archived",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Project"
+                  },
+                  "title": "Response Projects List Projects",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Projects in your workspace, most recently active first",
+        "tags": [
+          "projects"
+        ]
+      },
+      "post": {
+        "operationId": "projects_create_project",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Project"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Create a project",
+        "tags": [
+          "projects"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}": {
+      "get": {
+        "operationId": "projects_get_project",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Project"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "One project",
+        "tags": [
+          "projects"
+        ]
+      },
+      "patch": {
+        "operationId": "projects_update_project",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Project"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Rename or archive a project",
+        "tags": [
+          "projects"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/documents": {
+      "get": {
+        "operationId": "projects_list_documents",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Document"
+                  },
+                  "title": "Response Projects List Documents",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "The project library",
+        "tags": [
+          "projects"
+        ]
+      },
+      "post": {
+        "operationId": "projects_save_document",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "document_type",
+            "required": true,
+            "schema": {
+              "maxLength": 120,
+              "minLength": 1,
+              "title": "Document Type",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "filename",
+            "required": true,
+            "schema": {
+              "maxLength": 300,
+              "minLength": 1,
+              "title": "Filename",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "title",
+            "required": false,
+            "schema": {
+              "default": "",
+              "maxLength": 300,
+              "title": "Title",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "format": "binary",
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Save a file to the project library (raw file bytes as the request body)",
+        "tags": [
+          "projects"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/documents/{document_id}": {
+      "delete": {
+        "operationId": "projects_delete_document",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "title": "Document Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Delete a saved document",
+        "tags": [
+          "projects"
+        ]
+      },
+      "get": {
+        "operationId": "projects_download_document",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "title": "Document Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Download a saved document",
+        "tags": [
+          "projects"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/state/{module}": {
+      "get": {
+        "operationId": "projects_get_state",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "module",
+            "required": true,
+            "schema": {
+              "title": "Module",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModuleState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "A module's saved working state",
+        "tags": [
+          "projects"
+        ]
+      },
+      "put": {
+        "operationId": "projects_save_state",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "module",
+            "required": true,
+            "schema": {
+              "title": "Module",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModuleStateSave"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModuleState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Save a module's working state",
+        "tags": [
+          "projects"
         ]
       }
     },
@@ -3742,6 +5980,9 @@
           }
         },
         "security": [
+          {
+            "SessionCookie": []
+          },
           {
             "HubSpotToken": []
           }
@@ -3810,6 +6051,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
         "summary": "Export a property audit (Excel workbook or PDF report)",
         "tags": [
           "portal"
@@ -3851,6 +6097,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
         "summary": "Pricing, requirement coverage, scope groups and warnings",
         "tags": [
           "proposals"
@@ -3872,6 +6123,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
         "summary": "A new proposal with standard boilerplate",
         "tags": [
           "proposals"
@@ -3913,6 +6169,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
         "summary": "Merge a Joint Evaluation Plan into the proposal",
         "tags": [
           "proposals"
@@ -3954,6 +6215,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
         "summary": "Merge a Requirements Document into the proposal",
         "tags": [
           "proposals"
@@ -3975,6 +6241,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
         "summary": "Reusable scope items and add-on services",
         "tags": [
           "proposals"
@@ -4017,6 +6288,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
         "summary": "Render the branded proposal / SOW PDF",
         "tags": [
           "proposals"
@@ -4058,6 +6334,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
         "summary": "Draft scope items for uncovered requirements",
         "tags": [
           "proposals"
@@ -4099,6 +6380,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
         "summary": "Add add-on services (as Optional scope items)",
         "tags": [
           "proposals"
@@ -4140,6 +6426,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
         "summary": "Add scope-library items",
         "tags": [
           "proposals"
@@ -4181,6 +6472,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
         "summary": "Strip deal-specific content, keeping reusable boilerplate",
         "tags": [
           "proposals"
@@ -4222,6 +6518,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
         "summary": "Compute executive-report figures",
         "tags": [
           "portal"
@@ -4280,9 +6581,253 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
         "summary": "Render the executive report (client or internal edition)",
         "tags": [
           "portal"
+        ]
+      }
+    },
+    "/api/v1/stage-planner/import": {
+      "post": {
+        "operationId": "stage planner_import_planner",
+        "requestBody": {
+          "content": {
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+              "schema": {
+                "format": "binary",
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StagePlannerImport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Parse a filled-out planner (.xlsx request body) for review",
+        "tags": [
+          "stage planner"
+        ]
+      }
+    },
+    "/api/v1/stage-planner/preview": {
+      "post": {
+        "operationId": "stage planner_preview",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StagePlannerPreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StagePlannerImport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Map reviewed / edited stages again",
+        "tags": [
+          "stage planner"
+        ]
+      }
+    },
+    "/api/v1/stage-planner/template": {
+      "get": {
+        "operationId": "stage planner_template",
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Download the blank pre-call template",
+        "tags": [
+          "stage planner"
+        ]
+      }
+    },
+    "/api/v1/workspace/secrets": {
+      "get": {
+        "operationId": "workspace_list_secrets",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SecretStatus"
+                  },
+                  "title": "Response Workspace List Secrets",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Which credentials are stored (never their values)",
+        "tags": [
+          "workspace"
+        ]
+      }
+    },
+    "/api/v1/workspace/secrets/{name}": {
+      "delete": {
+        "operationId": "workspace_delete_secret",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Remove a stored credential (admins)",
+        "tags": [
+          "workspace"
+        ]
+      },
+      "put": {
+        "operationId": "workspace_set_secret",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SecretSet"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SecretStatus"
+                  },
+                  "title": "Response Workspace Set Secret",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Store or replace a credential (admins)",
+        "tags": [
+          "workspace"
         ]
       }
     },

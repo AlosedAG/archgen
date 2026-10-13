@@ -29,6 +29,13 @@ class BlueprintInput:
     other_integration_notes: str = ""
     record_volumes: dict[str, int] = field(default_factory=dict)
     hubs_in_scope: list[str] = field(default_factory=list)
+    # Imported plans (e.g. a Deal Stage Planner), used as-is instead of the
+    # rules.yaml defaults: object type -> its stages, in order.
+    pipeline_overrides: dict[str, list[StageDef]] = field(default_factory=dict)
+    # Extra properties per object (added after the baseline, skipping names
+    # already present) and extra suggested workflows.
+    additional_properties: dict[str, list[PropertyDef]] = field(default_factory=dict)
+    additional_workflows: list[WorkflowSuggestion] = field(default_factory=list)
 
 
 @dataclass
@@ -65,6 +72,9 @@ class StageDef:
     order: int
     is_closed: bool = False
     is_won: bool = False
+    # Win probability 0–1 (HubSpot's stage probability); None = not set.
+    probability: float | None = None
+    description: str = ""
 
 
 @dataclass

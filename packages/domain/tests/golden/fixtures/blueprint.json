@@ -139,6 +139,8 @@
   ],
   "generated_at": "<TIMESTAMP>",
   "inputs": {
+   "additional_properties": {},
+   "additional_workflows": [],
    "currencies": [
     "USD",
     "CAD"
@@ -161,6 +163,7 @@
     "Payments Provider"
    ],
    "other_integration_notes": "",
+   "pipeline_overrides": {},
    "pipelines_required": [
     "Deal",
     "Ticket",
@@ -196,46 +199,60 @@
     "object_type": "Deal",
     "stages": [
      {
+      "description": "",
       "is_closed": false,
       "is_won": false,
       "name": "Appointment Scheduled",
-      "order": 0
+      "order": 0,
+      "probability": null
      },
      {
+      "description": "",
       "is_closed": false,
       "is_won": false,
       "name": "Qualified To Buy",
-      "order": 1
+      "order": 1,
+      "probability": null
      },
      {
+      "description": "",
       "is_closed": false,
       "is_won": false,
       "name": "Presentation Scheduled",
-      "order": 2
+      "order": 2,
+      "probability": null
      },
      {
+      "description": "",
       "is_closed": false,
       "is_won": false,
       "name": "Decision Maker Bought In",
-      "order": 3
+      "order": 3,
+      "probability": null
      },
      {
+      "description": "",
       "is_closed": false,
       "is_won": false,
       "name": "Contract Sent",
-      "order": 4
+      "order": 4,
+      "probability": null
      },
      {
+      "description": "",
       "is_closed": true,
       "is_won": true,
       "name": "Closed Won",
-      "order": 5
+      "order": 5,
+      "probability": null
      },
      {
+      "description": "",
       "is_closed": true,
       "is_won": false,
       "name": "Closed Lost",
-      "order": 6
+      "order": 6,
+      "probability": null
      }
     ]
    },
@@ -244,28 +261,36 @@
     "object_type": "Ticket",
     "stages": [
      {
+      "description": "",
       "is_closed": false,
       "is_won": false,
       "name": "New",
-      "order": 0
+      "order": 0,
+      "probability": null
      },
      {
+      "description": "",
       "is_closed": false,
       "is_won": false,
       "name": "Waiting on Contact",
-      "order": 1
+      "order": 1,
+      "probability": null
      },
      {
+      "description": "",
       "is_closed": false,
       "is_won": false,
       "name": "Waiting on Us",
-      "order": 2
+      "order": 2,
+      "probability": null
      },
      {
+      "description": "",
       "is_closed": true,
       "is_won": true,
       "name": "Closed",
-      "order": 3
+      "order": 3,
+      "probability": null
      }
     ]
    },
@@ -274,28 +299,36 @@
     "object_type": "Membership",
     "stages": [
      {
+      "description": "",
       "is_closed": false,
       "is_won": false,
       "name": "New",
-      "order": 0
+      "order": 0,
+      "probability": null
      },
      {
+      "description": "",
       "is_closed": false,
       "is_won": false,
       "name": "In Progress",
-      "order": 1
+      "order": 1,
+      "probability": null
      },
      {
+      "description": "",
       "is_closed": true,
       "is_won": true,
       "name": "Completed",
-      "order": 2
+      "order": 2,
+      "probability": null
      },
      {
+      "description": "",
       "is_closed": true,
       "is_won": false,
       "name": "Cancelled",
-      "order": 3
+      "order": 3,
+      "probability": null
      }
     ]
    }
@@ -638,6 +671,8 @@
   ],
   "generated_at": "<TIMESTAMP>",
   "inputs": {
+   "additional_properties": {},
+   "additional_workflows": [],
    "currencies": [
     "USD",
     "CAD"
@@ -660,6 +695,7 @@
     "Payments Provider"
    ],
    "other_integration_notes": "",
+   "pipeline_overrides": {},
    "pipelines_required": [
     "Deal",
     "Ticket",
@@ -695,46 +731,60 @@
     "object_type": "Deal",
     "stages": [
      {
+      "description": "",
       "is_closed": false,
       "is_won": false,
       "name": "Appointment Scheduled",
-      "order": 0
+      "order": 0,
+      "probability": null
      },
      {
+      "description": "",
       "is_closed": false,
       "is_won": false,
       "name": "Qualified To Buy",
-      "order": 1
+      "order": 1,
+      "probability": null
      },
      {
+      "description": "",
       "is_closed": false,
       "is_won": false,
       "name": "Presentation Scheduled",
-      "order": 2
+      "order": 2,
+      "probability": null
      },
      {
+      "description": "",
       "is_closed": false,
       "is_won": false,
       "name": "Decision Maker Bought In",
-      "order": 3
+      "order": 3,
+      "probability": null
      },
      {
+      "description": "",
       "is_closed": false,
       "is_won": false,
       "name": "Contract Sent",
-      "order": 4
+      "order": 4,
+      "probability": null
      },
      {
+      "description": "",
       "is_closed": true,
       "is_won": true,
       "name": "Closed Won",
-      "order": 5
+      "order": 5,
+      "probability": null
      },
      {
+      "description": "",
       "is_closed": true,
       "is_won": false,
       "name": "Closed Lost",
-      "order": 6
+      "order": 6,
+      "probability": null
      }
     ]
    },
@@ -743,28 +793,36 @@
     "object_type": "Ticket",
     "stages": [
      {
+      "description": "",
       "is_closed": false,
       "is_won": false,
       "name": "New",
-      "order": 0
+      "order": 0,
+      "probability": null
      },
      {
+      "description": "",
       "is_closed": false,
       "is_won": false,
       "name": "Waiting on Contact",
-      "order": 1
+      "order": 1,
+      "probability": null
      },
      {
+      "description": "",
       "is_closed": false,
       "is_won": false,
       "name": "Waiting on Us",
-      "order": 2
+      "order": 2,
+      "probability": null
      },
      {
+      "description": "",
       "is_closed": true,
       "is_won": true,
       "name": "Closed",
-      "order": 3
+      "order": 3,
+      "probability": null
      }
     ]
    },
@@ -773,28 +831,36 @@
     "object_type": "Membership",
     "stages": [
      {
+      "description": "",
       "is_closed": false,
       "is_won": false,
       "name": "New",
-      "order": 0
+      "order": 0,
+      "probability": null
      },
      {
+      "description": "",
       "is_closed": false,
       "is_won": false,
       "name": "In Progress",
-      "order": 1
+      "order": 1,
+      "probability": null
      },
      {
+      "description": "",
       "is_closed": true,
       "is_won": true,
       "name": "Completed",
-      "order": 2
+      "order": 2,
+      "probability": null
      },
      {
+      "description": "",
       "is_closed": true,
       "is_won": false,
       "name": "Cancelled",
-      "order": 3
+      "order": 3,
+      "probability": null
      }
     ]
    }

@@ -1,0 +1,195 @@
+# HubSpot Deal Stage Planner — the pre-call template reps send to clients,
+# and how a filled-out copy is read back in.
+#
+# One file drives both directions, so the template format can change
+# without code changes:
+#   EXPORT — the downloadable .xlsx is built from `template:` and `rows:`.
+#   IMPORT — a filled-out .xlsx is parsed by matching each row's label in
+#            column A against `rows:` (label + aliases), never by a fixed
+#            row number — clients insert and delete rows. Stage columns are
+#            read until the last non-blank one; blank and placeholder
+#            columns are skipped.
+#   MAPPING — `mapping:` turns the parsed stages into the Discovery
+#            Processes answer, the Architecture Generator's deal pipeline,
+#            deal properties and workflows, and build-order items.
+# Loaded and validated by archscope_domain/stage_planner.py; an invalid
+# file is listed entry by entry on the Deal Stage Planner page.
+
+sheet_name: Planner            # the sheet to read; falls back to the first sheet
+                               # whose column A has the stage-name row label
+
+# Rows of the planner, top to bottom. `key` is what the parser produces;
+# `label` is the column-A text written to the template; `aliases` are
+# other labels accepted on import (matching ignores case, spacing, and a
+# trailing ":"). The `name` row is required on import; the rest are optional.
+rows:
+  - key: name
+    label: Stage Name
+    aliases: [Stage, Deal Stage, Pipeline Stage]
+  - key: forecast
+    label: "Forecast %"
+    aliases: [Forecast, Probability, Win Probability, Deal Probability, "Probability %"]
+  - key: entry_criteria
+    label: Entry Criteria
+    aliases: [Entry, Entry Requirements]
+  - key: exit_criteria
+    label: Exit Criteria
+    aliases: [Exit, Exit Requirements]
+  - key: actions
+    label: "Desired Actions / Activities"
+    aliases: [Desired Actions, Activities, Actions]
+  - key: automations
+    label: Automations
+    aliases: [Automation, Workflows]
+
+# The "Fields to Fill Out" section header. Every labelled row below it
+# (Field 1, Field 2, … or any other label) is a field row; each non-blank
+# cell is a HubSpot deal property required at that column's stage.
+fields_section:
+  label: Fields to Fill Out
+  aliases: [Fields, Required Fields, Properties, Deal Properties]
+  row_label: "Field {n}"       # template row labels
+  template_rows: 7
+
+# Header text that means "unused stage column" (the template's blank columns).
+placeholders: [Stage name, Stage, New stage]
+# Cell values treated as blank: exact matches, or text starting with one
+# of these followed by a space, dash or "—" (e.g. "N/A — terminal stage").
+empty_markers: ["N/A", "NA", "n/a", "-", "—", "TBD", "None"]
+# How Desired Actions / Automations cells split into separate items.
+item_separators: [";", "\n", "•"]
+
+template:
+  title: HubSpot Deal Stage Planner
+  subtitle: >-
+    Each column = one stage.  Add stages by filling in the blank columns on the right.
+    Add fields by inserting rows above the bottom bar.  See Instructions tab.
+  instructions_title: HubSpot Deal Stage Planner — Instructions
+  blank_stage_columns: 3
+  # Pre-filled example stages (HubSpot's default sales pipeline). Clients
+  # edit, delete, or add to them. `fields` fill Field 1, Field 2, … in order.
+  stages:
+    - name: Appointment Scheduled
+      forecast: 10
+      entry_criteria: Contact identified; basic research done
+      exit_criteria: Discovery call booked
+      actions: Research company; personalize outreach; send connection request
+      automations: "Create task: send intro email; notify owner on create"
+      fields: [Lead Source, Company Size, Initial Notes]
+    - name: Qualified to Buy
+      forecast: 20
+      entry_criteria: Intro call completed; pain points identified
+      exit_criteria: Demo or proposal requested
+      actions: Run discovery call; document pain points; confirm budget and timeline
+      automations: Send follow-up email sequence; create next-step task
+      fields: [Pain Points, Budget Range, Decision Timeline, Key Stakeholders]
+    - name: Presentation Scheduled
+      forecast: 40
+      entry_criteria: Demo or presentation has been scheduled
+      exit_criteria: Prospect has seen product demo
+      actions: Deliver tailored demo; send recap; address objections
+      automations: Notify AE; schedule proposal meeting; log demo feedback
+      fields: [Demo Date, Use Cases Covered, Competitor Mentions, Champion Name]
+    - name: Decision Maker Bought-in
+      forecast: 60
+      entry_criteria: Demo complete, nearing verbal commit
+      exit_criteria: Verbal or written commitment received
+      actions: Send proposal; follow up within 48 hrs; negotiate terms
+      automations: Create follow-up task at T+2 days; alert manager if no response in 5 days
+      fields: [Proposal Amount, Contract Type, Decision Maker, Proposed Start Date]
+    - name: Contract Sent
+      forecast: 80
+      entry_criteria: Agreement in principle; terms being finalized
+      exit_criteria: Contract signed
+      actions: Align on legal terms; loop in finance and legal; confirm implementation plan
+      automations: Notify CSM; create implementation task; update close date
+      fields: [Discount %, Final Contract Value, Legal Contact, Expected Close Date]
+    - name: Closed Won
+      forecast: 100
+      entry_criteria: Contract signed; payment terms agreed
+      exit_criteria: N/A — terminal stage
+      actions: Send welcome email; introduce CSM; schedule kickoff
+      automations: Create onboarding tasks; notify CSM; update deal to Closed Won
+      fields: [ARR/MRR, Contract Start Date, CSM Assigned, Products Purchased]
+    - name: Closed Lost
+      forecast: 0
+      entry_criteria: Prospect will not move forward at this time
+      exit_criteria: N/A — terminal stage
+      actions: Send loss survey; document reason; set nurture reminder
+      automations: Tag with loss reason; enroll in nurture sequence; notify manager
+      fields: [Loss Reason, Competitor Won, Re-engage Date]
+  instructions:
+    - heading: Adding a stage
+      text: >-
+        Go to the Planner tab. Scroll right to the next blank stage column. The stage name row at the top
+        is your header — type the new stage name there, then fill in the rows below. Three blank columns
+        are already included to make this obvious.
+    - heading: Removing a stage
+      text: Select the entire column and delete it. Nothing else will break.
+    - heading: Reordering stages
+      text: >-
+        Cut the column (select it, Ctrl+X), insert a blank column where you want it, and paste. Stages
+        are read left to right, so the column order is the pipeline order.
+    - heading: Adding more fields
+      text: >-
+        The field rows are at the bottom of the label column, labeled Field 1, Field 2, etc. To add more,
+        insert a row above the bottom bar. The field area is highlighted in a warm tint to distinguish it
+        from the criteria section above.
+    - heading: "Forecast %"
+      text: >-
+        Set this to your actual historical close rate from each stage. HubSpot uses it to weight pipeline
+        value in forecasting reports.
+    - heading: Entry vs Exit Criteria
+      text: >-
+        Entry = what must be true when a deal arrives at this stage. Exit = what must happen for the deal
+        to advance. Both should be observable facts you can verify in a deal record.
+    - heading: Fields to Fill Out
+      text: >-
+        HubSpot deal properties a rep must complete at this stage. Use the exact property label as it
+        appears in HubSpot. Each field has its own row so you can see at a glance which stages require
+        which properties.
+    - heading: Frozen panes
+      text: >-
+        The label column (A) and the top rows stay fixed as you scroll. This means you always know which
+        row you are editing, no matter how far right you scroll.
+
+mapping:
+  pipeline_object: Deal
+  pipeline_name: Deal Pipeline
+  # A stage is Closed Won / Closed Lost if its name contains one of the
+  # keywords, or (when the name says neither) its forecast is exactly this.
+  closed_won: {name_keywords: [won], forecast: 100}
+  closed_lost: {name_keywords: [lost], forecast: 0}
+
+  # Where the pipeline lands in the Discovery Call Assistant.
+  discovery:
+    section: Processes
+    question_id: sales_pipeline_stages
+
+  # Property type for each "Field to Fill Out", by the first rule whose
+  # keyword appears in the label (case-insensitive).
+  property_types:
+    - {keywords: [date], type: date, field_type: date}
+    - {keywords: ["%", amount, value, arr, mrr, price, revenue, size, count, number], type: number, field_type: number}
+    - {keywords: [notes, points, mentions, covered, criteria, reason], type: string, field_type: textarea}
+  default_property_type: {type: string, field_type: text}
+  property_group: stage_requirements
+  # Labels that are HubSpot's own deal properties: mapped, not created.
+  existing_properties:
+    amount: amount
+    deal amount: amount
+    close date: closedate
+    expected close date: closedate
+    deal owner: hubspot_owner_id
+    deal name: dealname
+    deal stage: dealstage
+    pipeline: pipeline
+
+  # Build-order items (sections are ids from discovery_build_order.yaml).
+  # {stage}, {item}, {label}, {count} are filled in.
+  build_order:
+    pipeline: {section: pipelines, name: "Deal pipeline from the Stage Planner ({count} stages)"}
+    property: {section: properties, name: "Deal property: {label}"}
+    automation: {section: assets, name: "Workflow — {stage}: {item}"}
+    action: {section: assets, name: "Rep task / sequence — {stage}: {item}"}
+    record_page: {section: record_pages, name: "Deal record: show each stage's required properties"}

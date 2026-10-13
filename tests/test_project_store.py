@@ -101,3 +101,25 @@ def test_list_documents_excludes_the_snapshots_folder(tmp_library):
     docs = project_store.list_documents("Acme")
     assert {d.document_type for d in docs} == {"Architecture Diagram"}
     assert all(d.document_type != "_snapshots" for d in docs)
+
+
+def test_saves_in_the_same_millisecond_never_overwrite_each_other(tmp_library, monkeypatch):
+    """Regression: two saves within one millisecond got the same filename,
+    so the second silently replaced the first (seen on fast CI runners)."""
+    from datetime import datetime as real_datetime
+
+    frozen = real_datetime(2026, 10, 6, 12, 0, 0, 123000)
+
+    class FrozenDatetime(real_datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return frozen
+
+    monkeypatch.setattr(project_store, "datetime", FrozenDatetime)
+    paths = [project_store.save_document("Acme", "WRD", f"v{i}".encode(), "docx") for i in range(3)]
+    assert len(set(paths)) == 3
+    assert [p.read_bytes() for p in paths] == [b"v0", b"v1", b"v2"]
+    assert paths[1].name.endswith("_2026-10-06_120000_123-2.docx")
+    docs = project_store.list_documents("Acme")
+    assert len(docs) == 3
+    assert {d.saved_at for d in docs} == {frozen}  # suffix doesn't break the date

@@ -30,6 +30,14 @@
 
 other_option: "Other (specify)"
 
+# Optional one-line intro shown under each section's heading — what the
+# specialist is trying to learn there. Keys must be section names below.
+section_descriptions:
+  Goals: "Align the business outcomes before talking about features. Capture a measurable baseline and a named decision-maker."
+  Data: "Understand the data landscape before designing the future state. Follow-ups appear directly beneath the answer that triggered them."
+  Processes: "Follow the enquiry from first touch to handoff. Identify ownership, routing, and exceptions before automating."
+  Solutions Design: "Translate outcomes into a practical HubSpot design. Separate confirmed requirements from assumptions and optional scope."
+
 sections:
   Goals:
     - id: growth_areas
@@ -242,6 +250,11 @@ sections:
         - Evangelist / advocate
         - Custom stages (see notes)
         - Not defined
+
+    - id: sales_pipeline_stages
+      label: "Sales pipeline stages (in order, with win %)"
+      input: text
+      hint: "Filled in automatically when a client's Deal Stage Planner is imported"
 
     - id: team_processes
       label: "Current team processes (sales, marketing, service)"

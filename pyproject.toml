@@ -112,6 +112,7 @@ forbidden_modules = [
     "requests",
     "httpx",
     "anthropic",
+    "google",
 ]
 
 [[tool.importlinter.contracts]]
@@ -121,10 +122,11 @@ source_modules = ["archscope_integrations"]
 forbidden_modules = ["archscope_api", "streamlit", "fastapi"]
 
 [[tool.importlinter.contracts]]
-name = "API layering: routers map HTTP <-> domain; services never see HTTP schemas"
+name = "API layering: routers map HTTP <-> domain; services never see HTTP schemas; persistence is the bottom"
 type = "layers"
 layers = [
     "archscope_api.main",
     "archscope_api.routers",
     "archscope_api.services | archscope_api.schemas",
+    "archscope_api.persistence | archscope_api.mail",
 ]

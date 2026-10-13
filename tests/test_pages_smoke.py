@@ -16,6 +16,7 @@ see that test's docstring.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -295,6 +296,7 @@ def test_sidebar_starts_with_setup_and_lists_pages_in_process_order():
         "setup",
         "user_guide",
         "discovery_assistant",
+        "stage_planner",
         "requirements_document",
         "joint_evaluation_plan",
         "portal_auditor",
@@ -387,6 +389,117 @@ def test_discovery_old_free_text_and_stale_options_are_kept():
     assert at.text_input(key="disc_goals_timeline__notes").value == "3–6 months"
 
 
+def test_discovery_trigger_answer_reveals_follow_ups_and_required_tasks():
+    """Picking a rule's trigger option (config/discovery_rules.yaml) shows
+    its follow-up questions inline and its tasks in the checklist; taking
+    it back hides them again without losing the follow-up's answer."""
+    at = _run("11_Discovery_Call_Assistant.py", timeout=20)
+    assert any("Required tasks" in m.value for m in at.markdown)
+    assert not [c for c in at.checkbox if c.key.startswith("disc_tasks__")]
+    assert not [m for m in at.multiselect if m.key == "disc_data_gdpr_lawful_basis"]
+
+    at.multiselect(key="disc_data_data_regions").select("EU / UK").run(timeout=20)
+    assert not at.exception, [str(e) for e in at.exception]
+    assert any("↳ Follow-up" in m.value for m in at.markdown)
+    at.multiselect(key="disc_data_gdpr_lawful_basis").select("Consent (opt-in)").run(timeout=20)
+    tasks = {c.label: c for c in at.checkbox if c.key.startswith("disc_tasks__")}
+    assert "Set up GDPR consent / subscription types" in tasks
+    assert "Configure data residency considerations" in tasks
+    assert any("Required tasks (0 of 3 done)" in m.value for m in at.markdown)
+    tasks["Set up GDPR consent / subscription types"].check().run(timeout=20)
+    assert any("Required tasks (1 of 3 done)" in m.value for m in at.markdown)
+    assert any("3 follow-ups" in c.value for c in at.caption)
+
+    at.multiselect(key="disc_data_data_regions").unselect("EU / UK").run(timeout=20)
+    assert not at.exception, [str(e) for e in at.exception]
+    assert not [m for m in at.multiselect if m.key == "disc_data_gdpr_lawful_basis"]
+    assert not [c for c in at.checkbox if c.key.startswith("disc_tasks__")]
+
+
+def test_discovery_multiple_locations_reveals_ownership_and_routing():
+    at = _run("11_Discovery_Call_Assistant.py", timeout=20)
+    at.selectbox(key="disc_data_org_structure").select("Multiple locations (same country)").run(timeout=20)
+    assert not at.exception, [str(e) for e in at.exception]
+    assert at.selectbox(key="disc_data_location_ownership")
+    assert at.multiselect(key="disc_data_location_routing")
+    labels = [c.label for c in at.checkbox if c.key.startswith("disc_tasks__")]
+    assert "Build lead and ticket routing per location / region" in labels
+
+
+def test_discovery_page_explains_broken_rules(monkeypatch, tmp_path):
+    import archscope_domain.discovery_rules
+
+    bad = tmp_path / "discovery_rules.yaml"
+    bad.write_text(
+        "tasks: {gdpr: GDPR}\nrules:\n  - {trigger: {question_id: data_regions, value: EU/UK}, flags: [gdpr]}\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(archscope_domain.discovery_rules, "DEFAULT_RULES_PATH", bad)
+    at = _run("11_Discovery_Call_Assistant.py", timeout=20)
+    assert any("follow-up rules (`config/discovery_rules.yaml`)" in e.value for e in at.error)
+    assert any("'EU/UK' isn't an option of 'data_regions'" in m.value for m in at.markdown)
+
+
+def test_discovery_checklist_previews_and_saves_to_the_project_library(monkeypatch, tmp_path):
+    monkeypatch.setenv("PROJECT_LIBRARY_DIR", str(tmp_path))
+    at = _run(
+        "11_Discovery_Call_Assistant.py",
+        timeout=20,
+        report_project_name="Bright Smiles",
+        disc_data_data_regions=["EU / UK"],
+        disc_solutions_design_integrations=["Salesforce"],
+    )
+    tables = {tuple(df.value.columns): df.value for df in at.dataframe}
+    columns = ("Task", "Why it's required", "Status / Notes")
+    assert columns in tables
+    rows = [r for df in at.dataframe for r in df.value.to_dict("records")]
+    assert {"Task": "Integration: Salesforce", "Why it's required": "Integrations needed → Salesforce", "Status / Notes": ""} in rows
+    assert any(r["Task"].startswith("Set up GDPR consent / subscription types") for r in rows)
+    save = next(b for b in at.button if b.key == "save_Discovery Checklist")
+    at = save.click().run(timeout=20)
+    assert not at.exception, [str(e) for e in at.exception]
+    saved = [d for d in list_documents("Bright Smiles") if d.document_type == "Discovery Checklist"]
+    assert {d.filename.rsplit(".", 1)[-1] for d in saved} == {"docx", "xlsx", "csv", "pdf"}
+
+
+def test_discovery_checklist_is_empty_until_answers_fill_it():
+    at = _run("11_Discovery_Call_Assistant.py", timeout=20)
+    assert any("Nothing on the checklist yet" in i.value for i in at.info)
+    assert not [b for b in at.button if b.key == "save_Discovery Checklist"]
+
+
+def test_discovery_build_order_ticks_items_and_saves_every_format(monkeypatch, tmp_path):
+    monkeypatch.setenv("PROJECT_LIBRARY_DIR", str(tmp_path))
+    at = _run(
+        "11_Discovery_Call_Assistant.py",
+        timeout=20,
+        report_project_name="Bright Smiles",
+        disc_data_data_regions=["EU / UK"],
+        disc_solutions_design_integrations=["Salesforce"],
+    )
+    assert any(s.value == "Bright Smiles — HubSpot Implementation — Build Order" for s in at.subheader)
+    assert any(":green-badge[♻ Template · GDPR asset bundle]" in c.value for c in at.caption)
+    assert any(":gray-badge[Build from scratch] Source: Scope item: Integration: Salesforce" in c.value for c in at.caption)
+    at.checkbox(key="disc_build__gdpr_form_consent").check().run(timeout=20)
+    assert any("1 done" in c.value for c in at.caption)
+    at.selectbox(key="disc_buildorder_project_type").select("CRM Migration to HubSpot").run(timeout=20)
+    assert any(s.value == "Bright Smiles — CRM Migration to HubSpot — Build Order" for s in at.subheader)
+    save = next(b for b in at.button if b.key == "save_Discovery Build Order")
+    at = save.click().run(timeout=20)
+    assert not at.exception, [str(e) for e in at.exception]
+    saved = [d for d in list_documents("Bright Smiles") if d.document_type == "Discovery Build Order"]
+    assert {d.filename.rsplit(".", 1)[-1] for d in saved} == {"docx", "xlsx", "csv", "pdf", "json"}
+    data = json.loads(next(d for d in saved if d.filename.endswith(".json")).path.read_text(encoding="utf-8"))
+    item = next(i for s in data["sections"] for i in s["items"] if i["id"] == "gdpr_form_consent")
+    assert item["done"] is True
+
+
+def test_discovery_build_order_is_empty_until_answers_fill_it():
+    at = _run("11_Discovery_Call_Assistant.py", timeout=20)
+    assert any("No build items yet" in i.value for i in at.info)
+    assert not [b for b in at.button if b.key == "save_Discovery Build Order"]
+
+
 def test_discovery_page_renders_and_exports_a_generated_document(monkeypatch, tmp_path):
     monkeypatch.setenv("PROJECT_LIBRARY_DIR", str(tmp_path))
     md = "# Discovery\n## Executive Summary\nA **dental** group.\n## Recommended HubSpot Modules\n- Sales Hub — pipelines\n"
@@ -414,3 +527,69 @@ def test_discovery_page_explains_a_broken_question_bank(monkeypatch, tmp_path):
     assert any("question bank" in e.value for e in at.error)
     assert any("Goals › kpis" in m.value for m in at.markdown)
     assert not at.multiselect
+
+
+# ---- Deal Stage Planner ---------------------------------------------------------
+
+
+def _planner_draft():
+    from archscope_domain.discovery import discovery_build_order
+    from archscope_domain.stage_planner import build_template, load_stage_planner_config, parse_stage_planner
+
+    config = load_stage_planner_config(discovery_build_order())
+    return parse_stage_planner(build_template(config), config, source="client.xlsx").to_dict()
+
+
+def test_stage_planner_offers_the_precall_template(monkeypatch, tmp_path):
+    monkeypatch.setenv("PROJECT_LIBRARY_DIR", str(tmp_path))
+    at = _run("13_Deal_Stage_Planner.py", report_project_name="Bright Smiles")
+    assert at.selectbox(key="spl_template_choice").value == "HubSpot Deal Stage Planner"
+    save = next(b for b in at.button if b.key == "save_Pre-call Template — HubSpot Deal Stage Planner")
+    at = save.click().run(timeout=APPTEST_TIMEOUT)
+    assert not at.exception, [str(e) for e in at.exception]
+    assert [d.filename.rsplit(".", 1)[-1] for d in list_documents("Bright Smiles")] == ["xlsx"]
+
+
+def test_stage_planner_review_applies_only_on_click_and_confirms_overwrites():
+    at = _run(
+        "13_Deal_Stage_Planner.py",
+        spl_draft=_planner_draft(),
+        spl_draft_hash="abc",
+        disc_processes_sales_pipeline_stages="Lead → Won",
+        disc_processes_notes="Existing call notes.",
+    )
+    assert any("Read from `client.xlsx`: 7 stages" in m.value for m in at.markdown)
+    assert "disc_stage_planner" not in at.session_state  # nothing applied by just uploading
+    apply = at.button(key="spl_apply")
+    assert apply.disabled  # the existing Discovery answer would be replaced
+    at.checkbox(key="spl_confirm_replace").check().run(timeout=APPTEST_TIMEOUT)
+    at = at.button(key="spl_apply").click().run(timeout=APPTEST_TIMEOUT)
+    assert not at.exception, [str(e) for e in at.exception]
+    record = at.session_state["disc_stage_planner"]
+    assert record["targets"] == ["discovery", "architecture", "build_order"]
+    assert at.session_state["disc_processes_sales_pipeline_stages"].startswith("Appointment Scheduled (10%) →")
+    notes = at.session_state["disc_processes_notes"]
+    assert notes.startswith("Existing call notes.\n\n[Deal Stage Planner]")
+
+
+def test_discovery_build_order_includes_the_applied_planner():
+    record = {"planner": _planner_draft(), "targets": ["build_order"], "applied_on": "2026-10-12"}
+    at = _run("11_Discovery_Call_Assistant.py", disc_stage_planner=record, report_project_name="Bright Smiles")
+    assert any("Deal pipeline from the Stage Planner (7 stages)" == c.label for c in at.checkbox)
+
+
+def test_architecture_generator_uses_the_applied_planner():
+    record = {"planner": _planner_draft(), "targets": ["architecture"], "applied_on": "2026-10-12"}
+    at = AppTest.from_file(str(REPO_ROOT / "Home.py"))
+    at.session_state["disc_stage_planner"] = record
+    at.run(timeout=APPTEST_TIMEOUT)
+    at.switch_page("app_pages/1_Architecture_Generator.py")
+    at.run(timeout=APPTEST_TIMEOUT)
+    assert any("Using the Deal Stage Planner applied on 2026-10-12" in i.value for i in at.info)
+    at = next(b for b in at.button if b.label == "Generate blueprint").click().run(timeout=APPTEST_TIMEOUT)
+    assert not at.exception, [str(e) for e in at.exception]
+    blueprint = at.session_state["blueprint"]
+    deal = next(p for p in blueprint.pipelines if p.object_type == "Deal")
+    assert [s.name for s in deal.stages][:2] == ["Appointment Scheduled", "Qualified to Buy"]
+    assert deal.stages[1].probability == 0.2
+    assert any(p.name == "demo_date" for p in blueprint.standard_object_properties["Deal"])

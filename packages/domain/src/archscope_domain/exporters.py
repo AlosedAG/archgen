@@ -83,7 +83,8 @@ def sections_to_xlsx(sections: list[Section]) -> bytes:
     wb.remove(wb.active)
     used_names: set[str] = set()
     for section_title, rows in sections:
-        name = (section_title or "Sheet")[:31]
+        # Excel forbids : \ / ? * [ ] in sheet names (e.g. "Segments / Lists").
+        name = (re.sub(r"[:\\/?*\[\]]", "-", section_title or "").strip() or "Sheet")[:31]
         base, suffix_i = name, 1
         while name in used_names:
             suffix = f" ({suffix_i})"

@@ -15,7 +15,7 @@ picked up on the next Streamlit rerun without restarting the app.
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -35,7 +35,7 @@ DEFAULT_OTHER_OPTION = "Other (specify)"
 # Section-level fields share the per-section session-key namespace with
 # question ids, so a question can't be called either of these.
 RESERVED_IDS = frozenset({"notes", "edge_cases"})
-_ID_RE = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$")
+ID_RE = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$")
 
 
 class DiscoveryConfigError(ValueError):
@@ -67,6 +67,8 @@ class QuestionBank:
     # Section name -> questions, in YAML order.
     sections: dict[str, list[Question]]
     other_option: str = DEFAULT_OTHER_OPTION
+    # Section name -> its optional one-line intro.
+    descriptions: dict[str, str] = field(default_factory=dict)
 
     def choices(self, question: Question) -> list[str]:
         """The options a widget for ``question`` offers: the YAML's
@@ -126,7 +128,7 @@ def parse_question_bank(raw: Any, *, path: Path = DEFAULT_OPTIONS_PATH) -> Quest
             qid = entry.get("id")
             if isinstance(qid, str) and qid:
                 where = f"{section} › {qid}"
-            if not isinstance(qid, str) or not _ID_RE.match(qid):
+            if not isinstance(qid, str) or not ID_RE.match(qid):
                 problems.append(f"{where}: 'id' must be snake_case (lowercase letters, digits, single underscores)")
                 continue
             if qid in RESERVED_IDS:
@@ -137,43 +139,67 @@ def parse_question_bank(raw: Any, *, path: Path = DEFAULT_OPTIONS_PATH) -> Quest
                 continue
             seen_ids[qid] = section
 
-            label = entry.get("label")
-            if not isinstance(label, str) or not label.strip():
-                problems.append(f"{where}: 'label' is required")
-                continue
-            input_type = entry.get("input", INPUT_TEXT)
-            if input_type not in INPUT_TYPES:
-                problems.append(f"{where}: 'input' must be one of {', '.join(INPUT_TYPES)} (got {input_type!r})")
-                continue
-            hint = entry.get("hint") or ""
-            if not isinstance(hint, str):
-                problems.append(f"{where}: 'hint' must be text")
-                continue
-
-            options = entry.get("options") or []
-            if not isinstance(options, list) or not all(isinstance(o, (str, int, float)) for o in options):
-                problems.append(f"{where}: 'options' must be a list of text values")
-                continue
-            options = [str(o).strip() for o in options]
-            if input_type == INPUT_TEXT and options:
-                problems.append(f"{where}: a 'text' question can't have options — set 'input' to select/multiselect/radio")
-                continue
-            if input_type in CHOICE_INPUTS and not options:
-                problems.append(f"{where}: a '{input_type}' question needs 'options'")
-                continue
-            if any(not o for o in options):
-                problems.append(f"{where}: options can't be blank")
-                continue
-            dupes = sorted({o for o in options if options.count(o) > 1})
-            if dupes:
-                problems.append(f"{where}: duplicate option(s) {', '.join(dupes)}")
-                continue
-            # The fallback is appended automatically; tolerate it being listed.
-            options = [o for o in options if o != other_option]
-
-            questions.append(Question(qid, label.strip(), hint.strip(), input_type, tuple(options)))
+            question = parse_question_fields(qid, entry, where, problems, other_option=other_option)
+            if question:
+                questions.append(question)
         sections[str(section)] = questions
+
+    descriptions: dict[str, str] = {}
+    raw_descriptions = raw.get("section_descriptions") or {}
+    if not isinstance(raw_descriptions, dict):
+        problems.append("'section_descriptions' must be a mapping of section name -> text")
+        raw_descriptions = {}
+    for section, text in raw_descriptions.items():
+        if section not in sections:
+            problems.append(f"section_descriptions › {section}: no section by that name")
+        elif not isinstance(text, str) or not text.strip():
+            problems.append(f"section_descriptions › {section}: must be non-empty text")
+        else:
+            descriptions[str(section)] = text.strip()
 
     if problems:
         raise DiscoveryConfigError(path, problems)
-    return QuestionBank(sections=sections, other_option=other_option)
+    return QuestionBank(sections=sections, other_option=other_option, descriptions=descriptions)
+
+
+def parse_question_fields(
+    qid: str, entry: dict[str, Any], where: str, problems: list[str], *, other_option: str
+) -> Question | None:
+    """Validate one question entry's label/input/hint/options (its id is
+    already checked by the caller). Appends to ``problems`` and returns
+    ``None`` if the entry is invalid. Shared with the discovery rules'
+    follow-up questions, which use the same format."""
+    label = entry.get("label")
+    if not isinstance(label, str) or not label.strip():
+        problems.append(f"{where}: 'label' is required")
+        return None
+    input_type = entry.get("input", INPUT_TEXT)
+    if input_type not in INPUT_TYPES:
+        problems.append(f"{where}: 'input' must be one of {', '.join(INPUT_TYPES)} (got {input_type!r})")
+        return None
+    hint = entry.get("hint") or ""
+    if not isinstance(hint, str):
+        problems.append(f"{where}: 'hint' must be text")
+        return None
+
+    options = entry.get("options") or []
+    if not isinstance(options, list) or not all(isinstance(o, (str, int, float)) for o in options):
+        problems.append(f"{where}: 'options' must be a list of text values")
+        return None
+    options = [str(o).strip() for o in options]
+    if input_type == INPUT_TEXT and options:
+        problems.append(f"{where}: a 'text' question can't have options — set 'input' to select/multiselect/radio")
+        return None
+    if input_type in CHOICE_INPUTS and not options:
+        problems.append(f"{where}: a '{input_type}' question needs 'options'")
+        return None
+    if any(not o for o in options):
+        problems.append(f"{where}: options can't be blank")
+        return None
+    dupes = sorted({o for o in options if options.count(o) > 1})
+    if dupes:
+        problems.append(f"{where}: duplicate option(s) {', '.join(dupes)}")
+        return None
+    # The fallback is appended automatically; tolerate it being listed.
+    options = [o for o in options if o != other_option]
+    return Question(qid, label.strip(), hint.strip(), input_type, tuple(options))

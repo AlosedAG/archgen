@@ -64,6 +64,7 @@ user_guide = st.Page("app_pages/12_User_Guide.py", title="User guide", url_path=
 discovery_assistant = st.Page(
     "app_pages/11_Discovery_Call_Assistant.py", title="Discovery Call Assistant", url_path="Discovery_Call_Assistant"
 )
+stage_planner = st.Page("app_pages/13_Deal_Stage_Planner.py", title="Deal Stage Planner", url_path="Deal_Stage_Planner")
 requirements_document = st.Page(
     "app_pages/6_Requirements_Document.py", title="Requirements Document", url_path="Requirements_Document"
 )
@@ -98,7 +99,7 @@ project_library = st.Page("app_pages/9_Project_Library.py", title="Project Libra
 pg = st.navigation(
     {
         "Start here": [setup, user_guide],
-        "Step 1 · Discover": [discovery_assistant, requirements_document, joint_evaluation_plan],
+        "Step 1 · Discover": [discovery_assistant, stage_planner, requirements_document, joint_evaluation_plan],
         "Step 2 · Assess current portal": [portal_auditor, property_audit, documentation_generator, executive_report],
         "Step 3 · Design": [architecture_generator, architecture_diagram],
         "Step 4 · Propose": [proposal_builder],

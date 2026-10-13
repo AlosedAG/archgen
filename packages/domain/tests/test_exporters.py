@@ -139,3 +139,8 @@ def test_markdown_export_adds_title_when_missing():
 
     doc = _Document(markdown_to_docx("## Section\nBody", title="My Title"))
     assert doc.paragraphs[0].text == "My Title"
+
+
+def test_sections_to_xlsx_replaces_characters_excel_forbids_in_sheet_names():
+    wb = openpyxl.load_workbook(io.BytesIO(sections_to_xlsx([("Segments / Lists", [{"A": "1"}]), ("Q: [draft]?", [])])))
+    assert wb.sheetnames == ["Segments - Lists", "Q- -draft--"]

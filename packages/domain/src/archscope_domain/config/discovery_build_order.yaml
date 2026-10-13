@@ -1,0 +1,208 @@
+# Discovery Call Assistant — implementation build order.
+#
+# The build order (page tab "4 · Build order", exported as .docx / .xlsx /
+# .csv / .pdf / .json and savable to the Project Library) turns the
+# confirmed scope into checkable build items for the implementation team,
+# grouped under the sections below. Edit this file to rename or reorder
+# sections, add templates, or change which answers produce which items —
+# no code changes needed. Loaded and validated by
+# archscope_domain/discovery_build_order.py together with the question
+# bank, discovery_rules.yaml, and discovery_checklist.yaml; edits are
+# picked up on the next page refresh, and an invalid file is listed entry
+# by entry on the page.
+#
+# project_types: the choices for "[Client] — [Project Type] — Build Order".
+#                The first is the default.
+# statuses:      the status values an item can have. The first is every
+#                new item's status; 'done_status' is what a ticked item gets.
+# sections:      the document's sections, in order — id (snake_case, used
+#                by items below) and title (the header shown / exported).
+# templates:     reusable template bundles, keyed by id — label. Items
+#                with a template are tagged and listed first in their
+#                section, apart from build-from-scratch items.
+# items:         a list; each entry has
+#   id:          unique snake_case id. Saved tick-marks refer to it, and an
+#                export's JSON uses it, so keep it stable.
+#   section:     a section id from above.
+#   name:        the build item. With a 'scope' trigger, "{option}" is
+#                replaced by the picked option (e.g. "Salesforce").
+#   template:    optional — a template id from above.
+#   and exactly ONE trigger:
+#     task:      a task id from discovery_rules.yaml — included when the
+#                rules flag that task. Source: the task.
+#     scope:     a question id listed in discovery_checklist.yaml — one
+#                item per scope item picked there. Source: the scope item.
+#     answer:    {question_id, value} — included when that option (or any
+#                of a list of options) is picked, exactly as in a
+#                discovery_rules.yaml trigger. Source: the answer.
+# Items with the same section and name are merged into one, listing every
+# source.
+
+project_types:
+  - HubSpot Implementation
+  - CRM Migration to HubSpot
+  - HubSpot Portal Optimization
+
+statuses:
+  - Not started
+  - In progress
+  - Blocked
+  - Done
+done_status: Done
+
+sections:
+  - {id: assets, title: "Assets to be created"}
+  - {id: segments, title: "Segments / Lists"}
+  - {id: properties, title: "Properties"}
+  - {id: pipelines, title: "Pipelines"}
+  - {id: record_pages, title: "Record-page updates"}
+
+templates:
+  gdpr_bundle: "GDPR asset bundle"
+  multi_location_bundle: "Multi-location bundle"
+
+items:
+  # ---- GDPR (from discovery_rules.yaml tasks) ----
+  - id: gdpr_subscription_types
+    section: assets
+    name: "Subscription types (marketing, newsletter, service)"
+    template: gdpr_bundle
+    task: gdpr_consent_setup
+  - id: gdpr_form_consent
+    section: assets
+    name: "Consent checkboxes on every form"
+    template: gdpr_bundle
+    task: gdpr_consent_setup
+  - id: gdpr_cookie_banner
+    section: assets
+    name: "Cookie consent banner"
+    template: gdpr_bundle
+    task: gdpr_consent_setup
+  - id: gdpr_eu_contacts_list
+    section: segments
+    name: "EU / UK contacts"
+    template: gdpr_bundle
+    task: gdpr_consent_setup
+  - id: gdpr_no_consent_list
+    section: segments
+    name: "EU / UK contacts without marketing consent"
+    template: gdpr_bundle
+    task: gdpr_consent_setup
+  - id: gdpr_legal_basis_property
+    section: properties
+    name: "Legal basis for processing (contact)"
+    template: gdpr_bundle
+    task: gdpr_lawful_basis_tracking
+  - id: gdpr_record_card
+    section: record_pages
+    name: "Contact record: show consent status and legal basis"
+    template: gdpr_bundle
+    task: gdpr_lawful_basis_tracking
+  - id: data_residency_record
+    section: assets
+    name: "Data-residency decision record (where EU / UK data is hosted)"
+    task: gdpr_data_residency
+
+  # ---- Multiple locations / regions ----
+  - id: location_property
+    section: properties
+    name: "Location / region (contact, company, deal, ticket)"
+    template: multi_location_bundle
+    task: location_teams
+  - id: location_teams
+    section: assets
+    name: "Teams per location / region"
+    template: multi_location_bundle
+    task: location_teams
+  - id: location_record_cards
+    section: record_pages
+    name: "Show location / region on contact, company, and deal records"
+    template: multi_location_bundle
+    task: location_teams
+  - id: location_routing_workflow
+    section: assets
+    name: "Lead and ticket routing workflow by location / region"
+    template: multi_location_bundle
+    task: location_routing_rules
+  - id: location_lists
+    section: segments
+    name: "Contacts by location / region"
+    template: multi_location_bundle
+    task: location_reporting
+  - id: location_dashboard
+    section: assets
+    name: "Per-location dashboard"
+    template: multi_location_bundle
+    task: location_reporting
+  - id: deal_currency
+    section: properties
+    name: "Deal currency with base-currency roll-up"
+    task: multi_currency
+
+  # ---- Scope items (from discovery_checklist.yaml) ----
+  - id: integration_setup
+    section: assets
+    name: "Integration: {option}"
+    scope: integrations
+  - id: automation_workflow
+    section: assets
+    name: "Workflow: {option}"
+    scope: required_actions
+  - id: custom_data_properties
+    section: properties
+    name: "Custom object or properties for {option}"
+    scope: custom_data
+  - id: custom_data_record_page
+    section: record_pages
+    name: "Record page for {option}"
+    scope: custom_data
+
+  # ---- Specific answers ----
+  - id: sales_pipeline
+    section: pipelines
+    name: "Sales deal pipeline and stages"
+    answer: {question_id: priority_features, value: Deal pipelines}
+  - id: ticket_pipeline
+    section: pipelines
+    name: "Support ticket pipeline and statuses"
+    answer: {question_id: priority_features, value: Help desk / ticketing}
+  - id: renewal_pipeline
+    section: pipelines
+    name: "Renewal pipeline"
+    answer: {question_id: team_processes, value: Renewals}
+  - id: lead_score_property
+    section: properties
+    name: "Lead score"
+    answer: {question_id: priority_features, value: Lead scoring}
+  - id: custom_lifecycle_stages
+    section: properties
+    name: "Custom lifecycle stages"
+    answer: {question_id: journey_stages, value: Custom stages (see notes)}
+  - id: email_templates
+    section: assets
+    name: "Branded email templates"
+    answer: {question_id: priority_features, value: Email marketing}
+  - id: marketing_subscribers_list
+    section: segments
+    name: "Marketing-email subscribers"
+    answer: {question_id: priority_features, value: Email marketing}
+  - id: forms_and_pages
+    section: assets
+    name: "Lead-capture forms and landing pages"
+    answer: {question_id: priority_features, value: Landing pages / forms}
+  - id: quote_template
+    section: assets
+    name: "Quote template"
+    answer: {question_id: priority_features, value: Quotes}
+  - id: deal_record_layout
+    section: record_pages
+    name: "Deal record: key properties and associations"
+    answer: {question_id: priority_features, value: Deal pipelines}
+  - id: ticket_record_layout
+    section: record_pages
+    name: "Ticket record: SLA and priority properties"
+    answer: {question_id: priority_features, value: Help desk / ticketing}
+  - id: dashboards
+    section: assets
+    name: "Reporting dashboards for the KPIs captured"
+    answer: {question_id: priority_features, value: Reporting dashboards}

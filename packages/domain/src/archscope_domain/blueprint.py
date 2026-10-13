@@ -63,10 +63,11 @@ class BlueprintGenerator:
         standard_object_properties = self._build_standard_object_properties(bp_input)
         custom_objects = self._build_custom_objects(bp_input, warnings)
         self._apply_integration_heuristics(bp_input, standard_object_properties, warnings)
+        self._apply_additional_properties(bp_input, standard_object_properties, warnings)
         associations = self._build_associations(custom_objects)
         pipelines = self._build_pipelines(bp_input, warnings)
         base_currency_note = self._resolve_base_currency(bp_input, warnings)
-        workflows = self._build_workflows(bp_input, custom_objects)
+        workflows = self._build_workflows(bp_input, custom_objects) + list(bp_input.additional_workflows)
 
         if bp_input.custom_object_notes.strip():
             warnings.append(
@@ -140,6 +141,23 @@ class BlueprintGenerator:
                 if not any(p.name == prop.name for p in existing):
                     existing.append(prop)
 
+    def _apply_additional_properties(
+        self,
+        bp_input: BlueprintInput,
+        standard_object_properties: dict[str, list[PropertyDef]],
+        warnings: list[str],
+    ) -> None:
+        """Imported properties (e.g. a Stage Planner's deal fields), after the
+        baseline and integration ones, skipping names already present."""
+        for obj, props in bp_input.additional_properties.items():
+            existing = standard_object_properties.setdefault(obj, [])
+            for prop in props:
+                is_valid, message = self.rules.check_naming(prop.name, "property")
+                if not is_valid:
+                    warnings.append(f"Property '{prop.name}' ({obj}): {message}")
+                if not any(p.name == prop.name for p in existing):
+                    existing.append(prop)
+
     def _build_associations(self, custom_objects: list[CustomObjectDef]) -> list[AssociationDef]:
         keywords = self.rules.get_object_model_keywords()
         templates_by_object_name = {t.get("object_name"): t for t in keywords.values()}
@@ -161,12 +179,19 @@ class BlueprintGenerator:
 
     def _build_pipelines(self, bp_input: BlueprintInput, warnings: list[str]) -> list[PipelineDef]:
         pipelines: list[PipelineDef] = []
-        for object_type in bp_input.pipelines_required:
-            template = self.rules.get_pipeline_template(object_type)
+        required = list(bp_input.pipelines_required)
+        required += [o for o in bp_input.pipeline_overrides if o not in required]
+        for object_type in required:
             name = f"{object_type} Pipeline"
             is_valid, message = self.rules.check_naming(name, "pipeline")
             if not is_valid:
                 warnings.append(f"Pipeline '{name}': {message}")
+            override = bp_input.pipeline_overrides.get(object_type)
+            if override:
+                stages = sorted(override, key=lambda s: s.order)
+                pipelines.append(PipelineDef(object_type=object_type, name=name, stages=stages))
+                continue
+            template = self.rules.get_pipeline_template(object_type)
             stages = [
                 StageDef(
                     name=s["name"],
@@ -310,10 +335,19 @@ def blueprint_to_markdown(blueprint: Blueprint) -> str:
     lines.append("## Pipelines & Stages")
     for pl in blueprint.pipelines:
         lines.append(f"### {pl.name} ({pl.object_type})")
-        lines.append("| Order | Stage | Closed | Won |")
-        lines.append("|---|---|---|---|")
+        detailed = any(s.probability is not None or s.description for s in pl.stages)
+        if detailed:
+            lines.append("| Order | Stage | Probability | Closed | Won | Description |")
+            lines.append("|---|---|---|---|---|---|")
+        else:
+            lines.append("| Order | Stage | Closed | Won |")
+            lines.append("|---|---|---|---|")
         for s in sorted(pl.stages, key=lambda stage: stage.order):
-            lines.append(f"| {s.order} | {s.name} | {s.is_closed} | {s.is_won} |")
+            if detailed:
+                probability = "" if s.probability is None else f"{s.probability:.0%}"
+                lines.append(f"| {s.order} | {s.name} | {probability} | {s.is_closed} | {s.is_won} | {s.description} |")
+            else:
+                lines.append(f"| {s.order} | {s.name} | {s.is_closed} | {s.is_won} |")
         lines.append("")
 
     lines.append("## Naming Conventions")

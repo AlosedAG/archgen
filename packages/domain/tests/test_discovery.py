@@ -24,6 +24,7 @@ from archscope_domain.discovery import (
     has_any_notes,
     sections,
     stream_document,
+    stream_document_gemini,
     suggest_modules,
 )
 
@@ -150,6 +151,47 @@ def test_stream_document_raises_on_incomplete_document(stop_reason):
     client, _ = _fake_client(["partial"], stop_reason)
     with pytest.raises(DiscoveryError):
         list(stream_document(client, build_client_explainer_input(["Sales Hub"])))
+
+
+def _gemini_chunk(*parts, finish=None):
+    content = SimpleNamespace(parts=[SimpleNamespace(text=t, thought=thought) for t, thought in parts])
+    return SimpleNamespace(prompt_feedback=None, candidates=[SimpleNamespace(content=content, finish_reason=finish)])
+
+
+def _fake_gemini(chunks):
+    calls = []
+
+    def generate_content_stream(**kwargs):
+        calls.append(kwargs)
+        return iter(chunks)
+
+    return SimpleNamespace(models=SimpleNamespace(generate_content_stream=generate_content_stream)), calls
+
+
+def test_stream_document_gemini_yields_answer_text_not_thoughts():
+    client, calls = _fake_gemini(
+        [_gemini_chunk(("thinking about gaps", True), ("# Title\n", False)), _gemini_chunk(("Body", False), finish="STOP")]
+    )
+    payload = build_client_explainer_input(["Sales Hub"])
+    assert "".join(stream_document_gemini(client, payload, model="gemini-3.8-flash")) == "# Title\nBody"
+    request = calls[0]
+    assert request["model"] == "gemini-3.8-flash"
+    assert request["config"]["system_instruction"] == SYSTEM_PROMPT
+    assert request["config"]["thinking_config"] == {"thinking_level": "high"}
+    assert json.loads(request["contents"].split("\n\n", 1)[0]) == payload
+
+
+def test_gemini_2_5_uses_a_thinking_budget():
+    client, calls = _fake_gemini([_gemini_chunk(("x", False), finish="STOP")])
+    list(stream_document_gemini(client, build_client_explainer_input(["Sales Hub"]), model="gemini-2.5-pro"))
+    assert calls[0]["config"]["thinking_config"] == {"thinking_budget": -1}
+
+
+@pytest.mark.parametrize("finish", ["MAX_TOKENS", "SAFETY", SimpleNamespace(name="RECITATION")])
+def test_stream_document_gemini_raises_on_incomplete_document(finish):
+    client, _ = _fake_gemini([_gemini_chunk(("partial", False), finish=finish)])
+    with pytest.raises(DiscoveryError):
+        list(stream_document_gemini(client, build_client_explainer_input(["Sales Hub"]), model="gemini-3.8-flash"))
 
 
 def test_suggest_modules_reads_only_the_recommended_section():

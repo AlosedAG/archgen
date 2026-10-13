@@ -1,10 +1,15 @@
-"""API test harness: an isolated app per test, an async HTTP client over
-ASGI (no network, no server), the Streamlit-era golden fixtures, and an
-in-memory read-only portal."""
+"""API test harness: an isolated app per test (with its own SQLite
+database and a seeded workspace + user), an async HTTP client over ASGI
+(no network, no server), the Streamlit-era golden fixtures, and an
+in-memory read-only portal.
+
+``client`` is signed in as the seeded user (the principal dependency is
+overridden); ``anon_client`` isn't, for testing sign-in itself."""
 
 from __future__ import annotations
 
 import json
+import shutil
 from collections.abc import AsyncIterator, Callable
 from pathlib import Path
 from typing import Any
@@ -14,8 +19,16 @@ from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
 from archscope_api.main import create_app
-from archscope_api.routers.deps import get_portal_reader
+from archscope_api.persistence.db import get_engine, session_scope
+from archscope_api.persistence.models import Base
+from archscope_api.persistence.security import hash_password
+from archscope_api.routers.deps import current_principal, get_portal_reader
+from archscope_api.services import auth
+from archscope_api.services.auth import Principal
 from archscope_api.settings import Settings, get_settings
+
+TEST_EMAIL = "ana@sonamation.test"
+TEST_PASSWORD = "correct horse battery staple"
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 GOLDEN_DIR = REPO_ROOT / "packages" / "domain" / "tests" / "golden" / "fixtures"
@@ -82,21 +95,61 @@ PORTAL = InMemoryPortalReader(
 
 
 @pytest.fixture
-def settings() -> Settings:
-    return Settings(environment="test", ANTHROPIC_API_KEY=None, cors_origins=["http://localhost:3000"])
+def settings(tmp_path: Path) -> Settings:
+    return Settings(
+        environment="test",
+        ANTHROPIC_API_KEY=None,
+        cors_origins=["http://localhost:3000"],
+        database_url=f"sqlite:///{(tmp_path / 'test.db').as_posix()}",
+        blob_dir=str(tmp_path / "blobs"),
+    )
+
+
+@pytest.fixture(scope="session")
+def schema_template(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """An empty database with the full schema, built once and copied per test
+    (creating tables per test is slow on Windows file systems)."""
+    path = tmp_path_factory.mktemp("schema") / "template.db"
+    engine = get_engine(f"sqlite:///{path.as_posix()}")
+    Base.metadata.create_all(engine)
+    engine.dispose()
+    return path
 
 
 @pytest.fixture
-def app(settings: Settings) -> FastAPI:
+def principal(settings: Settings, schema_template: Path) -> Principal:
+    """A fresh database with one workspace owner, signed in for ``client``."""
+    shutil.copyfile(schema_template, settings.database_url.removeprefix("sqlite:///"))
+    with session_scope(settings.database_url) as db:
+        user = auth.create_user(db, email=TEST_EMAIL, name="Ana", workspace_name="SonaMation", role="owner")
+        # A cheap hash keeps the suite fast; production uses 600k iterations.
+        user.password_hash = hash_password(TEST_PASSWORD, iterations=1_000)
+        membership = user.memberships[0]
+        return Principal(user.id, user.email, user.name, membership.workspace_id, "SonaMation", "owner")
+
+
+@pytest.fixture
+def app(settings: Settings, principal: Principal) -> FastAPI:
     application = create_app(settings)
     application.dependency_overrides[get_settings] = lambda: settings
     application.dependency_overrides[get_portal_reader] = lambda: PORTAL
+    application.dependency_overrides[current_principal] = lambda: principal
     return application
 
 
 @pytest.fixture
 async def client(app: FastAPI) -> AsyncIterator[AsyncClient]:
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as http:
+        yield http
+
+
+@pytest.fixture
+async def anon_client(settings: Settings, principal: Principal) -> AsyncIterator[AsyncClient]:
+    """No signed-in user: the real session-cookie check applies."""
+    application = create_app(settings)
+    application.dependency_overrides[get_settings] = lambda: settings
+    application.dependency_overrides[get_portal_reader] = lambda: PORTAL
+    async with AsyncClient(transport=ASGITransport(app=application), base_url="http://test") as http:
         yield http
 
 
@@ -118,3 +171,9 @@ def golden() -> Callable[[str], Any]:
         return json.loads((GOLDEN_DIR / f"{name}.json").read_text(encoding="utf-8"))
 
     return load
+
+
+@pytest.fixture
+def test_password() -> str:
+    """The seeded user's password (their email is ``principal.email``)."""
+    return TEST_PASSWORD

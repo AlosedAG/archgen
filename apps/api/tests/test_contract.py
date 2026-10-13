@@ -10,11 +10,12 @@ from typing import Any
 
 import pytest
 from fastapi import FastAPI
+from google.genai import errors as genai_errors
 from httpx import ASGITransport, AsyncClient
 
 from archscope_api.main import create_app
 from archscope_api.openapi import OPENAPI_PATH, render_openapi
-from archscope_api.routers.deps import get_ai_client, get_portal_reader
+from archscope_api.routers.deps import AiBackend, get_ai_client, get_portal_reader
 from archscope_api.settings import Settings, get_settings
 from archscope_domain.ports import PortalAPIError, PortalScopeError
 
@@ -105,9 +106,14 @@ async def test_cors_allows_the_web_origin_only(client: AsyncClient) -> None:
 
 
 def test_docs_disabled_in_production() -> None:
-    app = create_app(Settings(environment="production"))
+    app = create_app(Settings(environment="production", secret_key="x" * 32))
     assert app.openapi_url is None
     assert app.docs_url is None
+
+
+def test_production_refuses_to_start_without_a_secret_key() -> None:
+    with pytest.raises(RuntimeError, match="ARCHSCOPE_SECRET_KEY"):
+        create_app(Settings(environment="production", secret_key=None))
 
 
 # ---- SSE -------------------------------------------------------------------------
@@ -135,7 +141,7 @@ def _fake_ai(chunks: list[str], stop_reason: str = "end_turn") -> tuple[Any, lis
         calls.append(kwargs)
         return _FakeStream(chunks, stop_reason)
 
-    return SimpleNamespace(beta=SimpleNamespace(messages=SimpleNamespace(stream=stream))), calls
+    return AiBackend("anthropic", SimpleNamespace(beta=SimpleNamespace(messages=SimpleNamespace(stream=stream)))), calls
 
 
 def _events(body: str) -> list[tuple[str, dict[str, Any]]]:
@@ -178,6 +184,44 @@ async def test_model_override_from_settings(app: FastAPI) -> None:
     assert calls[0]["model"] == "claude-sonnet-5-5"
 
 
+def _fake_gemini(per_model: dict[str, Any]) -> tuple[AiBackend, list[str]]:
+    """A Gemini backend whose models either stream text or raise (e.g. a 429)."""
+    tried: list[str] = []
+
+    def generate_content_stream(**kwargs: Any) -> Any:
+        tried.append(kwargs["model"])
+        outcome = per_model[kwargs["model"]]
+        if isinstance(outcome, Exception):
+            raise outcome
+        content = SimpleNamespace(parts=[SimpleNamespace(text=outcome, thought=False)])
+        return iter([SimpleNamespace(prompt_feedback=None, candidates=[SimpleNamespace(content=content, finish_reason="STOP")])])
+
+    client = SimpleNamespace(models=SimpleNamespace(generate_content_stream=generate_content_stream))
+    return AiBackend("gemini", client, tuple(per_model)), tried
+
+
+async def test_gemini_falls_back_to_the_next_model_when_quota_is_used_up(app: FastAPI) -> None:
+    quota = genai_errors.ClientError(429, {"error": {"code": 429, "message": "quota", "status": "RESOURCE_EXHAUSTED"}})
+    ai, tried = _fake_gemini({"gemini-3.8-flash": quota, "gemini-2.5-pro": "# Drafted"})
+    app.dependency_overrides[get_ai_client] = lambda: ai
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as http:
+        response = await http.post("/api/v1/discovery/client-explainer", json={"modules": ["Sales Hub"]})
+    assert tried == ["gemini-3.8-flash", "gemini-2.5-pro"]
+    assert _events(response.text) == [("delta", {"text": "# Drafted"}), ("done", {})]
+
+
+async def test_gemini_quota_used_up_everywhere_is_a_rate_limit_error(app: FastAPI) -> None:
+    quota = genai_errors.ClientError(429, {"error": {"code": 429, "message": "quota", "status": "RESOURCE_EXHAUSTED"}})
+    ai, tried = _fake_gemini({"gemini-3.8-flash": quota, "gemini-2.5-pro": quota})
+    app.dependency_overrides[get_ai_client] = lambda: ai
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as http:
+        response = await http.post("/api/v1/discovery/client-explainer", json={"modules": ["Sales Hub"]})
+    assert tried == ["gemini-3.8-flash", "gemini-2.5-pro"]
+    ((event, problem),) = _events(response.text)
+    assert event == "error"
+    assert problem["type"].endswith("/ai-rate-limited")
+
+
 # ---- OpenAPI contract --------------------------------------------------------------
 
 
@@ -196,3 +240,10 @@ def test_every_operation_is_documented() -> None:
             assert op.get("summary"), f"{method.upper()} {path} has no summary"
             operation_ids.append(op["operationId"])
     assert len(operation_ids) == len(set(operation_ids))
+
+
+def test_schema_names_are_unique() -> None:
+    """Two API models with the same class name get module-qualified OpenAPI
+    names, which breaks the web app's generated types — rename one instead."""
+    names = json.loads(render_openapi())["components"]["schemas"]
+    assert not [n for n in names if "__" in n], sorted(n for n in names if "__" in n)

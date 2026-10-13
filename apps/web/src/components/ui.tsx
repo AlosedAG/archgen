@@ -1,0 +1,319 @@
+"use client";
+
+/** Shared UI primitives from the ArchScope component sheet, with motion built in. */
+
+import { AnimatePresence, motion } from "framer-motion";
+import { useState } from "react";
+
+import { ApiError, downloadFile, saveToLibrary, type GeneratedFile } from "@/lib/api";
+
+export const spring = { type: "spring", stiffness: 500, damping: 38 } as const;
+export const fade = { duration: 0.2, ease: "easeOut" } as const;
+
+// ---- Icons ------------------------------------------------------------------
+
+/** The design's icons (exported from Figma into /public/icons), at their designed size. */
+export type IconName =
+  | "chevron-right"
+  | "chevron-down"
+  | "chevron-down-18"
+  | "message-square"
+  | "sparkles"
+  | "rotate-ccw"
+  | "megaphone"
+  | "handshake"
+  | "headset"
+  | "workflow"
+  | "panels-top-left"
+  | "credit-card";
+
+const ICON_SIZE: Partial<Record<IconName, number>> = {
+  "chevron-down-18": 18,
+  megaphone: 24,
+  handshake: 24,
+  headset: 24,
+  workflow: 24,
+  "panels-top-left": 24,
+  "credit-card": 24,
+};
+
+export function Icon({ name }: { name: IconName }) {
+  const size = ICON_SIZE[name] ?? 16;
+  // eslint-disable-next-line @next/next/no-img-element -- static design SVGs at fixed size
+  return <img src={`/icons/${name}.svg`} width={size} height={size} alt="" aria-hidden style={{ flex: "none" }} />;
+}
+
+// ---- Tabs -------------------------------------------------------------------
+
+export type TabDef<T extends string> = { id: T; label: string };
+
+/**
+ * Accessible tab list. `primary` is the segmented control (active tab on a
+ * white tile); `secondary` is the underlined row. The active marker slides
+ * between tabs; `layoutId` must be unique per tab list on the page.
+ */
+export function Tabs<T extends string>({
+  tabs,
+  active,
+  onChange,
+  layoutId,
+  variant,
+  label,
+}: {
+  tabs: TabDef<T>[];
+  active: T;
+  onChange: (id: T) => void;
+  layoutId: string;
+  variant: "primary" | "secondary";
+  label: string;
+}) {
+  const primary = variant === "primary";
+  return (
+    <div className={primary ? "tabs-primary" : "tabs-secondary"} role="tablist" aria-label={label}>
+      {tabs.map((tab) => {
+        const selected = tab.id === active;
+        return (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={selected}
+            aria-controls={`panel-${layoutId}`}
+            className={primary ? "tab-primary" : "tab-secondary"}
+            onClick={() => onChange(tab.id)}
+          >
+            {selected && (
+              <motion.span layoutId={layoutId} className={primary ? "tab-primary-bg" : "tab-underline"} transition={spring} />
+            )}
+            <span className="tab-label">{tab.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Cross-fades between tab panels when `panelKey` changes. */
+export function TabPanel({ panelKey, id, children }: { panelKey: string; id: string; children: React.ReactNode }) {
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={panelKey}
+        id={`panel-${id}`}
+        role="tabpanel"
+        className="stack"
+        style={{ gap: 24 }}
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -4 }}
+        transition={{ duration: 0.16, ease: "easeOut" }}
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+// ---- Checkbox ---------------------------------------------------------------
+
+/** Checkbox whose tick draws itself in. */
+export function Checkbox({
+  checked,
+  onChange,
+  children,
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  children?: React.ReactNode;
+}) {
+  return (
+    <label className="check" data-checked={checked}>
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      <CheckMark checked={checked} />
+      {children}
+    </label>
+  );
+}
+
+export function CheckMark({ checked }: { checked: boolean }) {
+  return (
+    <motion.span
+      className="check-box"
+      data-checked={checked}
+      animate={{ scale: checked ? [1, 1.15, 1] : 1 }}
+      transition={{ duration: 0.22 }}
+    >
+      <svg width="10" height="10" viewBox="0 0 12 12" aria-hidden>
+        <motion.path
+          d="M2.5 6.2 5 8.6 9.6 3.4"
+          fill="none"
+          stroke="#fff"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          initial={false}
+          animate={{ pathLength: checked ? 1 : 0, opacity: checked ? 1 : 0 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+        />
+      </svg>
+    </motion.span>
+  );
+}
+
+// ---- Reveal / numbers ---------------------------------------------------------
+
+/** Height + fade reveal for content that appears and disappears in place. */
+export function Reveal({ show, children }: { show: boolean; children: React.ReactNode }) {
+  return (
+    <AnimatePresence initial={false}>
+      {show && (
+        <motion.div
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: "auto", opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
+          style={{ overflow: "hidden" }}
+        >
+          {children}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+/** A number that rolls when it changes. */
+export function AnimatedNumber({ value }: { value: number }) {
+  return (
+    <AnimatePresence mode="popLayout" initial={false}>
+      <motion.span
+        key={value}
+        initial={{ y: -8, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 8, opacity: 0 }}
+        transition={spring}
+        style={{ display: "inline-block" }}
+      >
+        {value}
+      </motion.span>
+    </AnimatePresence>
+  );
+}
+
+// ---- Callout -----------------------------------------------------------------
+
+const CALLOUT_GLYPH = { info: "ⓘ", warning: "!", error: "!", success: "✓" } as const;
+
+/** Tinted callout with a bold first line and an optional body. */
+export function Callout({
+  tone,
+  title,
+  children,
+}: {
+  tone: "info" | "warning" | "error" | "success";
+  title: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <motion.div
+      className={`callout callout-${tone}`}
+      role={tone === "error" ? "alert" : "status"}
+      initial={{ opacity: 0, y: -4 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={fade}
+    >
+      <p className="callout-title">
+        {CALLOUT_GLYPH[tone]}&nbsp;&nbsp;{title}
+      </p>
+      {children && <div className="callout-body">{children}</div>}
+    </motion.div>
+  );
+}
+
+// ---- Export footer -------------------------------------------------------------
+
+export type ExportAction = {
+  /** Button label, e.g. ".pdf". */
+  label: string;
+  /** Produce the file (downloaded on click, or saved to the library). */
+  make: () => Promise<GeneratedFile> | GeneratedFile;
+};
+
+/**
+ * The document export footer: outlined download buttons, the orange
+ * "Save to Project Library" (every format, filed under the project), and
+ * the "fully editable" caption. Failures show inline.
+ */
+export function ExportFooter({
+  actions,
+  library,
+  divider = true,
+}: {
+  actions: ExportAction[];
+  /** Where "Save to Project Library" files it; omit to hide the button. */
+  library?: { projectId: string; documentType: string; title?: string };
+  divider?: boolean;
+}) {
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState<number | null>(null);
+
+  const run = async (key: string, work: () => Promise<void>) => {
+    setBusy(key);
+    setError(null);
+    try {
+      await work();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "That didn't work. Try again.");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  return (
+    <div className={divider ? "export-footer" : "stack"} style={divider ? undefined : { gap: 12 }}>
+      <div className="row-between">
+        <div className="download-group">
+          {actions.map((action) => (
+            <motion.button
+              key={action.label}
+              type="button"
+              className="btn btn-secondary"
+              whileTap={{ scale: 0.97 }}
+              disabled={busy !== null}
+              onClick={() => run(action.label, async () => downloadFile(await action.make()))}
+            >
+              {busy === action.label ? "Preparing…" : `↓  ${action.label}`}
+            </motion.button>
+          ))}
+        </div>
+        {library && (
+          <motion.button
+            type="button"
+            className="btn btn-primary"
+            whileTap={{ scale: 0.97 }}
+            disabled={busy !== null}
+            onClick={() =>
+              run("library", async () => {
+                const files = await Promise.all(actions.map((a) => a.make()));
+                for (const file of files) await saveToLibrary(library.projectId, library.documentType, file, library.title);
+                setSaved(files.length);
+              })
+            }
+          >
+            {busy === "library" ? "Saving…" : "Save to Project Library"}
+          </motion.button>
+        )}
+      </div>
+      <p className="t-caption">Every format is fully editable afterward</p>
+      {saved !== null && library && (
+        <Callout tone="success" title={`Saved ${saved} file${saved === 1 ? "" : "s"} to the project library`}>
+          Filed under {library.documentType}.{" "}
+          <a className="btn-link" href={`/projects/${library.projectId}/library`}>
+            View in Project Library →
+          </a>
+        </Callout>
+      )}
+      {error && <Callout tone="error" title="That didn't finish">{error}</Callout>}
+    </div>
+  );
+}

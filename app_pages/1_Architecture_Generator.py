@@ -10,6 +10,8 @@ import streamlit as st
 from archscope_domain.blueprint import BlueprintGenerator, blueprint_to_json, blueprint_to_markdown
 from core.doc_export_ui import save_to_library_button
 from archscope_domain.models import BlueprintInput
+from archscope_domain.stage_planner import to_deal_properties, to_pipeline, to_workflows
+from core.stage_planner_session import TARGET_ARCHITECTURE, applied_planner, applied_record, planner_config
 from core.theme import inject_global_css, render_page_header
 from archscope_domain.rules import RulesEngine
 
@@ -112,6 +114,20 @@ st.text_area(
     help="e.g.\nContact: 45000\nDeal: 12000",
 )
 
+# A Deal Stage Planner applied on its page replaces the default deal
+# pipeline and adds the stage-required deal properties and workflows.
+_planner = applied_planner(TARGET_ARCHITECTURE)
+if _planner is not None:
+    _planner_cfg = planner_config()
+    _pipeline = to_pipeline(_planner, _planner_cfg)
+    _n_props = sum(1 for p in to_deal_properties(_planner, _planner_cfg) if p.definition)
+    st.info(
+        f"Using the Deal Stage Planner applied on {(applied_record() or {}).get('applied_on', 'an earlier date')}: "
+        f"{len(_pipeline.stages)} {_pipeline.object_type.lower()} pipeline stages, {_n_props} deal properties, and "
+        f"{len(to_workflows(_planner, _planner_cfg))} suggested workflows are included. Re-import on the Deal Stage "
+        "Planner page to change them."
+    )
+
 generate = st.button("Generate blueprint", type="primary")
 
 if generate:
@@ -126,7 +142,17 @@ if generate:
         if obj and count.isdigit():
             record_volumes[obj] = int(count)
 
+    planner_extras: dict = {}
+    if _planner is not None:
+        planner_extras = {
+            "pipeline_overrides": {_pipeline.object_type: _pipeline.stages},
+            "additional_properties": {
+                _pipeline.object_type: [p.definition for p in to_deal_properties(_planner, _planner_cfg) if p.definition]
+            },
+            "additional_workflows": to_workflows(_planner, _planner_cfg, RulesEngine()),
+        }
     bp_input = BlueprintInput(
+        **planner_extras,
         project_name=st.session_state["gen_project_name"] or "Untitled Project",
         standard_objects=list(st.session_state["gen_standard_objects"]),
         custom_object_keywords=list(st.session_state["gen_custom_object_keywords"]),

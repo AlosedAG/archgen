@@ -23,6 +23,13 @@ class BlueprintInput(ApiModel):
     other_integration_notes: str = Field("", max_length=10_000)
     record_volumes: dict[str, int] = Field(default_factory=dict)
     hubs_in_scope: list[str] = Field(default_factory=list, max_length=20)
+    pipeline_overrides: dict[str, list[StageDef]] = Field(
+        default_factory=dict, description="Imported pipelines used instead of the defaults: object type -> stages in order."
+    )
+    additional_properties: dict[str, list[PropertyDef]] = Field(
+        default_factory=dict, description="Extra properties per object, e.g. a Stage Planner's deal fields."
+    )
+    additional_workflows: list[WorkflowSuggestion] = Field(default_factory=list, max_length=500)
 
     def to_domain(self) -> dm.BlueprintInput:
         return to_domain(self, dm.BlueprintInput)
@@ -58,6 +65,8 @@ class StageDef(ApiModel):
     order: int
     is_closed: bool = False
     is_won: bool = False
+    probability: float | None = Field(None, ge=0, le=1, description="Win probability, 0–1.")
+    description: str = ""
 
 
 class PipelineDef(ApiModel):

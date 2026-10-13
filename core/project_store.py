@@ -23,6 +23,7 @@ offering its exported files for download.
 
 from __future__ import annotations
 
+import itertools
 import json
 import os
 import re
@@ -34,7 +35,8 @@ from typing import Optional
 DEFAULT_LIBRARY_DIR = Path(__file__).resolve().parent.parent / "project_library"
 
 _ILLEGAL_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
-_TIMESTAMP_RE = re.compile(r"_(\d{4}-\d{2}-\d{2}_\d{6}_\d{3})\.")
+# Optional "-N" suffix: added when two saves land in the same millisecond.
+_TIMESTAMP_RE = re.compile(r"_(\d{4}-\d{2}-\d{2}_\d{6}_\d{3})(?:-\d+)?\.")
 
 # Reserved subfolder name for save_snapshot()/load_snapshot() below -- kept
 # out of list_documents()/list_projects()'s document-type listing so it
@@ -83,14 +85,24 @@ def save_document(project_name: str, document_type: str, content: bytes | str, e
     # silently overwrite each other.
     timestamp = f"{now.strftime('%Y-%m-%d_%H%M%S')}_{now.microsecond // 1000:03d}"
     ext = extension.lstrip(".")
-    filename = f"{safe_foldername(document_type)}_{timestamp}.{ext}"
-    path = type_dir / filename
+    stem = f"{safe_foldername(document_type)}_{timestamp}"
 
-    if isinstance(content, (bytes, bytearray)):
-        path.write_bytes(content)
-    else:
-        path.write_text(content, encoding="utf-8")
-    return path
+    # Exclusive create ("x" mode): a save can never overwrite an existing
+    # file, even when two saves (a double click, two teammates) land in the
+    # same millisecond — the later one gets a "-2", "-3", ... suffix instead.
+    for attempt in itertools.count(1):
+        path = type_dir / (f"{stem}.{ext}" if attempt == 1 else f"{stem}-{attempt}.{ext}")
+        try:
+            if isinstance(content, (bytes, bytearray)):
+                with open(path, "xb") as f:
+                    f.write(content)
+            else:
+                with open(path, "x", encoding="utf-8") as f:
+                    f.write(content)
+            return path
+        except FileExistsError:
+            continue
+    raise AssertionError("unreachable")  # pragma: no cover
 
 
 def save_snapshot(project_name: str, document_type: str, data: dict) -> Path:

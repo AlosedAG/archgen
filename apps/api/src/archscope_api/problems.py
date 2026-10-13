@@ -16,6 +16,8 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from archscope_domain.discovery_config import DiscoveryConfigError
 from archscope_domain.ports import PortalAPIError, PortalScopeError
 
+from .services.errors import ServiceError
+
 log = logging.getLogger("archscope_api")
 
 PROBLEM_JSON = "application/problem+json"
@@ -47,6 +49,10 @@ def install_problem_handlers(app: FastAPI) -> None:
     @app.exception_handler(ProblemError)
     async def _problem(request: Request, exc: ProblemError) -> JSONResponse:
         return problem_response(request, exc.status, exc.slug, exc.title, exc.detail, **exc.extra)
+
+    @app.exception_handler(ServiceError)
+    async def _service(request: Request, exc: ServiceError) -> JSONResponse:
+        return problem_response(request, exc.status, exc.slug, exc.title, exc.detail)
 
     @app.exception_handler(RequestValidationError)
     async def _validation(request: Request, exc: RequestValidationError) -> JSONResponse:

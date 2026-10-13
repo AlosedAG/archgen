@@ -18,6 +18,23 @@ this page, to change what's asked. Each choice question also gets an
 "Other (specify)" box, a shorthand notes line, and a "Flag for follow-up"
 checkbox.
 
+"Gotcha" rules in ``config/discovery_rules.yaml`` reveal follow-up
+questions inline under the answer that triggered them (e.g. EU / UK
+contacts → GDPR questions) and add required tasks to the checklist above
+the sections. A follow-up's answer is stored under its home section (see
+:class:`archscope_domain.discovery_rules.DiscoveryRules`), like any other
+question's.
+
+The "3 · Required-tasks checklist" tab lists those tasks plus the scope
+items picked on the questions named in ``config/discovery_checklist.yaml``,
+and exports / saves them to the Project Library like the other note-taking
+modules (no API key needed).
+
+The "4 · Build order" tab turns the same scope into the implementation
+team's build order (sections, items, and template tags from
+``config/discovery_build_order.yaml``), exported in the same formats plus
+its structured ``.json`` form.
+
 Every note field's value lives under a ``disc_*`` session key, which the
 router (Home.py) re-saves on every run so notes survive switching pages
 mid-call.
@@ -29,6 +46,7 @@ import json
 from datetime import date
 
 import anthropic
+import pandas as pd
 import streamlit as st
 
 from core.connections import SETUP_URL, get_anthropic_key
@@ -38,6 +56,9 @@ from archscope_domain.discovery import (
     answered_count,
     build_business_analysis_input,
     build_client_explainer_input,
+    discovery_build_order,
+    discovery_checklist,
+    discovery_rules,
     flagged_keys,
     has_any_notes,
     question_bank,
@@ -45,8 +66,21 @@ from archscope_domain.discovery import (
     suggest_modules,
 )
 from archscope_domain.discovery_config import INPUT_MULTISELECT, INPUT_SELECT, DiscoveryConfigError, Question
-from core.doc_export_ui import render_export_footer
-from archscope_domain.exporters import markdown_to_docx, markdown_to_pdf
+from archscope_domain.discovery_build_order import DiscoveryBuildOrderError
+from archscope_domain.discovery_checklist import COL_STATUS, DiscoveryChecklistError
+from archscope_domain.discovery_rules import DiscoveryRulesError, Evaluation
+from archscope_domain.stage_planner import to_build_items
+from core.doc_export_ui import render_export_footer, render_sections_export
+from core.stage_planner_session import APPLIED_KEY as STAGE_PLANNER_KEY
+from core.stage_planner_session import TARGET_BUILD_ORDER, applied_planner, planner_config
+from archscope_domain.exporters import (
+    markdown_to_docx,
+    markdown_to_pdf,
+    sections_to_csv,
+    sections_to_docx,
+    sections_to_pdf,
+    sections_to_xlsx,
+)
 from core.project_store import project_name_input
 from core.theme import inject_global_css, render_page_header
 
@@ -63,18 +97,41 @@ BA_OUTPUT_KEY = "disc_ba_output"
 CE_OUTPUT_KEY = "disc_ce_output"
 CE_MODULES_KEY = "disc_ce_modules"
 BUSINESS_TYPE_KEY = "disc_business_type"
+# Prefix of each required task's "done" checkbox. Double underscore so it
+# can't collide with a section's field keys (ids are single-underscore).
+TASK_DONE_PREFIX = "disc_tasks__"
+# Likewise for each build-order item's tick box (item ids come from
+# discovery_build_order.yaml, plus a slug of the option for scope items).
+BUILD_DONE_PREFIX = "disc_build__"
+BUILD_PROJECT_TYPE_KEY = "disc_buildorder_project_type"
 
 
 try:
     BANK = question_bank()
+    RULES = discovery_rules()
+    CHECKLIST = discovery_checklist()
+    BUILD = discovery_build_order()
 except DiscoveryConfigError as exc:
+    if isinstance(exc, DiscoveryBuildOrderError):
+        what = "build-order settings"
+    elif isinstance(exc, DiscoveryChecklistError):
+        what = "checklist settings"
+    elif isinstance(exc, DiscoveryRulesError):
+        what = "follow-up rules"
+    else:
+        what = "question bank"
     st.error(
-        f"The discovery question bank (`config/{exc.path.name}`) has errors, so the form can't be shown. "
+        f"The discovery {what} (`config/{exc.path.name}`) has errors, so the form can't be shown. "
         "Fix these entries and refresh the page:"
     )
     st.markdown("\n".join(f"- {problem}" for problem in exc.problems))
     st.stop()
 SECTIONS = BANK.sections
+
+
+def _section_follow_ups(section: str) -> list[Question]:
+    """Every follow-up whose answer is stored under ``section``, shown or not."""
+    return [q for key, q in RULES.follow_ups.items() if RULES.home_sections[key] == section]
 
 
 def _field_key(section: str, field: str) -> str:
@@ -100,10 +157,22 @@ def _question_keys(section: str, question: Question) -> list[str]:
 def _all_note_keys() -> list[str]:
     keys = [BUSINESS_TYPE_KEY]
     for section, questions in SECTIONS.items():
-        for q in questions:
+        for q in [*questions, *_section_follow_ups(section)]:
             keys += _question_keys(section, q)
         keys += [_field_key(section, "notes"), _field_key(section, "edge_cases")]
+    keys += [TASK_DONE_PREFIX + key for key in RULES.tasks]
+    keys += [BUILD_PROJECT_TYPE_KEY]
+    # Build-order tick boxes: their ids depend on the options picked, so
+    # take whichever exist rather than enumerating them.
+    keys += [k for k in st.session_state.keys() if str(k).startswith(BUILD_DONE_PREFIX)]
+    keys += [STAGE_PLANNER_KEY]
     return keys
+
+
+def _planner_build_items() -> list:
+    """Build-order items from a Deal Stage Planner applied to the build order (see the Deal Stage Planner page)."""
+    planner = applied_planner(TARGET_BUILD_ORDER)
+    return to_build_items(planner, planner_config()) if planner else []
 
 
 def _collect_answer(section: str, question: Question) -> dict:
@@ -124,7 +193,7 @@ def _collect_answer(section: str, question: Question) -> dict:
 def _collect_notes() -> dict:
     return {
         section: {
-            "answers": {q.key: _collect_answer(section, q) for q in questions},
+            "answers": {q.key: _collect_answer(section, q) for q in [*questions, *_section_follow_ups(section)]},
             "notes": st.session_state.get(_field_key(section, "notes"), ""),
             "edge_cases": st.session_state.get(_field_key(section, "edge_cases"), ""),
         }
@@ -184,12 +253,17 @@ def _load_notes_backup() -> None:
     except (ValueError, AttributeError):
         st.session_state["disc_upload_error"] = "That file isn't a notes backup from this page."
         return
-    choice_keys = {_field_key(s, q.key) for s, qs in SECTIONS.items() for q in qs if q.is_choice}
+    choice_keys = {
+        _field_key(s, q.key) for s, qs in SECTIONS.items() for q in [*qs, *_section_follow_ups(s)] if q.is_choice
+    }
     valid = set(_all_note_keys())
     for key, value in fields.items():
-        if key not in valid:
+        if key not in valid and not key.startswith(BUILD_DONE_PREFIX):
             continue
-        if key.endswith("__flag"):
+        if key == STAGE_PLANNER_KEY:
+            # The applied Deal Stage Planner record is structured data, kept as saved.
+            st.session_state[key] = value if isinstance(value, dict) else None
+        elif key.endswith("__flag") or key.startswith((TASK_DONE_PREFIX, BUILD_DONE_PREFIX)):
             st.session_state[key] = bool(value)
         elif key in choice_keys:
             # Left as saved (list, single option, or a pre-dropdown free-text
@@ -240,13 +314,16 @@ def _generate(payload: dict, output_key: str) -> None:
     st.rerun()
 
 
-def _render_question(section: str, question: Question) -> None:
+def _render_question(section: str, question: Question, evaluation: Evaluation, *, follow_up: bool = False) -> None:
     """One question card: the dropdown/multiselect/radio from the YAML
     (or a text box for text questions), an "Other — specify" box when the
-    fallback option is picked, a shorthand notes line, and the follow-up flag."""
+    fallback option is picked, a shorthand notes line, and the follow-up flag.
+    Then, beneath it, a card for each follow-up its answer revealed."""
     key = _field_key(section, question.key)
     help_text = question.hint or None
     with st.container(border=True):
+        if follow_up:
+            st.markdown(":orange-badge[↳ Follow-up]")
         if not question.is_choice:
             st.text_area(question.label, key=key, height=90, help=help_text, placeholder="Shorthand is fine")
         else:
@@ -277,15 +354,40 @@ def _render_question(section: str, question: Question) -> None:
                 label_visibility="collapsed",
             )
         st.checkbox("⚑ Flag for follow-up", key=_part_key(section, question, "flag"))
+    for revealed in evaluation.follow_ups.get(question.key, []):
+        _render_question(RULES.home_sections[revealed.key], revealed, evaluation, follow_up=True)
 
 
-def _render_flagged_summary(notes: dict) -> None:
-    """Every question flagged for follow-up, across all sections — the
-    specialist's to-revisit list before the call ends."""
+def _render_required_tasks(evaluation: Evaluation) -> None:
+    """The running checklist of tasks the client's answers made required."""
+    with st.container(border=True):
+        if not evaluation.tasks:
+            st.markdown("**Required tasks**")
+            st.caption(
+                "None yet. Some answers — e.g. EU / UK contacts, or more than one location — add "
+                "follow-up questions and required tasks here."
+            )
+            return
+        done = sum(bool(st.session_state.get(TASK_DONE_PREFIX + t.task.key)) for t in evaluation.tasks)
+        st.markdown(f"**Required tasks ({done} of {len(evaluation.tasks)} done)**")
+        for flagged in evaluation.tasks:
+            st.checkbox(flagged.task.label, key=TASK_DONE_PREFIX + flagged.task.key, help=flagged.task.detail or None)
+            st.caption("Because: " + " · ".join(flagged.reasons))
+        st.caption("Added from the client's answers, and sent with your notes when you generate the business analysis.")
+
+
+def _shown_questions(section: str, evaluation: Evaluation) -> list[Question]:
+    """A section's questions plus the follow-ups of it currently showing."""
+    return [*SECTIONS[section], *(f for f in _section_follow_ups(section) if f.key in evaluation.revealed_ids)]
+
+
+def _render_flagged_summary(notes: dict, evaluation: Evaluation) -> None:
+    """Every showing question flagged for follow-up, across all sections —
+    the specialist's to-revisit list before the call ends."""
     flagged = [
         (section, q.label)
-        for section, questions in SECTIONS.items()
-        for q in questions
+        for section in SECTIONS
+        for q in _shown_questions(section, evaluation)
         if q.key in flagged_keys(notes[section])
     ]
     if not flagged:
@@ -342,7 +444,14 @@ with type_col:
         help="Used to tailor the client explainer with one example specific to their business.",
     )
 
-ba_tab, ce_tab = st.tabs(["1 · Business analysis (during the call)", "2 · Client explainer (share with the client)"])
+ba_tab, ce_tab, checklist_tab, build_tab = st.tabs(
+    [
+        "1 · Business analysis (during the call)",
+        "2 · Client explainer (share with the client)",
+        "3 · Required-tasks checklist (review & export)",
+        "4 · Build order (for the implementation team)",
+    ]
+)
 
 # ---- Mode 1: business analysis -------------------------------------------
 
@@ -351,21 +460,28 @@ with ba_tab:
         "Answer what you can, in any order. Anything left blank becomes a specific follow-up "
         "question in the generated document — nothing is guessed."
     )
+    progress_notes = _collect_notes()
+    evaluation = RULES.evaluate(progress_notes)
+    _render_required_tasks(evaluation)
     # Static tab labels: a label that changed as answers were typed (e.g. a
     # live "3/5" count) would make Streamlit reset to the first tab mid-call.
     section_tabs = st.tabs(list(SECTIONS))
-    progress_notes = _collect_notes()
     for tab, (section, questions) in zip(section_tabs, SECTIONS.items()):
         with tab:
-            flag_count = len(flagged_keys(progress_notes[section]))
+            shown = {q.key for q in _shown_questions(section, evaluation)}
+            follow_up_count = len(shown) - len(questions)
+            flag_count = len([k for k in flagged_keys(progress_notes[section]) if k in shown])
             st.caption(
-                f"{answered_count(progress_notes[section])} of {len(questions)} questions answered"
+                f"{answered_count(progress_notes[section], [q.key for q in questions])} of {len(questions)} questions answered"
+                + (f" · ↳ {follow_up_count} follow-up{'s' if follow_up_count != 1 else ''}" if follow_up_count else "")
                 + (f" · ⚑ {flag_count} flagged for follow-up" if flag_count else "")
             )
+            if BANK.descriptions.get(section):
+                st.markdown(BANK.descriptions[section])
             cols = st.columns(2)
             for i, question in enumerate(questions):
                 with cols[i % 2]:
-                    _render_question(section, question)
+                    _render_question(section, question, evaluation)
             notes_col, edge_col = st.columns(2)
             with notes_col:
                 st.text_area(
@@ -383,7 +499,7 @@ with ba_tab:
                 )
 
     notes = _collect_notes()
-    _render_flagged_summary(notes)
+    _render_flagged_summary(notes, RULES.evaluate(notes))
     can_generate = bool(api_key) and has_any_notes(notes)
     if st.button(
         "Generate business analysis",
@@ -469,3 +585,100 @@ with ce_tab:
         document_type="Discovery Client Explainer",
         file_suffix="hubspot_explainer",
     )
+
+# ---- Required-tasks checklist ---------------------------------------------
+
+with checklist_tab:
+    st.caption(
+        "Everything the client's answers committed you to: the required tasks the follow-up rules "
+        "flagged, plus each feature, integration, and automation they asked for. Export it, or save "
+        "it to the Project Library under this client, and fill in Status / Notes as work progresses."
+    )
+    checklist = CHECKLIST.build(_collect_notes())
+    if not any(rows for _, rows in checklist):
+        st.info(
+            "Nothing on the checklist yet. It fills in from the business-analysis answers — e.g. EU / UK "
+            "contacts, more than one location, or any integrations and must-have features picked."
+        )
+    else:
+        for title, rows in checklist:
+            st.markdown(f"**{title} ({len(rows)})**")
+            if rows:
+                st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")
+            else:
+                st.caption("None.")
+        st.caption(f"“{COL_STATUS}” is left blank for you to fill in after exporting.")
+        client = st.session_state.get("report_project_name", "")
+        render_sections_export(
+            doc_title=f"Required-Tasks Checklist — {client or 'Client'}",
+            subtitle=f"From the discovery call · {date.today().isoformat()}",
+            sections=checklist,
+            document_type="Discovery Checklist",
+            project_name=client,
+            file_stub=f"{client or 'client'}_discovery_checklist".replace(" ", "_"),
+        )
+
+# ---- Build order -----------------------------------------------------------
+
+with build_tab:
+    st.caption(
+        "The confirmed scope as a build order for the implementation team: what to create, grouped "
+        "by section, each with the requirement or scope item it came from. Items marked ♻ Template "
+        "can be deployed from a reusable bundle; the rest are built from scratch. Tick items as "
+        "they're built — the tick shows as the item's status in the export."
+    )
+    st.selectbox("Project type", BUILD.project_types, key=BUILD_PROJECT_TYPE_KEY)
+    client = st.session_state.get("report_project_name", "")
+    done_ids = {
+        str(k)[len(BUILD_DONE_PREFIX) :]
+        for k, v in st.session_state.items()
+        if str(k).startswith(BUILD_DONE_PREFIX) and v
+    }
+    build_order = BUILD.build(
+        _collect_notes(),
+        client=client,
+        project_type=st.session_state.get(BUILD_PROJECT_TYPE_KEY) or "",
+        done_ids=done_ids,
+        extra_items=_planner_build_items(),
+    )
+    items = build_order.items
+    if not items:
+        st.info(
+            "No build items yet. They come from the business-analysis answers — e.g. EU / UK contacts "
+            "(GDPR bundle), more than one location, integrations, or must-have features like deal pipelines."
+        )
+    else:
+        st.subheader(build_order.title)
+        template_count = sum(item.is_template for item in items)
+        done_count = sum(item.status == build_order.done_status for item in items)
+        st.caption(
+            f"{len(items)} items · ♻ {template_count} from reusable templates · "
+            f"{len(items) - template_count} from scratch · {done_count} done"
+        )
+        for section, section_items in build_order.sections:
+            st.markdown(f"**{section.title} ({len(section_items)})**")
+            if not section_items:
+                st.caption("Nothing for this section from the current answers.")
+            for item in section_items:
+                st.checkbox(item.name, key=BUILD_DONE_PREFIX + item.id)
+                tag = (
+                    f":green-badge[♻ Template · {item.template_label}]"
+                    if item.is_template
+                    else ":gray-badge[Build from scratch]"
+                )
+                st.caption(f"{tag} Source: {'; '.join(item.sources)}")
+        sections = build_order.to_sections()
+        subtitle = f"Generated {build_order.generated_on} from the discovery call"
+        render_export_footer(
+            {
+                "docx": sections_to_docx(build_order.title, subtitle, sections).getvalue(),
+                "xlsx": sections_to_xlsx(sections),
+                "csv": sections_to_csv(sections),
+                "pdf": sections_to_pdf(build_order.title, subtitle, sections),
+                # The structured build order, for a later task-tool import.
+                "json": json.dumps(build_order.to_dict(), indent=2, ensure_ascii=False),
+            },
+            document_type="Discovery Build Order",
+            project_name=client,
+            file_stub=f"{client or 'client'}_build_order".replace(" ", "_"),
+        )

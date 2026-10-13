@@ -1,11 +1,13 @@
-"""Version 1 of the public API, mounted at ``/api/v1``."""
+"""Version 1 of the public API, mounted at ``/api/v1``. Every route here
+requires a signed-in user; sign-in itself lives in ``routers.auth``."""
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
-from . import architecture, discovery, exports, portal, proposals
+from ..deps import current_principal
+from . import architecture, discovery, exports, portal, projects, proposals, stage_planner, workspace
 
-api_router = APIRouter(prefix="/api/v1")
-for _module in (architecture, portal, proposals, discovery, exports):
+api_router = APIRouter(prefix="/api/v1", dependencies=[Depends(current_principal)])
+for _module in (architecture, portal, proposals, discovery, exports, stage_planner, projects, workspace):
     api_router.include_router(_module.router)
 
 __all__ = ["api_router"]

@@ -1,0 +1,42 @@
+# Discovery Call Assistant — required-tasks checklist.
+#
+# The checklist (page tab "3 · Checklist", exported as .docx / .xlsx /
+# .csv / .pdf and savable to the Project Library) has two parts:
+#
+#   Required tasks — every task flagged by discovery_rules.yaml for the
+#                    client's answers. Nothing to configure here.
+#   Scope items    — one item per option picked on the questions listed
+#                    below, so what the client asked for during the call
+#                    becomes something to check off. Configured here.
+#
+# Each item carries the task name, why it's on the list (the answer that
+# put it there), and an empty "Status / Notes" column to fill in later.
+# Edit this file to change which answers become scope items — no code
+# changes needed. Loaded and validated by
+# archscope_domain/discovery_checklist.py; edits are picked up on the next
+# page refresh, and an invalid file is listed entry by entry on the page.
+#
+# scope_items: a list; each entry has
+#   question_id: a choice question from discovery_options.yaml, or a
+#                follow-up from discovery_rules.yaml (used only while that
+#                follow-up is showing).
+#   name:        optional — prefix for each item, e.g. "Integration" gives
+#                "Integration: Salesforce". Defaults to the question label.
+#   exclude:     optional — options that aren't scope (e.g. "None
+#                identified"). Must match the option text exactly.
+# A picked "Other (specify)" becomes an item with the typed text.
+
+scope_items:
+  - question_id: priority_features
+    name: "Must-have feature"
+
+  - question_id: integrations
+    name: "Integration"
+
+  - question_id: required_actions
+    name: "Automation"
+
+  - question_id: custom_data
+    name: "Custom data"
+    exclude:
+      - None identified

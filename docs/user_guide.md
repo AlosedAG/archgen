@@ -75,18 +75,36 @@ Use it **live, during the discovery call**.
 
 1. Enter the **Client / project name** and the client's **business type** (e.g. "multi-location dental practice").
 2. On **1 · Business analysis**, answer under **Goals**, **Data**, **Processes**, and **Solutions Design**, in any order. Most questions are dropdowns: pick the common answers, choose **Other (specify)** to type something that isn't listed, and use the notes line under each question for shorthand (numbers, dates, the client's exact words). Use **Edge cases / flags** for compliance, multi-location/multi-entity, or anything the client contradicted.
-3. Tick **⚑ Flag for follow-up** on any question you need to revisit. Flagged questions are listed above the Generate button and passed to the AI as items to confirm.
-4. Leave unknowns blank — the AI never guesses. Every blank becomes a specific item under **Open Questions & Gaps**, which is your follow-up checklist.
-5. After the call, click **Generate business analysis**. Review it under **Preview**, fix anything under **Edit text**, then download (.docx / .pdf / .md) or **Save to Project Library**.
-6. Switch to **2 · Client explainer**, click **Use the hubs recommended in the business analysis** (or pick hubs yourself), and **Generate client explainer** — a plain-language page you can send the client.
+3. Some answers reveal extra questions marked **↳ Follow-up** right under them — e.g. picking **EU / UK** for where contacts are located asks about GDPR, and picking more than one location asks who owns each location's records and how leads route. The same answers add items to the **Required tasks** checklist at the top (with the reason for each); tick them off as they're covered. Un-picking the answer hides its follow-ups and tasks again.
+4. Tick **⚑ Flag for follow-up** on any question you need to revisit. Flagged questions are listed above the Generate button and passed to the AI as items to confirm.
+5. Leave unknowns blank — the AI never guesses. Every blank becomes a specific item under **Open Questions & Gaps**, which is your follow-up checklist.
+6. After the call, click **Generate business analysis**. Review it under **Preview**, fix anything under **Edit text**, then download (.docx / .pdf / .md) or **Save to Project Library**.
+7. Switch to **2 · Client explainer**, click **Use the hubs recommended in the business analysis** (or pick hubs yourself), and **Generate client explainer** — a plain-language page you can send the client.
+8. Open **3 · Required-tasks checklist** to review every required task plus each integration, must-have feature, automation, and custom data element the client asked for — each with the answer that put it there and a blank **Status / Notes** column. Download it (.docx / .xlsx / .csv / .pdf) or **Save to Project Library** under the client. No API key needed.
+9. Open **4 · Build order** for the implementation team's version: pick the **Project type**, then review the items under Assets, Segments / Lists, Properties, Pipelines, and Record-page updates. Items tagged **♻ Template** can be deployed from a reusable bundle (e.g. the GDPR asset bundle); the rest are **Build from scratch**. Each shows where it came from. Tick items as they're built, then download (.docx / .xlsx / .csv / .pdf, or .json for importing into a task tool later) or **Save to Project Library**.
 
 **Tips**
 
 - Notes survive switching pages, but not closing the tab. Use **Back up, restore, or reset call notes** to download a backup mid-call; restore it from the same place.
 - **Start a new call** clears every note and draft before the next client.
-- The questions and dropdown options come from `packages/domain/src/archscope_domain/config/discovery_options.yaml` — ask whoever maintains the app to add or change an option.
+- The questions and dropdown options come from `packages/domain/src/archscope_domain/config/discovery_options.yaml` — ask whoever maintains the app to add or change an option. Follow-up questions and required tasks come from `config/discovery_rules.yaml` in the same folder, which answers become checklist scope items from `config/discovery_checklist.yaml`, and the build-order sections, templates, and items from `config/discovery_build_order.yaml`.
 - The business analysis's **Preliminary Scope Signals** section is written as input for the Proposal & SOW Builder.
 - Needs an Anthropic API key (Setup). Notes are sent to Anthropic only when you click a Generate button.
+
+## Deal Stage Planner
+
+Use it **before and after** the discovery call to define the client's sales pipeline.
+
+1. **Send the template.** Under **Send a pre-call template**, download the **HubSpot Deal Stage Planner** (.xlsx) — or **Save to Project Library** under the client — and send it to the client. Each column is a stage: Forecast %, Entry / Exit Criteria, Desired Actions, Automations, and the deal properties ("Fields to Fill Out") required at that stage.
+2. **Import the filled-out copy.** Upload it under **Import a filled-out planner**. The client can add, delete, reorder or relabel rows and stages — rows are recognised by their label, and blank or "Stage name" columns are skipped. Anything odd is listed under **Things to check**.
+3. **Review and edit.** Correct any stage in the table (edit cells, add or delete rows, change Order). The tabs show exactly what will be populated: the pipeline (with win probabilities), the deal properties (and which stage requires each), the suggested workflows, the build-order items, and the Discovery answer.
+4. **Apply.** Choose where it goes — Discovery Processes, the Architecture Generator, the build order — and click **Apply the planner**. Nothing changes before that, and if it would replace earlier work you're asked to confirm first.
+
+**Tips**
+
+- The Architecture Generator uses the imported stages instead of its default deal pipeline; click **Generate blueprint** again after applying.
+- Re-importing replaces the earlier planner (including its block in the Processes notes) rather than adding a second one.
+- Nothing is sent to HubSpot — this only fills in ArchitectureScope.
 
 ## Requirements Document
 
