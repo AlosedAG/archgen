@@ -15,6 +15,72 @@
         "title": "Accepted",
         "type": "object"
       },
+      "Account": {
+        "additionalProperties": false,
+        "description": "The signed-in user's own account, for the profile page.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "has_password": {
+            "description": "False for accounts that only sign in with Google.",
+            "title": "Has Password",
+            "type": "boolean"
+          },
+          "last_login_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Login At"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "other_sessions": {
+            "description": "Other browsers currently signed in to this account.",
+            "title": "Other Sessions",
+            "type": "integer"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          },
+          "workspace_name": {
+            "title": "Workspace Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "email",
+          "name",
+          "workspace_name",
+          "role",
+          "has_password",
+          "created_at",
+          "last_login_at",
+          "other_sessions"
+        ],
+        "title": "Account",
+        "type": "object"
+      },
       "AddLibraryAddonsRequest": {
         "additionalProperties": false,
         "properties": {
@@ -262,6 +328,168 @@
           }
         },
         "title": "Answer",
+        "type": "object"
+      },
+      "ArchitectureAssistRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "context": {
+            "$ref": "#/components/schemas/AssistContext"
+          },
+          "inputs": {
+            "$ref": "#/components/schemas/ArchitectureInputs"
+          }
+        },
+        "required": [
+          "context",
+          "inputs"
+        ],
+        "title": "ArchitectureAssistRequest",
+        "type": "object"
+      },
+      "ArchitectureAssistResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "added": {
+            "description": "How many values were added.",
+            "title": "Added",
+            "type": "integer"
+          },
+          "inputs": {
+            "$ref": "#/components/schemas/ArchitectureInputs"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          }
+        },
+        "required": [
+          "inputs",
+          "added",
+          "model"
+        ],
+        "title": "ArchitectureAssistResponse",
+        "type": "object"
+      },
+      "ArchitectureInputs": {
+        "additionalProperties": false,
+        "properties": {
+          "currencies": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Currencies",
+            "type": "array"
+          },
+          "custom_object_keywords": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Custom Object Keywords",
+            "type": "array"
+          },
+          "custom_object_notes": {
+            "default": "",
+            "title": "Custom Object Notes",
+            "type": "string"
+          },
+          "hubs_in_scope": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Hubs In Scope",
+            "type": "array"
+          },
+          "integrations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Integrations",
+            "type": "array"
+          },
+          "other_integration_notes": {
+            "default": "",
+            "title": "Other Integration Notes",
+            "type": "string"
+          },
+          "pipelines_required": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Pipelines Required",
+            "type": "array"
+          },
+          "record_volumes": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Record Volumes",
+            "type": "object"
+          },
+          "regions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Regions",
+            "type": "array"
+          },
+          "standard_objects": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Standard Objects",
+            "type": "array"
+          }
+        },
+        "title": "ArchitectureInputs",
+        "type": "object"
+      },
+      "AssistContext": {
+        "additionalProperties": false,
+        "properties": {
+          "business_analysis": {
+            "default": "",
+            "description": "The drafted business analysis (Markdown).",
+            "maxLength": 60000,
+            "title": "Business Analysis",
+            "type": "string"
+          },
+          "discovery": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DiscoveryNotes"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The discovery call notes, if any."
+          },
+          "documents": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "type": "object"
+            },
+            "description": "Earlier documents as {title: {section: rows}}, e.g. {\"Requirements Document\": {...}}.",
+            "title": "Documents",
+            "type": "object"
+          },
+          "stage_planner": {
+            "description": "An applied Deal Stage Planner's stages.",
+            "items": {
+              "$ref": "#/components/schemas/PlannedStage"
+            },
+            "title": "Stage Planner",
+            "type": "array"
+          }
+        },
+        "title": "AssistContext",
         "type": "object"
       },
       "AssociationDef": {
@@ -1695,6 +1923,129 @@
         "title": "Health",
         "type": "object"
       },
+      "IndustryDiscoveryRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "industry": {
+            "title": "Industry",
+            "type": "string"
+          },
+          "notes": {
+            "$ref": "#/components/schemas/DiscoveryNotes"
+          },
+          "size": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Size"
+          }
+        },
+        "required": [
+          "industry",
+          "notes"
+        ],
+        "title": "IndustryDiscoveryRequest",
+        "type": "object"
+      },
+      "IndustryDiscoveryResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "filled": {
+            "description": "How many unanswered questions received the template's answer.",
+            "title": "Filled",
+            "type": "integer"
+          },
+          "notes": {
+            "$ref": "#/components/schemas/DiscoveryNotes"
+          }
+        },
+        "required": [
+          "notes",
+          "filled"
+        ],
+        "title": "IndustryDiscoveryResponse",
+        "type": "object"
+      },
+      "IndustryProposalRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "industry": {
+            "title": "Industry",
+            "type": "string"
+          },
+          "proposal": {
+            "$ref": "#/components/schemas/ProposalDocument"
+          },
+          "size": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Size"
+          }
+        },
+        "required": [
+          "industry",
+          "proposal"
+        ],
+        "title": "IndustryProposalRequest",
+        "type": "object"
+      },
+      "IndustryProposalResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "changed": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Changed",
+            "type": "array"
+          },
+          "proposal": {
+            "$ref": "#/components/schemas/ProposalDocument"
+          }
+        },
+        "required": [
+          "proposal",
+          "changed"
+        ],
+        "title": "IndustryProposalResponse",
+        "type": "object"
+      },
+      "IndustryTemplates": {
+        "additionalProperties": false,
+        "properties": {
+          "industries": {
+            "items": {
+              "$ref": "#/components/schemas/TemplateChoice"
+            },
+            "title": "Industries",
+            "type": "array"
+          },
+          "sizes": {
+            "items": {
+              "$ref": "#/components/schemas/TemplateChoice"
+            },
+            "title": "Sizes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "industries",
+          "sizes"
+        ],
+        "title": "IndustryTemplates",
+        "type": "object"
+      },
       "JepImportRequest": {
         "additionalProperties": false,
         "properties": {
@@ -2221,6 +2572,29 @@
         "title": "Party",
         "type": "object"
       },
+      "PasswordChange": {
+        "additionalProperties": false,
+        "properties": {
+          "current_password": {
+            "default": "",
+            "description": "Required when the account has a password.",
+            "maxLength": 500,
+            "title": "Current Password",
+            "type": "string"
+          },
+          "new_password": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "New Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "new_password"
+        ],
+        "title": "PasswordChange",
+        "type": "object"
+      },
       "PasswordResetConfirm": {
         "additionalProperties": false,
         "properties": {
@@ -2710,6 +3084,22 @@
         "title": "PricingSummary",
         "type": "object"
       },
+      "ProfileUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "ProfileUpdate",
+        "type": "object"
+      },
       "Project": {
         "additionalProperties": false,
         "properties": {
@@ -3145,6 +3535,50 @@
           "warnings"
         ],
         "title": "ProposalAnalysis",
+        "type": "object"
+      },
+      "ProposalAssistRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "context": {
+            "$ref": "#/components/schemas/AssistContext"
+          },
+          "proposal": {
+            "$ref": "#/components/schemas/ProposalDocument"
+          }
+        },
+        "required": [
+          "context",
+          "proposal"
+        ],
+        "title": "ProposalAssistRequest",
+        "type": "object"
+      },
+      "ProposalAssistResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "changed": {
+            "description": "Proposal fields that received suggestions, e.g. executive_summary, scope.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Changed",
+            "type": "array"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "proposal": {
+            "$ref": "#/components/schemas/ProposalDocument"
+          }
+        },
+        "required": [
+          "proposal",
+          "changed",
+          "model"
+        ],
+        "title": "ProposalAssistResponse",
         "type": "object"
       },
       "ProposalDocument": {
@@ -4200,6 +4634,20 @@
         "title": "SignUpRequest",
         "type": "object"
       },
+      "SignedOutOthers": {
+        "additionalProperties": false,
+        "properties": {
+          "signed_out": {
+            "title": "Signed Out",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "signed_out"
+        ],
+        "title": "SignedOutOthers",
+        "type": "object"
+      },
       "StageDef": {
         "additionalProperties": false,
         "properties": {
@@ -4246,6 +4694,55 @@
           "order"
         ],
         "title": "StageDef",
+        "type": "object"
+      },
+      "StagePlannerAssistRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "context": {
+            "$ref": "#/components/schemas/AssistContext"
+          },
+          "stages": {
+            "description": "The planner's current stages (may be empty).",
+            "items": {
+              "$ref": "#/components/schemas/PlannedStage"
+            },
+            "title": "Stages",
+            "type": "array"
+          }
+        },
+        "required": [
+          "context"
+        ],
+        "title": "StagePlannerAssistRequest",
+        "type": "object"
+      },
+      "StagePlannerAssistResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "filled": {
+            "description": "How many cells were filled.",
+            "title": "Filled",
+            "type": "integer"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "stages": {
+            "items": {
+              "$ref": "#/components/schemas/PlannedStage"
+            },
+            "title": "Stages",
+            "type": "array"
+          }
+        },
+        "required": [
+          "stages",
+          "filled",
+          "model"
+        ],
+        "title": "StagePlannerAssistResponse",
         "type": "object"
       },
       "StagePlannerImport": {
@@ -4467,6 +4964,30 @@
         "title": "TechniqueRow",
         "type": "object"
       },
+      "TemplateChoice": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label"
+        ],
+        "title": "TemplateChoice",
+        "type": "object"
+      },
       "TimelineRow": {
         "additionalProperties": false,
         "properties": {
@@ -4645,6 +5166,144 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/assist/architecture": {
+      "post": {
+        "operationId": "assist_architecture",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ArchitectureAssistRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArchitectureAssistResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Fill the Architecture Generator's inputs from earlier steps",
+        "tags": [
+          "assist"
+        ]
+      }
+    },
+    "/api/v1/assist/proposal": {
+      "post": {
+        "operationId": "assist_proposal",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposalAssistRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalAssistResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Suggest proposal content from earlier steps",
+        "tags": [
+          "assist"
+        ]
+      }
+    },
+    "/api/v1/assist/stage-planner": {
+      "post": {
+        "operationId": "assist_stage_planner",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StagePlannerAssistRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StagePlannerAssistResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Fill the Deal Stage Planner from earlier steps",
+        "tags": [
+          "assist"
+        ]
+      }
+    },
     "/api/v1/audits": {
       "post": {
         "description": "Structural checks run on the snapshot; record-level checks (fill\nrates, orphaned records) sample the live portal, read-only.",
@@ -4692,6 +5351,148 @@
         "summary": "Audit a snapshot against best-practice rules",
         "tags": [
           "portal"
+        ]
+      }
+    },
+    "/api/v1/auth/account": {
+      "get": {
+        "operationId": "auth_get_account",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Account"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Your account",
+        "tags": [
+          "auth"
+        ]
+      },
+      "patch": {
+        "operationId": "auth_update_account",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Account"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Change your display name",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/account/password": {
+      "post": {
+        "operationId": "auth_change_password",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordChange"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Account"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Change your password (signs out your other browsers)",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/account/sign-out-others": {
+      "post": {
+        "operationId": "auth_sign_out_others",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignedOutOthers"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Sign out every other browser",
+        "tags": [
+          "auth"
         ]
       }
     },
@@ -5799,6 +6600,124 @@
         "summary": "Send a bug report, idea or question to the app owner",
         "tags": [
           "feedback"
+        ]
+      }
+    },
+    "/api/v1/industry-templates": {
+      "get": {
+        "operationId": "industry templates_list_templates",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndustryTemplates"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "The industries and company sizes available",
+        "tags": [
+          "industry templates"
+        ]
+      }
+    },
+    "/api/v1/industry-templates/discovery": {
+      "post": {
+        "operationId": "industry templates_apply_to_discovery",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IndustryDiscoveryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndustryDiscoveryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Pre-fill unanswered discovery questions",
+        "tags": [
+          "industry templates"
+        ]
+      }
+    },
+    "/api/v1/industry-templates/proposal": {
+      "post": {
+        "operationId": "industry templates_apply_to_proposal",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IndustryProposalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndustryProposalResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Add an industry template's rows to a proposal",
+        "tags": [
+          "industry templates"
         ]
       }
     },

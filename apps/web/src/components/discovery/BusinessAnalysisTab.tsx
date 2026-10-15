@@ -7,7 +7,7 @@
  */
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useCallback, useRef, useState } from "react";
+import { Children, useCallback, useRef, useState } from "react";
 
 import { downloadFile, fileStub, textFile, type DiscoveryConfig, type Evaluation, type FollowUpQuestion } from "@/lib/api";
 import {
@@ -28,6 +28,47 @@ import { RequiredTasksPanel, RequiredTasksSnapshot } from "./RequiredTasks";
 import { StreamErrorCallout } from "./StreamErrorCallout";
 import { ModelPicker, useAiModel } from "./ModelPicker";
 import { useDocumentStream } from "./useDocumentStream";
+import { Glyph } from "@/components/icons";
+import { collapse, dropdown, staggerTiming, useStagger } from "@/lib/motion";
+
+/** A column of question cards; when a section opens they rise in, the two columns slightly offset. */
+function QuestionColumn({ index, children }: { index: number; children: React.ReactNode }) {
+  const variants = useStagger(Children.count(children), staggerTiming.cards, index * (staggerTiming.cards / 2));
+  return (
+    <motion.div className="question-column" variants={variants} initial="hidden" animate="visible">
+      {children}
+    </motion.div>
+  );
+}
+
+/** One segment per question, filled when it has an answer. */
+function AnsweredProgress({ answered, label }: { answered: boolean[]; label: string }) {
+  return (
+    <div className="answered-progress" role="img" aria-label={label}>
+      {answered.map((on, i) => (
+        <span key={i} className="answered-segment" data-on={on} />
+      ))}
+    </div>
+  );
+}
+
+/** The section's purpose, collapsed by default (design: "Why we ask"). */
+function WhyWeAsk({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="why-we-ask">
+      <button type="button" className="why-we-ask-summary" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+        <motion.span animate={{ rotate: open ? 90 : 0 }} transition={spring} style={{ display: "inline-flex" }}>
+          <Icon name="chevron-right" />
+        </motion.span>
+        Why we ask
+      </button>
+      <Reveal show={open}>
+        <p className="why-we-ask-body">{text}</p>
+      </Reveal>
+    </div>
+  );
+}
 
 /** The business analysis always has these 12 sections (see the system prompt), so progress can count them. */
 const BUSINESS_ANALYSIS_SECTIONS = 12;
@@ -97,21 +138,25 @@ export function BusinessAnalysisTab({
                   <h2 className="t-section">{current.name}</h2>
                   <p className="t-caption">
                     {answered} of {current.questions.length} questions answered
-                    {followUpCount > 0 && ` · ↳ ${followUpCount} follow-up${followUpCount === 1 ? "" : "s"}`}
-                    {flaggedHere > 0 && ` · ⚑ ${flaggedHere} flagged for follow-up`}
+                    {followUpCount > 0 && ` · ${followUpCount} follow-up${followUpCount === 1 ? "" : "s"}`}
+                    {flaggedHere > 0 && ` · ${flaggedHere} flagged for follow-up`}
                   </p>
                 </div>
-                {current.description && <p className="t-intro">{current.description}</p>}
+                <AnsweredProgress
+                  answered={current.questions.map((q) => isAnswered(getAnswer(state, current.name, q.id)))}
+                  label={`${answered} of ${current.questions.length} questions answered`}
+                />
+                {current.description && <WhyWeAsk text={current.description} />}
               </div>
               <div className="question-columns">
                 {[0, 1].map((column) => (
-                  <div key={column} className="question-column">
+                  <QuestionColumn key={column} index={column}>
                     {current.questions
                       .filter((_, i) => i % 2 === column)
                       .map((q) => (
                         <QuestionBlock key={q.id} section={current.name} question={q} ctx={ctx} />
                       ))}
-                  </div>
+                  </QuestionColumn>
                 ))}
               </div>
               <div className="grid-2">
@@ -141,17 +186,17 @@ export function BusinessAnalysisTab({
 
       <Reveal show={flagged.length > 0}>
         <section className="panel" aria-label="Flagged for follow-up">
-          <h2 className="t-card-title">⚑ Flagged for follow-up ({flagged.length})</h2>
+          <h2 className="t-card-title row" style={{ gap: 8 }}><Glyph name="flag" /> Flagged for follow-up ({flagged.length})</h2>
           <AnimatePresence initial={false}>
             {flagged.map((f) => (
               <motion.p
                 key={`${f.section}-${f.label}`}
                 className="flagged-line"
                 layout
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                transition={spring}
+                variants={dropdown}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
               >
                 {f.section} · {f.label}
                 {f.note.trim() && ` — ${f.note.trim()}`}
@@ -167,7 +212,6 @@ export function BusinessAnalysisTab({
             type="button"
             className={stream.streaming ? "btn btn-primary btn-busy" : "btn btn-primary"}
             disabled={!hasAnyNotes(state) || stream.streaming}
-            whileTap={{ scale: 0.97 }}
             onClick={() => stream.start(toDiscoveryNotes(state), ai.model)}
           >
             {!stream.streaming && <Icon name="sparkles" />}
@@ -239,13 +283,7 @@ function BackupAccordion({ store }: { store: DiscoveryStore }) {
       </button>
       <AnimatePresence initial={false}>
         {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.22 }}
-            style={{ overflow: "hidden" }}
-          >
+          <motion.div variants={collapse} initial="closed" animate="open" exit="closed" style={{ overflow: "hidden" }}>
             <div className="accordion-body">
               <p className="flagged-line">
                 Notes save to this project automatically. A backup (.json) contains answers, notes, follow-up flags
@@ -264,7 +302,7 @@ function BackupAccordion({ store }: { store: DiscoveryStore }) {
                   )
                 }
               >
-                ↓  Download call notes .json
+                <Glyph name="download" /> Download call notes .json
               </button>
               <div className="field" style={{ width: "100%" }}>
                 <span className="field-label">Restore a call-note backup</span>
@@ -330,9 +368,6 @@ function BackupAccordion({ store }: { store: DiscoveryStore }) {
                   Start a new call
                 </button>
               )}
-              <p className="t-caption">
-                Clears this project&apos;s answers and notes only. Download a backup before starting again.
-              </p>
             </div>
           </motion.div>
         )}

@@ -22,6 +22,7 @@ import {
 } from "@/lib/api";
 
 import { Callout } from "../ui";
+import { collapse } from "@/lib/motion";
 
 type Panel = null | "use" | "save" | "manage";
 
@@ -155,9 +156,10 @@ export function ProposalTemplatesBar({
           <motion.div
             key={panel}
             className="templates-panel"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
+            variants={collapse}
+            initial="closed"
+            animate="open"
+            exit="closed"
           >
             {panel === "use" && templates && (
               <div className="stack" style={{ gap: 10 }}>

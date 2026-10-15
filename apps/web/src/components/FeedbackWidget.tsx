@@ -14,7 +14,8 @@ import { useEffect, useRef, useState } from "react";
 import { ApiError, sendFeedback, type FeedbackRequest } from "@/lib/api";
 
 import { useAppSession } from "./AppSession";
-import { spring } from "./ui";
+import { Glyph } from "@/components/icons";
+import { scaleIn } from "@/lib/motion";
 
 type Kind = FeedbackRequest["kind"];
 type Shot = { file: File; url: string };
@@ -42,6 +43,13 @@ function pageTitle(): string {
   return document.querySelector(".page-header h1")?.textContent?.trim() ?? document.title;
 }
 
+const OPEN_EVENT = "archscope:feedback";
+
+/** Open the Feedback panel (the sidebar's Feedback button). */
+export function openFeedback(): void {
+  window.dispatchEvent(new Event(OPEN_EVENT));
+}
+
 export function FeedbackWidget() {
   const { project } = useAppSession();
   const pathname = usePathname();
@@ -55,6 +63,12 @@ export function FeedbackWidget() {
   const [page, setPage] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
   const textArea = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const toggle = () => setOpen((o) => !o);
+    window.addEventListener(OPEN_EVENT, toggle);
+    return () => window.removeEventListener(OPEN_EVENT, toggle);
+  }, []);
 
   useEffect(() => {
     if (open) {
@@ -122,16 +136,6 @@ export function FeedbackWidget() {
   const current = KINDS.find((k) => k.id === kind) ?? KINDS[0];
   return (
     <>
-      <motion.button
-        type="button"
-        className="feedback-fab"
-        aria-expanded={open}
-        aria-controls="feedback-panel"
-        onClick={() => setOpen((o) => !o)}
-        whileTap={{ scale: 0.95 }}
-      >
-        {open ? "Close" : "Feedback"}
-      </motion.button>
       <AnimatePresence>
         {open && (
           <motion.section
@@ -139,15 +143,21 @@ export function FeedbackWidget() {
             className="feedback-panel"
             role="dialog"
             aria-label="Send feedback"
-            initial={{ opacity: 0, y: 16, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 16, scale: 0.98 }}
-            transition={spring}
+            variants={scaleIn}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            style={{ transformOrigin: "bottom left" }}
             onKeyDown={(e) => {
               if (e.key === "Escape") setOpen(false);
             }}
           >
-            <h2 className="feedback-title">Something not working? Have an idea?</h2>
+            <div className="row-between">
+              <h2 className="feedback-title">Something not working? Have an idea?</h2>
+              <button type="button" className="icon-btn" aria-label="Close feedback" onClick={() => setOpen(false)}>
+                <Glyph name="x" size={16} />
+              </button>
+            </div>
             <p className="t-caption">
               Tell us what happened and attach screenshots with the + button (or paste them). It goes straight to Aylin — we add the
               page you&apos;re on{page ? ` (${page})` : ""} automatically.
@@ -184,7 +194,7 @@ export function FeedbackWidget() {
                         URL.revokeObjectURL(s.url);
                         setShots(shots.filter((x) => x !== s));
                       }}>
-                      ×
+                      <Glyph name="x" size={12} />
                     </button>
                   </div>
                 ))}
@@ -233,7 +243,7 @@ export function FeedbackWidget() {
                 }}
               />
               <button type="submit" className="feedback-send" disabled={busy || (!text.trim() && !shots.length)} aria-label="Send feedback">
-                {busy ? "…" : "↑"}
+                {busy ? "…" : <Glyph name="arrow-up" />}
               </button>
             </form>
           </motion.section>

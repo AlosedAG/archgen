@@ -44,7 +44,6 @@ function LoadRequirements({ store }: { store: ModuleStore<DocumentState> }) {
         >
           Load requirements from the Requirements Document
         </button>
-        <span className="t-caption">Adds one test case per customer requirement, ready for steps and expected results.</span>
       </div>
       {message && (
         <Callout tone={message.tone} title={message.tone === "success" ? "Requirements loaded" : "Nothing to load"}>

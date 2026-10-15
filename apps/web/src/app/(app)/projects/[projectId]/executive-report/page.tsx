@@ -162,7 +162,6 @@ function Report({ project, store }: { project: Project; store: ModuleStore<Porta
       <div className="grid-2" style={{ alignItems: "start" }}>
         <div className="card stack" style={{ gap: 8 }}>
           <span className="t-card-title">Client report</span>
-          <span className="t-caption">Polished and plain-language — safe to send to the client as-is.</span>
           <ExportFooter
             divider={false}
             library={{ projectId: project.id, documentType: "Executive Report (Client)" }}
@@ -171,7 +170,6 @@ function Report({ project, store }: { project: Project; store: ModuleStore<Porta
         </div>
         <div className="card stack" style={{ gap: 8 }}>
           <span className="t-card-title">Internal report</span>
-          <span className="t-caption">Full technical detail — every finding and raw property groups.</span>
           <ExportFooter
             divider={false}
             library={{ projectId: project.id, documentType: "Executive Report (Internal)" }}
@@ -188,7 +186,6 @@ export default function ExecutiveReportPage() {
     <PortalPage
       eyebrow="STEP 2 / REPORT"
       title="Executive Report"
-      description="What the portal has, how it's structured, and what's worth fixing — as a polished client version and a full-detail internal version."
       pullBar={false}
     >
       {(project, store) => <Report project={project} store={store} />}

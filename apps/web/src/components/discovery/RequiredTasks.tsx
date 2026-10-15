@@ -8,11 +8,13 @@
  */
 
 import { AnimatePresence, motion } from "framer-motion";
+import { useState } from "react";
 
 import type { FlaggedTask } from "@/lib/api";
 import type { DiscoveryStore } from "@/lib/discovery-state";
 
-import { AnimatedNumber, Checkbox, spring } from "../ui";
+import { AnimatedNumber, Checkbox, Icon, Reveal, spring } from "../ui";
+import { highlight, offset, springs, tween } from "@/lib/motion";
 
 function Heading({ tasks, store, badge }: { tasks: FlaggedTask[]; store: DiscoveryStore; badge: string }) {
   const done = tasks.filter((t) => store.state.tasksDone.includes(t.task.id)).length;
@@ -22,6 +24,27 @@ function Heading({ tasks, store, badge }: { tasks: FlaggedTask[]; store: Discove
         Required tasks (<AnimatedNumber value={done} /> of <AnimatedNumber value={tasks.length} /> done)
       </h2>
       <span className="badge badge-keep">{badge}</span>
+    </div>
+  );
+}
+
+/** Why a task is required, collapsed under it (design: "Source details"). */
+function SourceDetails({ reasons, detail }: { reasons: string[]; detail?: string | null }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="task-source">
+      <button type="button" className="task-source-toggle" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+        <motion.span animate={{ rotate: open ? 90 : 0 }} transition={spring} style={{ display: "inline-flex" }}>
+          <Icon name="chevron-right" />
+        </motion.span>
+        Source details
+      </button>
+      <Reveal show={open}>
+        <p className="task-reason">
+          Because: {reasons.join(" · ")}
+          {detail ? ` — ${detail}` : ""}
+        </p>
+      </Reveal>
     </div>
   );
 }
@@ -46,16 +69,15 @@ export function RequiredTasksPanel({ tasks, store }: { tasks: FlaggedTask[]; sto
                   className="task-row"
                   data-done={done}
                   layout
-                  initial={{ opacity: 0, x: -12, backgroundColor: "rgba(247,121,29,0.12)" }}
-                  animate={{ opacity: 1, x: 0, backgroundColor: "rgba(247,121,29,0)" }}
-                  exit={{ opacity: 0, x: -12, transition: { duration: 0.15 } }}
-                  transition={{ ...spring, backgroundColor: { duration: 1.2 } }}
-                  title={flagged.task.detail || undefined}
+                  initial={{ opacity: 0, x: -offset.item, backgroundColor: highlight.from }}
+                  animate={{ opacity: 1, x: 0, backgroundColor: highlight.to }}
+                  exit={{ opacity: 0, x: -offset.item, transition: tween.fast }}
+                  transition={{ ...springs.snappy, backgroundColor: highlight.transition }}
                 >
                   <Checkbox checked={done} onChange={() => store.toggleIn("tasksDone", flagged.task.id)}>
                     {flagged.task.label}
                   </Checkbox>
-                  <p className="task-reason">Because: {flagged.reasons.join(" · ")}</p>
+                  <SourceDetails reasons={flagged.reasons} detail={flagged.task.detail} />
                 </motion.li>
               );
             })}

@@ -11,20 +11,22 @@
 import { useId, useState } from "react";
 
 import { useAppSession } from "@/components/AppSession";
+import { AssistButton } from "@/components/AssistButton";
 import { TokenSelect } from "@/components/discovery/QuestionCard";
 import { DataTable } from "@/components/project/DataTable";
 import { ProjectHeader } from "@/components/project/ProjectHeader";
 import { SaveBanner } from "@/components/project/SaveBanner";
 import { Callout, ExportFooter, Icon } from "@/components/ui";
-import { ApiError, blueprintMarkdown, fileStub, generateBlueprint, textFile } from "@/lib/api";
+import { ApiError, assistArchitecture, blueprintMarkdown, fileStub, generateBlueprint, textFile } from "@/lib/api";
+import { projectContext } from "@/lib/assist";
 import { normalizeArchitecture, type ArchitectureInputs, type ArchitectureState, type Blueprint } from "@/lib/architecture-state";
 import { useModuleState } from "@/lib/module-state";
 
 const STANDARD_OBJECTS = ["Contact", "Company", "Deal", "Ticket", "Location", "Child", "Family"];
 const CUSTOM_OBJECT_KEYWORDS = ["Membership", "Subscription", "Location", "Event"];
-const INTEGRATIONS = ["MyStudio", "Sakari", "Payments Provider", "Other"];
-const REGIONS = ["United States", "Canada", "United Kingdom", "European Union", "Australia", "Other"];
-const CURRENCIES = ["USD", "CAD", "GBP", "EUR", "AUD", "Other"];
+const INTEGRATIONS = ["MyStudio", "Sakari", "Payments Provider"];
+const REGIONS = ["United States", "Canada", "United Kingdom", "European Union", "Australia"];
+const CURRENCIES = ["USD", "CAD", "GBP", "EUR", "AUD"];
 const HUBS = ["Marketing Hub", "Sales Hub", "Service Hub", "CMS Hub", "Operations Hub", "Commerce Hub"];
 
 function MultiField({ label, options, value, onChange, help }: { label: string; options: string[]; value: string[]; onChange: (v: string[]) => void; help?: string }) {
@@ -34,7 +36,7 @@ function MultiField({ label, options, value, onChange, help }: { label: string; 
       <span className="field-label" id={id}>
         {label}
       </span>
-      <TokenSelect choices={options} selected={value} onChange={onChange} labelId={id} />
+      <TokenSelect choices={options} selected={value} onChange={onChange} labelId={id} allowCustom />
       {help && <span className="t-caption">{help}</span>}
     </div>
   );
@@ -62,7 +64,39 @@ export default function ArchitecturePage() {
   const inputs = state.inputs;
   const set = (patch: Partial<ArchitectureInputs>) => change((s) => ({ ...s, inputs: { ...s.inputs, ...patch } }));
   const planner = state.stagePlanner;
-  const pipelineChoices = ["Deal", "Ticket", ...inputs.customObjectKeywords];
+  const pipelineChoices = [...new Set(["Deal", "Ticket", ...inputs.customObjectKeywords])];
+
+  /** Add what earlier steps imply to the inputs; nothing selected or typed is removed. */
+  const fillFromEarlierSteps = async () => {
+    const result = await assistArchitecture(await projectContext(project.id, client), {
+      standard_objects: inputs.standardObjects,
+      custom_object_keywords: inputs.customObjectKeywords,
+      custom_object_notes: inputs.customObjectNotes,
+      pipelines_required: inputs.pipelinesRequired,
+      regions: inputs.regions,
+      currencies: inputs.currencies,
+      integrations: inputs.integrations,
+      other_integration_notes: inputs.otherIntegrationNotes,
+      record_volumes: parseVolumes(inputs.recordVolumes),
+      hubs_in_scope: inputs.hubsInScope,
+    });
+    if (!result.added) return "Nothing to add: the inputs already cover what earlier steps mention.";
+    const r = result.inputs;
+    const volumes = Object.entries(r.record_volumes ?? {});
+    set({
+      standardObjects: r.standard_objects ?? [],
+      customObjectKeywords: r.custom_object_keywords ?? [],
+      customObjectNotes: r.custom_object_notes ?? "",
+      pipelinesRequired: r.pipelines_required ?? [],
+      regions: r.regions ?? [],
+      currencies: r.currencies ?? [],
+      integrations: r.integrations ?? [],
+      otherIntegrationNotes: r.other_integration_notes ?? "",
+      recordVolumes: volumes.length ? volumes.map(([obj, n]) => `${obj}: ${n}`).join("\n") : inputs.recordVolumes,
+      hubsInScope: r.hubs_in_scope ?? [],
+    });
+    return `Added ${result.added} value${result.added === 1 ? "" : "s"} from earlier steps. Review them before generating.`;
+  };
 
   const generate = async () => {
     setBusy(true);
@@ -73,7 +107,7 @@ export default function ArchitecturePage() {
         standard_objects: inputs.standardObjects,
         custom_object_keywords: inputs.customObjectKeywords,
         custom_object_notes: inputs.customObjectNotes,
-        pipelines_required: inputs.pipelinesRequired.filter((p) => pipelineChoices.includes(p)),
+        pipelines_required: inputs.pipelinesRequired,
         regions: inputs.regions,
         currencies: inputs.currencies,
         integrations: inputs.integrations,
@@ -96,7 +130,6 @@ export default function ArchitecturePage() {
       <ProjectHeader
         eyebrow="STEP 3 / DESIGN"
         title="Architecture Generator"
-        description="Answer a few questions about the project and get a HubSpot architecture blueprint. No HubSpot access required."
       />
       <div className="page-content">
         {!loaded ? (
@@ -115,7 +148,10 @@ export default function ArchitecturePage() {
             )}
 
             <section className="stack">
-              <h2 className="t-section">Project inputs</h2>
+              <div className="heading-row">
+                <h2 className="t-section">Project inputs</h2>
+              </div>
+              <AssistButton label="Fill from earlier steps" run={fillFromEarlierSteps} />
               <div className="grid-2">
                 <MultiField label="Standard objects in scope" options={STANDARD_OBJECTS} value={inputs.standardObjects} onChange={(v) => set({ standardObjects: v })} />
                 <MultiField
@@ -123,22 +159,20 @@ export default function ArchitecturePage() {
                   options={CUSTOM_OBJECT_KEYWORDS}
                   value={inputs.customObjectKeywords}
                   onChange={(v) => set({ customObjectKeywords: v })}
-                  help="Known patterns become custom objects with their properties and associations."
                 />
                 <MultiField
                   label="Pipelines required"
                   options={pipelineChoices}
-                  value={inputs.pipelinesRequired.filter((p) => pipelineChoices.includes(p))}
+                  value={inputs.pipelinesRequired}
                   onChange={(v) => set({ pipelinesRequired: v })}
-                  help={planner ? "The Deal pipeline comes from the Stage Planner." : "Objects that need a pipeline."}
                 />
                 <MultiField label="Integrations" options={INTEGRATIONS} value={inputs.integrations} onChange={(v) => set({ integrations: v })} />
                 <MultiField label="Regions" options={REGIONS} value={inputs.regions} onChange={(v) => set({ regions: v })} />
                 <MultiField label="Currencies in scope" options={CURRENCIES} value={inputs.currencies} onChange={(v) => set({ currencies: v })} />
                 <MultiField label="Hubs in scope" options={HUBS} value={inputs.hubsInScope} onChange={(v) => set({ hubsInScope: v })} />
                 <label className="field">
-                  <span className="field-label">Other integration notes</span>
-                  <input className="input" placeholder="Name it if you picked Other" value={inputs.otherIntegrationNotes} onChange={(e) => set({ otherIntegrationNotes: e.target.value })} />
+                  <span className="field-label">Integration notes</span>
+                  <input className="input" placeholder="How each integration should sync" value={inputs.otherIntegrationNotes} onChange={(e) => set({ otherIntegrationNotes: e.target.value })} />
                 </label>
                 <label className="field">
                   <span className="field-label">Custom object notes</span>
@@ -147,7 +181,6 @@ export default function ArchitecturePage() {
                 <label className="field">
                   <span className="field-label">Estimated record volumes</span>
                   <textarea className="textarea" placeholder={"Contact: 45000\nDeal: 12000"} value={inputs.recordVolumes} onChange={(e) => set({ recordVolumes: e.target.value })} />
-                  <span className="t-caption">One per line, as Object: count.</span>
                 </label>
               </div>
               <div className="row">

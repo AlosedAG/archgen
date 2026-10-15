@@ -440,13 +440,15 @@ ADDON_LIBRARY: list[dict[str, Any]] = [
 
 
 def add_library_items(proposal: dict[str, Any], items: list[str], status: str = SCOPE_IN) -> dict[str, Any]:
-    """Append the named :data:`SCOPE_LIBRARY` items to the scope table."""
+    """Append the named :data:`SCOPE_LIBRARY` items to the scope table (skipping any already in it)."""
     p = copy.deepcopy(proposal)
     by_name = {entry["Item"]: entry for entry in SCOPE_LIBRARY}
     scope = nonblank(p.get("scope", []), "Item")
+    have = {_same_text(s.get("Item")) for s in scope}
     for name in items:
-        if name in by_name:
+        if name in by_name and _same_text(name) not in have:
             scope.append({**BLANK_ROWS["scope"], **by_name[name], "Status": status})
+            have.add(_same_text(name))
     p["scope"] = number_scope_items(scope)
     return p
 
@@ -459,12 +461,16 @@ def add_library_addons(proposal: dict[str, Any], services: list[str]) -> dict[st
     by_name = {entry["Service"]: entry for entry in ADDON_LIBRARY}
     addons = nonblank(p.get("addons", []), "Service")
     scope = nonblank(p.get("scope", []), "Item")
-    existing_scope = {_text(s.get("Item")).lower() for s in scope}
+    existing_scope = {_same_text(s.get("Item")) for s in scope}
+    existing_addons = {_same_text(a.get("Service")) for a in addons}
     for name in services:
         if name not in by_name:
             continue
-        addons.append({**BLANK_ROWS["addons"], **by_name[name]})
-        if name.lower() not in existing_scope:
+        if _same_text(name) not in existing_addons:
+            addons.append({**BLANK_ROWS["addons"], **by_name[name]})
+            existing_addons.add(_same_text(name))
+        if _same_text(name) not in existing_scope:
+            existing_scope.add(_same_text(name))
             scope.append({**BLANK_ROWS["scope"], "Workstream": "Add-on", "Item": name, "Status": SCOPE_OPTIONAL})
     p["addons"] = addons
     p["scope"] = number_scope_items(scope)
@@ -727,11 +733,51 @@ def validate(proposal: dict[str, Any]) -> list[str]:
 # ---- Import from the Requirements Document / Joint Evaluation Plan ----------
 
 
+def _same_text(value: Any) -> str:
+    """Comparable form of a cell: case, spacing and punctuation don't make two rows different."""
+    return " ".join(re.sub(r"[^\w\s]", " ", _text(value).lower()).split())
+
+
+def merge_rows(existing: list[dict[str, Any]], new: list[dict[str, Any]], *key_columns: str) -> list[dict[str, Any]]:
+    """``existing`` (blank rows dropped) followed by the ``new`` rows it doesn't
+    already have, compared on ``key_columns`` — so importing the same
+    document twice adds nothing the second time. Duplicates already in
+    ``existing`` (left by earlier imports) collapse to their first copy."""
+    seen: set[tuple[str, ...]] = set()
+    merged = []
+    for row in nonblank(existing, *key_columns) + new:
+        key = tuple(_same_text(row.get(c)) for c in key_columns)
+        if key in seen:
+            continue
+        seen.add(key)
+        merged.append(row)
+    return merged
+
+
+def _merge_requirements(
+    existing: list[dict[str, Any]], new: list[dict[str, Any]], scope: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    """Requirements merged like :func:`merge_rows` on their text, except that a
+    duplicate a scope item already cites by ID is kept, so no "Req. ID"
+    reference is left pointing at nothing."""
+    cited = {id_key(part) for s in scope for part in _text(s.get("Req. ID")).split(",") if part.strip()}
+    seen: set[str] = set()
+    merged = []
+    for row in number_requirements(nonblank(existing, "Requirement")) + new:
+        key = _same_text(row.get("Requirement"))
+        if key in seen and id_key(row.get("ID")) not in cited:
+            continue
+        seen.add(key)
+        merged.append(row)
+    return number_requirements(merged)
+
+
 def import_from_wrd(proposal: dict[str, Any], wrd: dict[str, list[dict[str, str]]]) -> dict[str, Any]:
     """Merge a Written Requirements Document export (``{section title:
     rows}``, as published by the WRD page) into ``proposal``. Blank
     proposal fields are filled; tables are appended to (after dropping the
-    proposal's blank placeholder rows), never overwritten."""
+    proposal's blank placeholder rows), never overwritten, and rows the
+    proposal already has are skipped, so importing again adds no duplicates."""
     p = copy.deepcopy(proposal)
 
     overview = wrd.get("Project Overview", [])
@@ -740,29 +786,28 @@ def import_from_wrd(proposal: dict[str, Any], wrd: dict[str, list[dict[str, str]
         p["problem_statement"] = purpose
 
     goals = [{"Objective": _text(r.get("Goal")), "Success Measure": ""} for r in wrd.get("Goals", []) if _text(r.get("Goal"))]
-    p["objectives"] = nonblank(p.get("objectives", []), "Objective") + goals
+    p["objectives"] = merge_rows(p.get("objectives", []), goals, "Objective")
 
-    existing_reqs = number_requirements(nonblank(p.get("requirements", []), "Requirement"))
     new_reqs = [
         {"ID": "", "Requirement": _text(r.get("Requirement")), "Priority": "Must Have", "Source": "Requirements Document"}
         for r in wrd.get("Customer Requirements", [])
         if _text(r.get("Requirement"))
     ]
-    p["requirements"] = number_requirements(existing_reqs + new_reqs)
+    p["requirements"] = _merge_requirements(p.get("requirements", []), new_reqs, p.get("scope", []))
 
     terms = [
         {"Term": _text(r.get("Term")), "Definition": _text(r.get("Definition"))}
         for r in wrd.get("Project Definitions", [])
         if _text(r.get("Term"))
     ]
-    p["glossary"] = nonblank(p.get("glossary", []), "Term") + terms
+    p["glossary"] = merge_rows(p.get("glossary", []), terms, "Term")
 
     risks = [
         {**BLANK_ROWS["risks"], "Risk": f"{_text(r.get('Type')) or 'Risk'}: {_text(r.get('Description'))}"}
         for r in wrd.get("Known Challenges or Risks", [])
         if _text(r.get("Description"))
     ]
-    p["risks"] = nonblank(p.get("risks", []), "Risk") + risks
+    p["risks"] = merge_rows(p.get("risks", []), risks, "Risk")
 
     plan = [
         {
@@ -774,14 +819,14 @@ def import_from_wrd(proposal: dict[str, Any], wrd: dict[str, list[dict[str, str]
         for r in wrd.get("Project Plan", [])
         if _text(r.get("Milestone"))
     ]
-    p["timeline"] = nonblank(p.get("timeline", []), "Phase / Milestone") + plan
+    p["timeline"] = merge_rows(p.get("timeline", []), plan, "Phase / Milestone")
 
     questions = [
         {"Assumption": f"To be confirmed: {_text(r.get('Question'))}"}
         for r in wrd.get("Open Questions", [])
         if _text(r.get("Question"))
     ]
-    p["assumptions"] = nonblank(p.get("assumptions", []), "Assumption") + questions
+    p["assumptions"] = merge_rows(p.get("assumptions", []), questions, "Assumption")
     return p
 
 
@@ -810,9 +855,8 @@ def import_from_jep(proposal: dict[str, Any], jep: dict[str, list[dict[str, str]
         for r in jep.get("Team Members", [])
         if _text(r.get("Team Member"))
     ]
-    p["team"] = nonblank(p.get("team", []), "Name", "Role") + team
+    p["team"] = merge_rows(p.get("team", []), team, "Name", "Role")
 
-    existing_reqs = number_requirements(nonblank(p.get("requirements", []), "Requirement"))
     new_reqs = []
     for section, label in (("Technical Needs", "Technical need"), ("Business Needs", "Business need")):
         for r in jep.get(section, []):
@@ -825,7 +869,7 @@ def import_from_jep(proposal: dict[str, Any], jep: dict[str, list[dict[str, str]
                         "Source": f"Joint Evaluation Plan ({label})",
                     }
                 )
-    p["requirements"] = number_requirements(existing_reqs + new_reqs)
+    p["requirements"] = _merge_requirements(p.get("requirements", []), new_reqs, p.get("scope", []))
 
     plan = [
         {
@@ -837,14 +881,14 @@ def import_from_jep(proposal: dict[str, Any], jep: dict[str, list[dict[str, str]
         for r in jep.get("Milestones", [])
         if _text(r.get("Milestone"))
     ]
-    p["timeline"] = nonblank(p.get("timeline", []), "Phase / Milestone") + plan
+    p["timeline"] = merge_rows(p.get("timeline", []), plan, "Phase / Milestone")
 
     questions = [
         {"Assumption": f"To be confirmed: {_text(r.get('Question'))}"}
         for r in jep.get("Questions", [])
         if _text(r.get("Question"))
     ]
-    p["assumptions"] = nonblank(p.get("assumptions", []), "Assumption") + questions
+    p["assumptions"] = merge_rows(p.get("assumptions", []), questions, "Assumption")
     return p
 
 

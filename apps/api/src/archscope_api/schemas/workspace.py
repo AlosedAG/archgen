@@ -139,3 +139,30 @@ class SecretStatus(ApiModel):
 
 class SecretSet(ApiModel):
     value: str = Field(min_length=8, max_length=2000)
+
+
+class Account(ApiModel):
+    """The signed-in user's own account, for the profile page."""
+
+    user_id: str
+    email: str
+    name: str
+    workspace_name: str
+    role: str
+    has_password: bool = Field(description="False for accounts that only sign in with Google.")
+    created_at: datetime
+    last_login_at: datetime | None
+    other_sessions: int = Field(description="Other browsers currently signed in to this account.")
+
+
+class ProfileUpdate(ApiModel):
+    name: str = Field(min_length=1, max_length=200)
+
+
+class PasswordChange(ApiModel):
+    current_password: str = Field("", max_length=500, description="Required when the account has a password.")
+    new_password: str = Field(min_length=1, max_length=500)
+
+
+class SignedOutOthers(ApiModel):
+    signed_out: int

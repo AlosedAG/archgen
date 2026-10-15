@@ -8,6 +8,7 @@ import { exportSections, fileStub, type Evaluation, type SectionsFormat } from "
 import type { DiscoveryStore } from "@/lib/discovery-state";
 
 import { Callout, ExportFooter } from "../ui";
+import { highlight, tween } from "@/lib/motion";
 
 const FORMATS: SectionsFormat[] = ["docx", "xlsx", "csv", "pdf"];
 
@@ -52,15 +53,7 @@ export function ChecklistTab({
           <h2 className="t-section">{title}</h2>
           <span className="badge badge-keep">{total} items · Ready to review</span>
         </div>
-        <p className="t-description">
-          A client-ready record of what must be configured and what belongs in scope. Status / Notes is intentionally
-          blank for your delivery team.
-        </p>
       </div>
-      <Callout tone="info" title="Required is not the same as agreed scope">
-        Required tasks are triggered by answers. Confirm the delivery scope, owners, and commercial assumptions before
-        using this checklist as a statement of work.
-      </Callout>
 
       {sections.map((section) => {
         const columns = Object.keys(section.rows[0] ?? { Task: "", "Why it's required": "", "Status / Notes": "" });
@@ -85,10 +78,10 @@ export function ChecklistTab({
                       className="table-row"
                       role="row"
                       layout
-                      initial={{ opacity: 0, backgroundColor: "rgba(247,121,29,0.10)" }}
-                      animate={{ opacity: 1, backgroundColor: "rgba(255,255,255,0)" }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.8 }}
+                      initial={{ opacity: 0, backgroundColor: highlight.from }}
+                      animate={{ opacity: 1, backgroundColor: highlight.to }}
+                      exit={{ opacity: 0, transition: tween.fast }}
+                      transition={highlight.transition}
                     >
                       {columns.map((c) => (
                         <span key={c} role="cell">

@@ -103,9 +103,6 @@ function PropertyAudit({ project, store }: { project: Project; store: ModuleStor
               ["Cleanup score", `${t.score}/100`],
             ]}
           />
-          <p className="t-caption">
-            &ldquo;Uses&rdquo; counts references in this portal&apos;s workflow actions only — forms, lists, reports and dashboards aren&apos;t pulled, so a property used only there still shows 0.
-          </p>
 
           <h2 className="t-section">Summary by object</h2>
           <DataTable
@@ -188,7 +185,6 @@ export default function PropertyAuditPage() {
   return (
     <PortalPage
       title="Property Audit"
-      description="Rates every property in the live portal Keep, Review or Remove candidate — from a sampled fill rate and workflow references — so a person can check the calls before anything is deleted in HubSpot. Nothing is changed by this tool."
     >
       {(project, store) => <PropertyAudit project={project} store={store} />}
     </PortalPage>

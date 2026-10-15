@@ -14,7 +14,9 @@ import { useEffect, useId, useRef, useState } from "react";
 import type { FollowUpQuestion, Question } from "@/lib/api";
 import { getAnswer, type Answer, type DiscoveryStore } from "@/lib/discovery-state";
 
-import { Checkbox, Reveal, spring } from "../ui";
+import { Reveal } from "../ui";
+import { collapse, dropdown, fadeInUp, highlight, insertRow, pop, press, staggerTiming, tween } from "@/lib/motion";
+import { Glyph } from "@/components/icons";
 
 export type QuestionContext = {
   store: DiscoveryStore;
@@ -38,9 +40,8 @@ export function QuestionBlock({
   depth?: number;
 }) {
   const revealed = ctx.followUps[question.id] ?? [];
-  const showOptions = depth === 0 && question.input !== "text";
   return (
-    <div className="question-block">
+    <motion.div className="question-block" variants={depth === 0 ? fadeInUp : undefined}>
       {depth >= 2 ? (
         <ChainedField section={section} question={question} ctx={ctx} />
       ) : (
@@ -52,18 +53,20 @@ export function QuestionBlock({
             key="follow-ups"
             className={depth === 0 ? "follow-ups" : undefined}
             style={{ overflow: "hidden", display: "grid", gap: 12 }}
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: [0.2, 0.8, 0.2, 1] }}
+            variants={collapse}
+            initial="closed"
+            animate="open"
+            exit="closed"
           >
             <AnimatePresence initial={false}>
               {revealed.map((followUp, i) => (
                 <motion.div
                   key={followUp.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0, transition: { delay: 0.06 * i, ...spring } }}
-                  exit={{ opacity: 0, x: -10, transition: { duration: 0.15 } }}
+                  variants={insertRow}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  transition={{ delay: i * staggerTiming.cards }}
                 >
                   <QuestionBlock section={followUp.home_section} question={followUp} ctx={ctx} depth={depth + 1} />
                 </motion.div>
@@ -72,10 +75,7 @@ export function QuestionBlock({
           </motion.div>
         )}
       </AnimatePresence>
-      {showOptions && (
-        <p className="options-caption">Options: {[...(question.options ?? []), ctx.otherOption].join(" · ")}</p>
-      )}
-    </div>
+    </motion.div>
   );
 }
 
@@ -100,11 +100,11 @@ function QuestionCard({
     <motion.div
       className={isFollowUp ? "question-card is-follow-up" : "question-card"}
       data-flagged={answer.flagged}
-      initial={isFollowUp ? { boxShadow: "0 0 0 4px rgba(247,121,29,0.28)" } : false}
-      animate={{ boxShadow: "0 0 0 0 rgba(247,121,29,0)" }}
-      transition={{ duration: 1.1, ease: "easeOut" }}
+      initial={isFollowUp ? { boxShadow: `0 0 0 4px ${highlight.from}` } : false}
+      animate={{ boxShadow: `0 0 0 0 ${highlight.to}` }}
+      transition={highlight.transition}
     >
-      {isFollowUp && <span className="badge badge-follow-up">↳ Follow-up</span>}
+      {isFollowUp && <span className="badge badge-follow-up"><Glyph name="corner-down-right" size={12} />Follow-up</span>}
       <p className="question-title" id={labelId}>
         {question.label}
         {question.hint && (
@@ -127,6 +127,10 @@ function QuestionCard({
               />
             </label>
           </Reveal>
+        </>
+      )}
+      <div className="note-row">
+        {isChoice ? (
           <input
             className="notes-input"
             aria-label={`Notes — ${question.label}`}
@@ -134,11 +138,11 @@ function QuestionCard({
             value={answer.notes}
             onChange={(e) => set({ notes: e.target.value })}
           />
-        </>
-      )}
-      <Checkbox checked={answer.flagged} onChange={(flagged) => set({ flagged })}>
-        Flag for follow-up
-      </Checkbox>
+        ) : (
+          <span className="note-row-spacer" />
+        )}
+        <FlagButton flagged={answer.flagged} onChange={(flagged) => set({ flagged })} label={question.label} />
+      </div>
     </motion.div>
   );
 }
@@ -150,7 +154,7 @@ function ChainedField({ section, question, ctx }: { section: string; question: Q
   const by = ctx.revealedBy[question.id] ?? [];
   return (
     <div className="chained">
-      <span className="badge badge-follow-up">↳ Revealed by {by.length ? by.join(", ") : "your answer"}</span>
+      <span className="badge badge-follow-up"><Glyph name="corner-down-right" size={12} />Revealed by {by.length ? by.join(", ") : "your answer"}</span>
       <p className="field-label" id={labelId}>
         {question.label}
       </p>
@@ -179,22 +183,25 @@ function AnswerInput({
   labelId: string;
 }) {
   const choices = [...(question.options ?? []), otherOption];
-  if (question.input === "multiselect") {
+  // The design labels the "Other (specify)" chip just "Other".
+  const chipLabel = (option: string) => (option === otherOption ? "Other" : option);
+  if (question.input === "multiselect" || question.input === "radio") {
+    const multiple = question.input === "multiselect";
     return (
-      <TokenSelect
+      <ChoiceChips
         choices={choices}
         selected={answer.selected}
-        onChange={(selected) => set({ selected })}
+        multiple={multiple}
         labelId={labelId}
-        // The design labels the "Other (specify)" token just "Other".
-        tokenLabel={(option) => (option === otherOption ? "Other" : option)}
+        chipLabel={chipLabel}
+        onChange={(selected) => set({ selected })}
       />
     );
   }
   if (question.input === "select") {
     return (
       <select
-        className="select"
+        className="select select-soft"
         aria-labelledby={labelId}
         value={answer.selected[0] ?? ""}
         onChange={(e) => set({ selected: e.target.value ? [e.target.value] : [] })}
@@ -209,55 +216,101 @@ function AnswerInput({
       </select>
     );
   }
-  if (question.input === "radio") {
-    return (
-      <div className="radio-list" role="radiogroup" aria-labelledby={labelId}>
-        {choices.map((option) => {
-          const on = answer.selected[0] === option;
-          return (
-            <button
-              key={option}
-              type="button"
-              role="radio"
-              aria-checked={on}
-              className="radio"
-              onClick={() => set({ selected: on ? [] : [option] })}
-            >
-              <span className="radio-dot">
-                <AnimatePresence>
-                  {on && (
-                    <motion.span
-                      className="radio-dot-fill"
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      exit={{ scale: 0 }}
-                      transition={spring}
-                    />
-                  )}
-                </AnimatePresence>
-              </span>
-              {option}
-            </button>
-          );
-        })}
-      </div>
-    );
-  }
   return (
     <input
-      className="input"
+      className="input input-soft"
       aria-labelledby={labelId}
-      placeholder="Shorthand is fine"
+      placeholder="Capture an answer…"
       value={answer.notes}
       onChange={(e) => set({ notes: e.target.value })}
     />
   );
 }
 
+/** The design's follow-up flag: an outlined "Flag" button that turns orange ("Flagged") when on. */
+function FlagButton({ flagged, onChange, label }: { flagged: boolean; onChange: (flagged: boolean) => void; label: string }) {
+  return (
+    <motion.button
+      type="button"
+      className="flag-button"
+      whileTap={press}
+      aria-pressed={flagged}
+      aria-label={flagged ? `Flagged for follow-up: ${label}` : `Flag for follow-up: ${label}`}
+      onClick={() => onChange(!flagged)}
+    >
+      {flagged ? "Flagged" : "Flag"}
+    </motion.button>
+  );
+}
+
+/**
+ * Answer choices as chips: every option visible, selected ones filled with a
+ * check. ``multiple`` = pick any number; otherwise picking one replaces the
+ * other and picking it again clears it.
+ */
+export function ChoiceChips({
+  choices,
+  selected,
+  multiple,
+  labelId,
+  chipLabel = (o) => o,
+  onChange,
+}: {
+  choices: string[];
+  selected: string[];
+  multiple: boolean;
+  labelId: string;
+  chipLabel?: (option: string) => string;
+  onChange: (selected: string[]) => void;
+}) {
+  const toggle = (option: string) => {
+    const on = selected.includes(option);
+    if (multiple) onChange(on ? selected.filter((s) => s !== option) : [...selected, option]);
+    else onChange(on ? [] : [option]);
+  };
+  return (
+    <div className="choice-chips" role={multiple ? "group" : "radiogroup"} aria-labelledby={labelId}>
+      {choices.map((option) => {
+        const on = selected.includes(option);
+        return (
+          <motion.button
+            key={option}
+            type="button"
+            className="choice-chip"
+            role={multiple ? "checkbox" : "radio"}
+            aria-checked={on}
+            onClick={() => toggle(option)}
+            whileTap={press}
+            animate={{ scale: on ? [1, 1.04, 1] : 1 }}
+            transition={tween.base}
+          >
+            <AnimatePresence initial={false}>
+              {on && (
+                <motion.span
+                  className="choice-chip-check"
+                  // 12px glyph + 5px gap; width animates so the label slides over instead of jumping.
+                  initial={{ width: 0, opacity: 0, scale: 0.85 }}
+                  animate={{ width: 17, opacity: 1, scale: 1 }}
+                  exit={{ width: 0, opacity: 0, scale: 0.85 }}
+                  transition={tween.fast}
+                >
+                  <Glyph name="check" size={12} />
+                </motion.span>
+              )}
+            </AnimatePresence>
+            {chipLabel(option)}
+          </motion.button>
+        );
+      })}
+    </div>
+  );
+}
+
 /**
  * Multiselect as removable tokens in a bordered box; clicking it opens a
  * filterable list of the remaining options. Keyboard: type to filter,
- * ↑/↓ to move, Enter to add, Backspace to remove the last token, Esc to close.
+ * Up/Down to move, Enter to add, Backspace to remove the last token, Esc to close.
+ * With ``allowCustom``, typed text that matches no option can be added as its own item.
  */
 export function TokenSelect({
   choices,
@@ -265,12 +318,16 @@ export function TokenSelect({
   onChange,
   labelId,
   tokenLabel,
+  allowCustom = false,
+  placeholder,
 }: {
   choices: string[];
   selected: string[];
   onChange: (selected: string[]) => void;
   labelId: string;
   tokenLabel?: (option: string) => string;
+  allowCustom?: boolean;
+  placeholder?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -278,7 +335,11 @@ export function TokenSelect({
   const root = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const listId = useId();
-  const remaining = choices.filter((c) => !selected.includes(c) && c.toLowerCase().includes(query.trim().toLowerCase()));
+  const typed = query.trim();
+  const matches = choices.filter((c) => !selected.includes(c) && c.toLowerCase().includes(typed.toLowerCase()));
+  const isNew = allowCustom && typed !== "" && ![...choices, ...selected].some((c) => c.toLowerCase() === typed.toLowerCase());
+  // The "Add …" entry is the last option, so Enter still picks the first match.
+  const remaining = isNew ? [...matches, typed] : matches;
 
   useEffect(() => {
     if (!open) return;
@@ -289,10 +350,17 @@ export function TokenSelect({
     return () => document.removeEventListener("mousedown", close);
   }, [open]);
 
-  const add = (option: string) => {
+  // The list fades out after closing; a click landing on it meanwhile must not pick anything.
+  const openRef = useRef(open);
+  openRef.current = open;
+
+  /** Keyboard picks keep the list open for the next one; a mouse pick closes it, so a
+   *  following click can't land on whichever option slid under the pointer. */
+  const add = (option: string, keepOpen: boolean) => {
     onChange([...selected, option]);
     setQuery("");
     setActive(0);
+    setOpen(keepOpen);
     input.current?.focus();
   };
 
@@ -312,10 +380,10 @@ export function TokenSelect({
               key={option}
               className="token"
               layout
-              initial={{ opacity: 0, scale: 0.85 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.85 }}
-              transition={spring}
+              variants={pop}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
             >
               {tokenLabel ? tokenLabel(option) : option}
               <button
@@ -327,7 +395,7 @@ export function TokenSelect({
                   onChange(selected.filter((s) => s !== option));
                 }}
               >
-                ×
+                <Glyph name="x" size={12} />
               </button>
             </motion.span>
           ))}
@@ -340,9 +408,12 @@ export function TokenSelect({
           aria-expanded={open}
           aria-controls={listId}
           aria-autocomplete="list"
-          placeholder={selected.length ? "" : "Select all that apply"}
+          placeholder={selected.length ? "" : (placeholder ?? (allowCustom ? "Select or type to add your own" : "Select all that apply"))}
           value={query}
           onFocus={() => setOpen(true)}
+          onBlur={(e) => {
+            if (!root.current?.contains(e.relatedTarget as Node | null)) setOpen(false);
+          }}
           onChange={(e) => {
             setQuery(e.target.value);
             setActive(0);
@@ -360,7 +431,7 @@ export function TokenSelect({
               const option = remaining[active];
               if (open && option) {
                 e.preventDefault();
-                add(option);
+                add(option, true);
               }
             } else if (e.key === "Backspace" && !query && selected.length) {
               onChange(selected.slice(0, -1));
@@ -376,13 +447,15 @@ export function TokenSelect({
             id={listId}
             role="listbox"
             className="option-list"
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.12 }}
+            variants={dropdown}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
           >
             {remaining.length === 0 ? (
-              <li className="option-empty">{selected.length === choices.length ? "Everything is selected." : "No matches."}</li>
+              <li className="option-empty">
+                {selected.length >= choices.length && !typed ? "Everything is selected." : allowCustom ? "Type to add your own." : "No matches."}
+              </li>
             ) : (
               remaining.map((option, i) => (
                 <li
@@ -394,10 +467,16 @@ export function TokenSelect({
                   onMouseEnter={() => setActive(i)}
                   onMouseDown={(e) => {
                     e.preventDefault();
-                    add(option);
+                    if (openRef.current) add(option, false);
                   }}
                 >
-                  {option}
+                  {isNew && i === remaining.length - 1 ? (
+                    <>
+                      <Glyph name="plus" size={14} /> Add &ldquo;{option}&rdquo;
+                    </>
+                  ) : (
+                    option
+                  )}
                 </li>
               ))
             )}

@@ -13,6 +13,8 @@ import { useEffect, useMemo, useState } from "react";
 
 import { useAppSession } from "@/components/AppSession";
 import { PageHeader } from "@/components/PageHeader";
+import { Glyph } from "@/components/icons";
+import { fadeInUp, lift, springs, tween, useStagger } from "@/lib/motion";
 import { Callout } from "@/components/ui";
 import { ApiError, createProject, deleteProject, listMembers, listProjects, updateProject, type Member, type Project } from "@/lib/api";
 
@@ -45,6 +47,67 @@ function FolderInput({ value, onChange, folders, id }: { value: string; onChange
         ))}
       </datalist>
     </>
+  );
+}
+
+/** A folder's heading; a real folder can be renamed, which moves every project in it (archived ones too). */
+function FolderHeading({ name, count, onRenamed }: { name: string; count: number; onRenamed: (from: string, to: string) => Promise<void> }) {
+  const [draft, setDraft] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (draft !== null) {
+    const next = draft.trim();
+    return (
+      <div className="stack" style={{ gap: 8 }}>
+        <form
+          className="folder-rename"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (!next || next === name) return setDraft(null);
+            setBusy(true);
+            setError(null);
+            try {
+              await onRenamed(name, next);
+              setDraft(null);
+            } catch (err) {
+              setError(err instanceof ApiError ? err.message : "Couldn't rename the folder.");
+            }
+            setBusy(false);
+          }}
+        >
+          <Glyph name="folder" size={18} />
+          <input className="input" aria-label="Folder name" autoFocus value={draft} maxLength={120} onChange={(e) => setDraft(e.target.value)} />
+          <button type="submit" className="btn btn-primary" disabled={busy || !next}>
+            {busy ? "Saving…" : "Rename"}
+          </button>
+          <button type="button" className="btn-link" disabled={busy} onClick={() => setDraft(null)}>
+            Cancel
+          </button>
+        </form>
+        {error && <Callout tone="error" title="That didn't work">{error}</Callout>}
+      </div>
+    );
+  }
+  return (
+    <h2 className="folder-heading">
+      <Glyph name={name ? "folder" : "file"} size={18} />
+      {name || "No folder"} <span className="t-caption">({count})</span>
+      {name && (
+        <button type="button" className="icon-btn" aria-label={`Rename folder ${name}`} title="Rename folder" onClick={() => setDraft(name)}>
+          <Glyph name="pencil" size={14} />
+        </button>
+      )}
+    </h2>
+  );
+}
+
+/** A folder's cards, rising in one after another when the list loads. */
+function ProjectGrid({ count, children }: { count: number; children: React.ReactNode }) {
+  return (
+    <motion.div className="project-grid" variants={useStagger(count)} initial="hidden" animate="visible">
+      {children}
+    </motion.div>
   );
 }
 
@@ -105,7 +168,14 @@ function ProjectCard({
 
   const title = project.client_name || project.name;
   return (
-    <motion.div layout className="project-card" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }}>
+    <motion.div
+      layout
+      className="project-card"
+      variants={fadeInUp}
+      exit={{ opacity: 0, scale: 0.98, transition: tween.fast }}
+      whileHover={mode === "view" ? lift : undefined}
+      transition={{ layout: springs.snappy }}
+    >
       {mode === "edit" ? (
         <form
           className="stack"
@@ -254,6 +324,14 @@ export default function ProjectsPage() {
     return [...map.entries()].sort(([a], [b]) => (a === "" ? 1 : b === "" ? -1 : a.localeCompare(b)));
   }, [visible]);
 
+  const renameFolder = async (from: string, to: string) => {
+    const inFolder = (await listProjects(true)).filter((p) => p.folder === from);
+    const updated = await Promise.all(inFolder.map((p) => updateProject(p.id, { folder: to })));
+    const byId = new Map(updated.map((p) => [p.id, p]));
+    setProjects((list) => (list ?? []).map((p) => byId.get(p.id) ?? p));
+    if (folderFilter === from) setFolderFilter(to);
+  };
+
   const replace = (updated: Project) => setProjects((list) => (list ?? []).map((p) => (p.id === updated.id ? updated : p)));
   const filtered = Boolean(query.trim() || folderFilter || leadFilter);
 
@@ -263,7 +341,6 @@ export default function ProjectsPage() {
         eyebrow="WORKSPACE / PROJECTS"
         breadcrumb={`${me.workspace_name}  /  ${me.name || me.email}`}
         title="Projects"
-        description="Each client engagement is a project. Its discovery call, documents and build order live inside it. Group them in folders, e.g. one per client."
       />
       <div className="page-content">
         <form
@@ -360,11 +437,9 @@ export default function ProjectsPage() {
           groups.map(([group, items]) => (
             <section key={group || "none"} className="stack" style={{ gap: 12 }}>
               {(folders.length > 0 || group) && (
-                <h2 className="folder-heading">
-                  <span aria-hidden>{group ? "📁" : "📄"}</span> {group || "No folder"} <span className="t-caption">({items.length})</span>
-                </h2>
+                <FolderHeading name={group} count={items.length} onRenamed={renameFolder} />
               )}
-              <div className="project-grid">
+              <ProjectGrid count={items.length}>
                 <AnimatePresence>
                   {items.map((p) => (
                     <ProjectCard
@@ -377,7 +452,7 @@ export default function ProjectsPage() {
                     />
                   ))}
                 </AnimatePresence>
-              </div>
+              </ProjectGrid>
             </section>
           ))
         )}

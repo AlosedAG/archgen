@@ -77,7 +77,7 @@ function Audit({ project, store }: { project: Project; store: ModuleStore<Portal
             ? "Pull from HubSpot first, then run the audit."
             : state.auditedAt
               ? `Last run ${new Date(state.auditedAt).toLocaleString()}`
-              : "Record-level checks sample records per object rather than pulling everything, and say so in each finding."}
+              : ""}
         </span>
       </div>
       {error && (
@@ -96,6 +96,7 @@ function Audit({ project, store }: { project: Project; store: ModuleStore<Portal
           ) : (
             <>
               <Stats items={SEVERITIES.map((s) => [s, findings.filter((f) => f.severity === s).length])} />
+              <SeverityBar counts={SEVERITIES.map((s) => [s, findings.filter((f) => f.severity === s).length] as const)} />
               <div className="filter-row" role="group" aria-label="Filter by severity">
                 <span className="field-label">Severity</span>
                 {SEVERITIES.map((s) => (
@@ -146,11 +147,25 @@ function Audit({ project, store }: { project: Project; store: ModuleStore<Portal
   );
 }
 
+/** Share of findings by severity (design: "Severity distribution"): High, Medium, Low left to right. */
+function SeverityBar({ counts }: { counts: readonly (readonly [string, number])[] }) {
+  const total = counts.reduce((n, [, c]) => n + c, 0);
+  if (!total) return null;
+  return (
+    <div className="severity-bar" role="img" aria-label={counts.map(([s, c]) => `${s} ${c} of ${total}`).join(", ")}>
+      {counts
+        .filter(([, c]) => c > 0)
+        .map(([s, c]) => (
+          <span key={s} className={`severity-bar-part severity-${s}`} style={{ flexGrow: c }} title={`${s} · ${c} of ${total}`} />
+        ))}
+    </div>
+  );
+}
+
 export default function PortalAuditPage() {
   return (
     <PortalPage
       title="Portal Auditor"
-      description="Checks the live portal against best practice — duplicate and unused properties, missing required data, orphaned records, risky workflows, team anomalies and naming drift. Every call is read-only."
     >
       {(project, store) => <Audit project={project} store={store} />}
     </PortalPage>

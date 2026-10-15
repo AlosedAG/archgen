@@ -1,0 +1,463 @@
+# Industry templates — starting points for the Discovery Call Assistant and
+# the Proposal & SOW Builder, for the kinds of companies that most often
+# buy HubSpot. Applying a template only fills what is still blank: answers
+# already captured and text already typed are never replaced, and proposal
+# rows that already exist are skipped.
+#
+# industries.<id>:
+#   label, description:  shown in the template picker
+#   discovery:
+#     business_type:     fills the client's business type if blank
+#     answers:           {section: {question_id: options}} — a list for
+#                        multiselect questions, one string for select / radio.
+#                        Options must match discovery_options.yaml exactly
+#                        (a test checks this).
+#   proposal:            rows added to the proposal (same keys as the
+#                        Suggest feature): objectives, scope, assumptions,
+#                        risks, kpis, glossary
+# sizes.<id>:            the same shape; applied on top of the industry
+#                        (select / radio answers from the size win; lists
+#                        and proposal rows are added).
+
+industries:
+  saas:
+    label: "Software & SaaS"
+    description: "Product-led or sales-led software companies: trials, onboarding, renewals and expansion revenue."
+    discovery:
+      business_type: "B2B software / SaaS company"
+      answers:
+        Goals:
+          growth_areas: ["New customer acquisition", "Upsell / cross-sell to existing customers", "Retention / renewals"]
+          kpis: ["MQL → SQL conversion", "Pipeline value", "Win rate", "Revenue / ARR growth", "Customer retention / churn"]
+          reason_for_switching: ["Outgrowing current tool", "Consolidating multiple tools", "Lack of reporting / visibility"]
+        Data:
+          data_location: ["Another CRM", "Billing / accounting system", "Custom database / in-house app"]
+          systems: ["Stripe"]
+          sync_direction: "Two-way sync"
+          custom_data: ["Products / line items", "Memberships / subscriptions"]
+          compliance: ["GDPR", "SOC 2"]
+          data_owners: ["RevOps / Operations"]
+        Processes:
+          journey_stages: ["Subscriber", "Lead", "Marketing qualified lead (MQL)", "Sales qualified lead (SQL)", "Opportunity", "Customer"]
+          team_processes: ["Inbound lead handling", "Outbound prospecting", "Lead routing / assignment", "Customer onboarding", "Renewals"]
+          communication: ["Email", "Video calls", "Live chat"]
+          pain_points: ["Poor sales–marketing handoff", "No visibility / poor reporting", "Missed renewals / churn"]
+        Solutions Design:
+          primary_users: ["Sales", "Marketing", "Customer service", "Operations / RevOps"]
+          required_actions: ["Lead assignment / rotation", "Deal stage automation", "Email sequences", "Internal notifications"]
+          integrations: ["Gmail / Google Workspace", "Stripe / payments", "Slack", "Custom API / in-house system"]
+          priority_features: ["Lead scoring", "Deal pipelines", "Sales sequences", "Help desk / ticketing", "Reporting dashboards"]
+    proposal:
+      objectives:
+        - {objective: "Give sales and marketing one shared view of every lead, trial and account", success_measure: "All active leads and customers in HubSpot; no parallel spreadsheets"}
+        - {objective: "Shorten the path from trial or demo request to closed deal", success_measure: "Median sales cycle tracked and reduced quarter over quarter"}
+        - {objective: "Protect recurring revenue with visible renewals and expansion opportunities", success_measure: "Every renewal created 90 days ahead with an owner"}
+      scope:
+        - {status: "In Scope", workstream: "Sales", item: "New business and renewal deal pipelines with stage probabilities and required properties", quantity_limit: "Up to 2 pipelines", acceptance_criteria: "Stages, probabilities and required fields match the signed-off design"}
+        - {status: "In Scope", workstream: "Marketing", item: "Lead lifecycle and lead scoring model (fit + engagement)", quantity_limit: "1 scoring model", acceptance_criteria: "MQL threshold agreed and contacts scored on test data"}
+        - {status: "In Scope", workstream: "Integrations", item: "Subscription / billing data sync to companies and deals", quantity_limit: "1 billing system, up to 15 fields", acceptance_criteria: "Test subscriptions appear on the right records within 15 minutes"}
+        - {status: "In Scope", workstream: "Reporting", item: "Revenue dashboards: pipeline, ARR movement, churn and expansion", quantity_limit: "Up to 3 dashboards, 10 reports each", acceptance_criteria: "Figures reconcile to the billing system for a sample month"}
+        - {status: "Out of Scope", workstream: "Product", item: "In-app product analytics or usage tracking implementation", quantity_limit: "", acceptance_criteria: ""}
+        - {status: "Optional Add-on", workstream: "Service", item: "Customer onboarding pipeline and ticket-based support desk", quantity_limit: "1 pipeline, 1 inbox", acceptance_criteria: "New customers enter onboarding automatically on Closed Won"}
+        - {status: "Client Responsibility", workstream: "Data", item: "Export of customer and subscription data from current systems", quantity_limit: "", acceptance_criteria: ""}
+      assumptions:
+        - "The billing system exposes an API or a supported HubSpot integration."
+        - "One SonaMation and one client admin sign off each pipeline design before build."
+      risks:
+        - {risk: "Subscription data model in billing differs from how sales tracks deals", likelihood: "Medium", impact: "High", mitigation: "Map billing objects to HubSpot in the design phase and test with real accounts"}
+        - {risk: "Trial and product-qualified leads arrive without consistent source data", likelihood: "Medium", impact: "Medium", mitigation: "Define required source properties and hidden form fields before launch"}
+      kpis:
+        - {type: "Primary", kpi: "Net revenue retention", definition: "Recurring revenue kept plus expansion, divided by starting revenue", target: "To be agreed with the client"}
+        - {type: "Primary", kpi: "Win rate", definition: "Closed Won deals divided by all closed deals in the period", target: "To be agreed"}
+        - {type: "Secondary", kpi: "MQL to SQL conversion", definition: "Share of marketing qualified leads accepted by sales", target: "To be agreed"}
+      glossary:
+        - {term: "ARR", definition: "Annual recurring revenue: the yearly value of active subscriptions."}
+        - {term: "PQL", definition: "Product qualified lead: a trial or free user whose product usage shows buying intent."}
+
+  professional_services:
+    label: "Professional services & agencies"
+    description: "Consultancies, agencies and advisory firms selling projects and retainers to client accounts."
+    discovery:
+      business_type: "Professional services firm / agency"
+      answers:
+        Goals:
+          growth_areas: ["New customer acquisition", "Upsell / cross-sell to existing customers", "Partner / channel sales"]
+          kpis: ["Pipeline value", "Win rate", "Sales cycle length", "Revenue / ARR growth"]
+          reason_for_switching: ["Consolidating multiple tools", "Lack of reporting / visibility", "Missing automation"]
+        Data:
+          data_location: ["Spreadsheets", "Email inboxes", "Billing / accounting system"]
+          systems: ["Excel / Google Sheets", "QuickBooks"]
+          custom_data: ["Projects", "Contracts"]
+          data_owners: ["Sales leadership", "RevOps / Operations"]
+        Processes:
+          journey_stages: ["Lead", "Sales qualified lead (SQL)", "Opportunity", "Customer"]
+          team_processes: ["Inbound lead handling", "Quoting / proposals", "Customer onboarding", "Account management"]
+          communication: ["Email", "Phone", "Video calls", "In person"]
+          pain_points: ["Manual data entry", "No visibility / poor reporting", "Disconnected tools"]
+        Solutions Design:
+          primary_users: ["Sales", "Marketing", "Leadership"]
+          required_actions: ["Deal stage automation", "Task reminders", "Quote generation", "Approval steps"]
+          integrations: ["Outlook / Microsoft 365", "Accounting (QuickBooks, Xero, NetSuite…)", "Calendly / scheduling"]
+          priority_features: ["Deal pipelines", "Quotes", "Email marketing", "Reporting dashboards"]
+    proposal:
+      objectives:
+        - {objective: "Track every opportunity from first conversation to signed engagement", success_measure: "All open opportunities in HubSpot with value, stage and close date"}
+        - {objective: "Standardise proposals and approvals", success_measure: "Quotes generated from HubSpot with an approval step for discounts"}
+        - {objective: "Grow revenue from existing clients", success_measure: "Account-level view of active projects and renewal dates"}
+      scope:
+        - {status: "In Scope", workstream: "Sales", item: "Engagement pipeline (new business) with stage requirements", quantity_limit: "1 pipeline", acceptance_criteria: "Pipeline stages and required fields match the signed-off design"}
+        - {status: "In Scope", workstream: "Sales", item: "Quote templates with products, services and discount approvals", quantity_limit: "Up to 2 quote templates", acceptance_criteria: "A test quote over the discount limit requires approval"}
+        - {status: "In Scope", workstream: "Operations", item: "Project hand-off from Closed Won deals", quantity_limit: "1 hand-off workflow", acceptance_criteria: "Closed Won creates the delivery record and notifies the delivery lead"}
+        - {status: "In Scope", workstream: "Marketing", item: "Thought-leadership newsletter and event registration forms", quantity_limit: "Up to 3 forms, 2 email templates", acceptance_criteria: "Submissions create contacts with source and consent"}
+        - {status: "Out of Scope", workstream: "Operations", item: "Time tracking, resourcing or project accounting inside HubSpot", quantity_limit: "", acceptance_criteria: ""}
+        - {status: "Optional Add-on", workstream: "Integrations", item: "Accounting sync for invoices and payment status", quantity_limit: "1 accounting system", acceptance_criteria: "Invoice status visible on the related deal"}
+        - {status: "Client Responsibility", workstream: "Content", item: "Proposal wording, service descriptions and price list", quantity_limit: "", acceptance_criteria: ""}
+      assumptions:
+        - "Services are sold from a defined price list or rate card."
+        - "Delivery work continues in the client's existing project-management tool."
+      risks:
+        - {risk: "Partners keep opportunities in personal inboxes instead of HubSpot", likelihood: "High", impact: "Medium", mitigation: "Connect inboxes, log emails automatically and review the pipeline weekly"}
+        - {risk: "Inconsistent service naming makes revenue reporting unreliable", likelihood: "Medium", impact: "Medium", mitigation: "Agree a product library before quotes are built"}
+      kpis:
+        - {type: "Primary", kpi: "Win rate", definition: "Signed engagements divided by proposals sent", target: "To be agreed"}
+        - {type: "Primary", kpi: "Average engagement value", definition: "Mean value of Closed Won deals", target: "To be agreed"}
+        - {type: "Secondary", kpi: "Proposal turnaround", definition: "Days from discovery meeting to proposal sent", target: "To be agreed"}
+      glossary:
+        - {term: "Retainer", definition: "An ongoing engagement billed on a recurring basis."}
+        - {term: "SOW", definition: "Statement of Work: the agreed scope, deliverables and fees of an engagement."}
+
+  healthcare:
+    label: "Healthcare & wellness"
+    description: "Medical and dental groups, clinics and fitness networks managing patient or member journeys."
+    discovery:
+      business_type: "Healthcare / wellness provider"
+      answers:
+        Goals:
+          growth_areas: ["New customer acquisition", "Retention / renewals", "New markets or regions"]
+          kpis: ["Lead volume", "Lead-to-customer rate", "Customer retention / churn", "NPS / CSAT"]
+          reason_for_switching: ["Missing automation", "Lack of reporting / visibility", "Poor user adoption / usability"]
+        Data:
+          data_location: ["Custom database / in-house app", "Spreadsheets", "Billing / accounting system"]
+          sync_direction: "One-way into HubSpot"
+          custom_data: ["Locations / sites", "Appointments / events", "Memberships / subscriptions"]
+          compliance: ["HIPAA", "Industry-specific regulation"]
+          data_owners: ["RevOps / Operations", "Marketing"]
+        Processes:
+          journey_stages: ["Lead", "Opportunity", "Customer", "Evangelist / advocate"]
+          team_processes: ["Inbound lead handling", "Lead routing / assignment", "Customer onboarding"]
+          communication: ["Email", "Phone", "SMS"]
+          pain_points: ["Slow lead follow-up", "Manual data entry", "Disconnected tools"]
+        Solutions Design:
+          primary_users: ["Marketing", "Customer service", "Operations / RevOps"]
+          required_actions: ["Lead assignment / rotation", "Task reminders", "Record creation from forms", "Internal notifications"]
+          integrations: ["Calendly / scheduling", "Custom API / in-house system"]
+          priority_features: ["Email marketing", "Landing pages / forms", "Reporting dashboards", "Help desk / ticketing"]
+    proposal:
+      objectives:
+        - {objective: "Respond to every new patient or member enquiry quickly and consistently", success_measure: "Enquiries assigned to the right location within minutes"}
+        - {objective: "Increase booked appointments from marketing", success_measure: "Booking rate reported by channel and location"}
+        - {objective: "Keep protected health information out of marketing systems", success_measure: "Data-handling rules signed off by the client's compliance owner"}
+      scope:
+        - {status: "In Scope", workstream: "Marketing", item: "Enquiry and booking-request forms with consent capture", quantity_limit: "Up to 5 forms", acceptance_criteria: "Submissions create contacts with consent and location"}
+        - {status: "In Scope", workstream: "Operations", item: "Location-based routing of new enquiries", quantity_limit: "Up to 10 locations", acceptance_criteria: "Test enquiries reach the correct location owner"}
+        - {status: "In Scope", workstream: "Marketing", item: "Nurture and reactivation email sequences", quantity_limit: "Up to 3 workflows, 10 emails", acceptance_criteria: "Workflows pass enrolment tests without sending PHI"}
+        - {status: "In Scope", workstream: "Reporting", item: "Enquiry-to-booking dashboard by channel and location", quantity_limit: "1 dashboard", acceptance_criteria: "Counts reconcile to the booking system for a sample week"}
+        - {status: "Out of Scope", workstream: "Compliance", item: "Storing clinical records, diagnoses or treatment notes in HubSpot", quantity_limit: "", acceptance_criteria: ""}
+        - {status: "Optional Add-on", workstream: "Integrations", item: "Practice-management or booking-system sync (non-clinical fields only)", quantity_limit: "1 system", acceptance_criteria: "Appointment status updates the contact within 1 hour"}
+        - {status: "Client Responsibility", workstream: "Compliance", item: "Legal review of consent wording and data-handling rules", quantity_limit: "", acceptance_criteria: ""}
+      assumptions:
+        - "No clinical or protected health information will be stored in HubSpot unless the client's HubSpot plan and agreements allow it."
+        - "Each location has a named owner for enquiry follow-up."
+      risks:
+        - {risk: "Protected health information entered in free-text fields", likelihood: "Medium", impact: "High", mitigation: "Limit free text on forms and train staff on what may be recorded"}
+        - {risk: "Booking system has no API for appointment status", likelihood: "Medium", impact: "Medium", mitigation: "Confirm integration options in discovery; fall back to scheduled imports"}
+      kpis:
+        - {type: "Primary", kpi: "Enquiry-to-booking rate", definition: "Booked appointments divided by new enquiries", target: "To be agreed"}
+        - {type: "Primary", kpi: "Speed to first response", definition: "Minutes from enquiry to first contact", target: "To be agreed"}
+        - {type: "Secondary", kpi: "Patient or member retention", definition: "Share of patients or members active after 12 months", target: "To be agreed"}
+      glossary:
+        - {term: "PHI", definition: "Protected health information: health data that identifies a person."}
+
+  financial_services:
+    label: "Financial services"
+    description: "Banks, credit unions, lenders, insurers and wealth managers with regulated client journeys."
+    discovery:
+      business_type: "Financial services firm"
+      answers:
+        Goals:
+          growth_areas: ["New customer acquisition", "Upsell / cross-sell to existing customers", "Retention / renewals"]
+          kpis: ["Pipeline value", "Lead-to-customer rate", "Sales cycle length", "Customer retention / churn"]
+          reason_for_switching: ["Outgrowing current tool", "Lack of reporting / visibility", "Missing automation"]
+        Data:
+          data_location: ["Another CRM", "Custom database / in-house app", "Spreadsheets"]
+          sync_direction: "Two-way sync"
+          custom_data: ["Products / line items", "Contracts"]
+          compliance: ["GDPR", "SOC 2", "Industry-specific regulation"]
+          data_owners: ["RevOps / Operations", "IT", "Sales leadership"]
+        Processes:
+          journey_stages: ["Lead", "Sales qualified lead (SQL)", "Opportunity", "Customer"]
+          team_processes: ["Inbound lead handling", "Lead routing / assignment", "Customer onboarding", "Account management", "Renewals"]
+          communication: ["Email", "Phone", "In person", "Customer portal"]
+          pain_points: ["Manual data entry", "Disconnected tools", "No visibility / poor reporting"]
+        Solutions Design:
+          primary_users: ["Sales", "Marketing", "Customer service", "Leadership"]
+          required_actions: ["Lead assignment / rotation", "Deal stage automation", "Approval steps", "Task reminders"]
+          integrations: ["Outlook / Microsoft 365", "Custom API / in-house system"]
+          priority_features: ["Deal pipelines", "Email marketing", "Reporting dashboards", "Customer portal"]
+    proposal:
+      objectives:
+        - {objective: "Track every application or opportunity through a compliant, auditable process", success_measure: "Required checks recorded at each stage before progression"}
+        - {objective: "Grow share of wallet with existing clients", success_measure: "Cross-sell opportunities created from product holdings"}
+        - {objective: "Give advisors and leadership one view of the client relationship", success_measure: "Household or company view with all products and owners"}
+      scope:
+        - {status: "In Scope", workstream: "Sales", item: "Application / opportunity pipeline with compliance checkpoints", quantity_limit: "Up to 2 pipelines", acceptance_criteria: "Deals cannot pass a checkpoint stage without required fields"}
+        - {status: "In Scope", workstream: "Sales", item: "Product holdings model for cross-sell targeting", quantity_limit: "Up to 20 products", acceptance_criteria: "Holdings visible on the contact and usable in lists"}
+        - {status: "In Scope", workstream: "Marketing", item: "Consent-aware nurture for prospects and existing clients", quantity_limit: "Up to 4 workflows", acceptance_criteria: "Only contacts with the right subscription types are enrolled"}
+        - {status: "In Scope", workstream: "Security", item: "Role-based permissions and field-level restrictions for sensitive data", quantity_limit: "Up to 6 roles", acceptance_criteria: "Each role sees only the agreed records and fields"}
+        - {status: "Out of Scope", workstream: "Compliance", item: "Regulatory reporting or record-keeping outside HubSpot's audit history", quantity_limit: "", acceptance_criteria: ""}
+        - {status: "Optional Add-on", workstream: "Integrations", item: "Core banking / policy system sync for product holdings", quantity_limit: "1 system", acceptance_criteria: "Holdings refresh daily without manual steps"}
+        - {status: "Client Responsibility", workstream: "Compliance", item: "Compliance sign-off of stage checkpoints, retention rules and email content", quantity_limit: "", acceptance_criteria: ""}
+      assumptions:
+        - "Account numbers and sensitive identifiers stay in the system of record; HubSpot stores references only."
+        - "The client's compliance team reviews workflows and templates before launch."
+      risks:
+        - {risk: "Regulatory review lengthens the build timeline", likelihood: "High", impact: "Medium", mitigation: "Book compliance reviews at fixed points in the plan"}
+        - {risk: "Legacy systems limit real-time integration", likelihood: "Medium", impact: "High", mitigation: "Agree a batch sync fallback in design"}
+      kpis:
+        - {type: "Primary", kpi: "Application conversion rate", definition: "Funded or bound applications divided by applications started", target: "To be agreed"}
+        - {type: "Primary", kpi: "Products per client", definition: "Average number of active products held per client", target: "To be agreed"}
+        - {type: "Secondary", kpi: "Time to decision", definition: "Days from application to decision", target: "To be agreed"}
+      glossary:
+        - {term: "Household", definition: "A group of related contacts managed as one relationship."}
+
+  ecommerce:
+    label: "E-commerce & retail"
+    description: "Online and omnichannel brands combining marketing automation, orders and customer service."
+    discovery:
+      business_type: "E-commerce / retail brand"
+      answers:
+        Goals:
+          growth_areas: ["New customer acquisition", "Retention / renewals", "Brand awareness"]
+          kpis: ["Revenue / ARR growth", "Customer retention / churn", "Marketing ROI / CAC", "NPS / CSAT"]
+          reason_for_switching: ["Consolidating multiple tools", "Missing automation", "Cost of current tool"]
+        Data:
+          data_location: ["E-commerce platform", "Marketing automation platform", "Help desk / ticketing system"]
+          systems: ["Shopify", "Mailchimp", "Zendesk", "Stripe"]
+          sync_direction: "One-way into HubSpot"
+          custom_data: ["Products / line items"]
+          compliance: ["GDPR", "CCPA / CPRA", "PCI DSS"]
+          data_owners: ["Marketing"]
+        Processes:
+          journey_stages: ["Subscriber", "Lead", "Customer", "Evangelist / advocate"]
+          team_processes: ["Support ticketing", "Event / webinar management"]
+          communication: ["Email", "SMS", "Social media", "Live chat"]
+          pain_points: ["Disconnected tools", "Duplicate / dirty data", "No visibility / poor reporting"]
+        Solutions Design:
+          primary_users: ["Marketing", "Customer service"]
+          required_actions: ["Email sequences", "Ticket routing", "Record creation from forms"]
+          integrations: ["Shopify / e-commerce", "Stripe / payments"]
+          priority_features: ["Email marketing", "Landing pages / forms", "Help desk / ticketing", "Reporting dashboards"]
+    proposal:
+      objectives:
+        - {objective: "Turn store, email and support data into one customer profile", success_measure: "Orders and tickets visible on each contact"}
+        - {objective: "Increase repeat purchases with automated lifecycle emails", success_measure: "Repeat purchase rate reported monthly"}
+        - {objective: "Resolve customer questions faster", success_measure: "First response time tracked by channel"}
+      scope:
+        - {status: "In Scope", workstream: "Integrations", item: "Store integration for customers, orders and products", quantity_limit: "1 store", acceptance_criteria: "Test orders appear on contacts with line items within 15 minutes"}
+        - {status: "In Scope", workstream: "Marketing", item: "Lifecycle automations: welcome, abandoned cart, post-purchase, win-back", quantity_limit: "Up to 4 workflows, 12 emails", acceptance_criteria: "Each workflow passes enrolment and suppression tests"}
+        - {status: "In Scope", workstream: "Service", item: "Shared inbox, chat and ticket pipeline for customer support", quantity_limit: "1 ticket pipeline, 2 channels", acceptance_criteria: "Messages create tickets routed to the right team"}
+        - {status: "In Scope", workstream: "Reporting", item: "Customer value and campaign revenue dashboards", quantity_limit: "Up to 2 dashboards", acceptance_criteria: "Revenue reconciles to the store for a sample month"}
+        - {status: "Out of Scope", workstream: "Commerce", item: "Storefront build, checkout changes or inventory management", quantity_limit: "", acceptance_criteria: ""}
+        - {status: "Optional Add-on", workstream: "Marketing", item: "SMS marketing with consent capture", quantity_limit: "1 SMS provider", acceptance_criteria: "Only SMS-consented contacts receive messages"}
+        - {status: "Client Responsibility", workstream: "Content", item: "Email copy, imagery and discount codes", quantity_limit: "", acceptance_criteria: ""}
+      assumptions:
+        - "The store platform has a supported HubSpot integration."
+        - "Historical orders are imported once, up to 24 months back."
+      risks:
+        - {risk: "Marketing contact limits exceeded by the size of the customer list", likelihood: "Medium", impact: "Medium", mitigation: "Set marketing-contact rules and sunset inactive contacts"}
+        - {risk: "Duplicate customers from guest checkouts", likelihood: "High", impact: "Medium", mitigation: "Deduplicate on email before import and monitor weekly"}
+      kpis:
+        - {type: "Primary", kpi: "Repeat purchase rate", definition: "Share of customers with two or more orders", target: "To be agreed"}
+        - {type: "Primary", kpi: "Email-attributed revenue", definition: "Revenue from orders attributed to email campaigns and workflows", target: "To be agreed"}
+        - {type: "Secondary", kpi: "First response time", definition: "Time to first reply on support conversations", target: "To be agreed"}
+      glossary:
+        - {term: "AOV", definition: "Average order value."}
+        - {term: "LTV", definition: "Customer lifetime value: total revenue expected from a customer."}
+
+  manufacturing:
+    label: "Manufacturing & industrial"
+    description: "B2B manufacturers and distributors with long sales cycles, dealer networks and quoting."
+    discovery:
+      business_type: "B2B manufacturer / distributor"
+      answers:
+        Goals:
+          growth_areas: ["New customer acquisition", "New markets or regions", "Partner / channel sales"]
+          kpis: ["Pipeline value", "Win rate", "Sales cycle length", "Revenue / ARR growth"]
+          reason_for_switching: ["Lack of reporting / visibility", "Poor user adoption / usability", "Consolidating multiple tools"]
+        Data:
+          data_location: ["ERP", "Spreadsheets", "Email inboxes"]
+          systems: ["NetSuite", "Excel / Google Sheets"]
+          sync_direction: "Two-way sync"
+          custom_data: ["Products / line items", "Assets / equipment", "Locations / sites"]
+          data_owners: ["Sales leadership", "IT"]
+        Processes:
+          journey_stages: ["Lead", "Sales qualified lead (SQL)", "Opportunity", "Customer"]
+          team_processes: ["Inbound lead handling", "Lead routing / assignment", "Quoting / proposals", "Account management"]
+          communication: ["Email", "Phone", "In person", "Video calls"]
+          pain_points: ["Manual data entry", "No visibility / poor reporting", "Low user adoption"]
+        Solutions Design:
+          primary_users: ["Sales", "Marketing", "Partners / resellers", "Leadership"]
+          required_actions: ["Lead assignment / rotation", "Deal stage automation", "Quote generation", "Approval steps"]
+          integrations: ["ERP", "Outlook / Microsoft 365"]
+          priority_features: ["Deal pipelines", "Quotes", "Lead scoring", "Reporting dashboards"]
+    proposal:
+      objectives:
+        - {objective: "Give sales leadership a reliable forecast across direct and distributor channels", success_measure: "Weekly forecast from HubSpot replaces spreadsheet roll-ups"}
+        - {objective: "Route enquiries to the right territory, dealer or rep", success_measure: "Every enquiry assigned by territory rules"}
+        - {objective: "Connect quoting with ERP pricing", success_measure: "Quotes use current ERP prices"}
+      scope:
+        - {status: "In Scope", workstream: "Sales", item: "Direct and distributor deal pipelines with forecast categories", quantity_limit: "Up to 2 pipelines", acceptance_criteria: "Forecast report matches the agreed categories"}
+        - {status: "In Scope", workstream: "Sales", item: "Territory-based lead routing", quantity_limit: "Up to 15 territories", acceptance_criteria: "Test leads route by country / state and product line"}
+        - {status: "In Scope", workstream: "Integrations", item: "ERP sync for accounts, products and order history", quantity_limit: "1 ERP, up to 3 objects", acceptance_criteria: "Records sync in both directions without duplicates"}
+        - {status: "In Scope", workstream: "Sales", item: "Quote templates with product library and approval rules", quantity_limit: "Up to 2 templates", acceptance_criteria: "Quotes over the threshold require manager approval"}
+        - {status: "Out of Scope", workstream: "Operations", item: "Production planning, inventory or CPQ configuration rules", quantity_limit: "", acceptance_criteria: ""}
+        - {status: "Optional Add-on", workstream: "Partners", item: "Distributor / dealer portal for deal registration", quantity_limit: "1 portal", acceptance_criteria: "Partners see only their own deals"}
+        - {status: "Client Responsibility", workstream: "Data", item: "Clean product catalogue and price lists from the ERP", quantity_limit: "", acceptance_criteria: ""}
+      assumptions:
+        - "The ERP remains the system of record for pricing and orders."
+        - "Territories and distributor assignments are documented before build."
+      risks:
+        - {risk: "Field sales reps don't log activity", likelihood: "High", impact: "High", mitigation: "Mobile app training and activity dashboards reviewed in sales meetings"}
+        - {risk: "ERP data quality blocks the sync", likelihood: "Medium", impact: "High", mitigation: "Data audit and mapping sign-off before integration build"}
+      kpis:
+        - {type: "Primary", kpi: "Forecast accuracy", definition: "Closed revenue vs. forecast at the start of the quarter", target: "To be agreed"}
+        - {type: "Primary", kpi: "Win rate by channel", definition: "Closed Won divided by closed deals, direct vs. distributor", target: "To be agreed"}
+        - {type: "Secondary", kpi: "Quote turnaround", definition: "Hours from request to quote sent", target: "To be agreed"}
+      glossary:
+        - {term: "Deal registration", definition: "A partner's claim on an opportunity, approved by the manufacturer."}
+
+  education_nonprofit:
+    label: "Education & non-profit"
+    description: "Schools, training providers and non-profits tracking applicants, students, donors or members."
+    discovery:
+      business_type: "Education / non-profit organisation"
+      answers:
+        Goals:
+          growth_areas: ["New customer acquisition", "Retention / renewals", "Brand awareness"]
+          kpis: ["Lead volume", "Lead-to-customer rate", "Customer retention / churn", "Marketing ROI / CAC"]
+          reason_for_switching: ["Cost of current tool", "Consolidating multiple tools", "Lack of reporting / visibility"]
+        Data:
+          data_location: ["Spreadsheets", "Custom database / in-house app", "Marketing automation platform"]
+          systems: ["Excel / Google Sheets", "Mailchimp"]
+          sync_direction: "One-way into HubSpot"
+          custom_data: ["Appointments / events", "Memberships / subscriptions"]
+          compliance: ["GDPR", "Industry-specific regulation"]
+          data_owners: ["Marketing", "RevOps / Operations"]
+        Processes:
+          journey_stages: ["Subscriber", "Lead", "Opportunity", "Customer", "Evangelist / advocate"]
+          team_processes: ["Inbound lead handling", "Event / webinar management", "Customer onboarding"]
+          communication: ["Email", "Social media", "In person", "SMS"]
+          pain_points: ["Disconnected tools", "Manual data entry", "No visibility / poor reporting"]
+        Solutions Design:
+          primary_users: ["Marketing", "Operations / RevOps", "Leadership"]
+          required_actions: ["Email sequences", "Record creation from forms", "Task reminders"]
+          integrations: ["Gmail / Google Workspace", "Stripe / payments", "Zoom / Microsoft Teams"]
+          priority_features: ["Email marketing", "Landing pages / forms", "Reporting dashboards", "Payments"]
+    proposal:
+      objectives:
+        - {objective: "Track every applicant, student, donor or member journey in one place", success_measure: "One record per person with their stage and history"}
+        - {objective: "Increase applications or donations from campaigns", success_measure: "Conversion reported by campaign"}
+        - {objective: "Run events and programmes with automated follow-up", success_measure: "Registrations and attendance tracked per event"}
+      scope:
+        - {status: "In Scope", workstream: "Admissions / Fundraising", item: "Applicant or donor pipeline with stage requirements", quantity_limit: "1 pipeline", acceptance_criteria: "Stages and required fields match the signed-off design"}
+        - {status: "In Scope", workstream: "Marketing", item: "Enquiry, application and donation forms", quantity_limit: "Up to 5 forms", acceptance_criteria: "Submissions create records with source and consent"}
+        - {status: "In Scope", workstream: "Marketing", item: "Nurture journeys for prospective applicants or donors", quantity_limit: "Up to 3 workflows, 10 emails", acceptance_criteria: "Workflows pass enrolment tests"}
+        - {status: "In Scope", workstream: "Events", item: "Event registration and attendance follow-up", quantity_limit: "Up to 2 event types", acceptance_criteria: "Attendees and no-shows receive the right follow-up"}
+        - {status: "Out of Scope", workstream: "Operations", item: "Student information system, grading or donor gift-aid processing", quantity_limit: "", acceptance_criteria: ""}
+        - {status: "Optional Add-on", workstream: "Integrations", item: "Payment or donation platform integration", quantity_limit: "1 platform", acceptance_criteria: "Payments appear on the contact within 1 hour"}
+        - {status: "Client Responsibility", workstream: "Content", item: "Programme, campaign and email content", quantity_limit: "", acceptance_criteria: ""}
+      assumptions:
+        - "The client confirms eligibility for HubSpot non-profit or education pricing, if any."
+        - "Historical records are imported once from spreadsheets supplied by the client."
+      risks:
+        - {risk: "Seasonal peaks (intakes, appeals) overlap with the build", likelihood: "Medium", impact: "Medium", mitigation: "Plan go-live outside peak periods"}
+        - {risk: "Small team capacity for testing and adoption", likelihood: "Medium", impact: "Medium", mitigation: "Short, focused UAT sessions and recorded training"}
+      kpis:
+        - {type: "Primary", kpi: "Application or donation conversion", definition: "Completed applications or donations divided by enquiries", target: "To be agreed"}
+        - {type: "Primary", kpi: "Retention or re-enrolment rate", definition: "Share of students, members or donors who continue", target: "To be agreed"}
+        - {type: "Secondary", kpi: "Event attendance rate", definition: "Attendees divided by registrations", target: "To be agreed"}
+      glossary:
+        - {term: "Intake", definition: "A start date or cohort for new students."}
+
+sizes:
+  smb:
+    label: "Small business"
+    description: "Up to about 20 users, one location, one team doing several jobs."
+    discovery:
+      answers:
+        Data:
+          volume: "Under 10k contacts"
+          org_structure: "Single location"
+        Goals:
+          timeline: "1–3 months"
+        Solutions Design:
+          team_sizes: "6–20 users"
+          prior_tools: "New to CRMs"
+          mvp_date: "1–3 months"
+    proposal:
+      assumptions:
+        - "One HubSpot portal, one business unit and one currency."
+      risks:
+        - {risk: "Limited client time for testing and training", likelihood: "Medium", impact: "Medium", mitigation: "Fixed weekly working sessions and recorded training"}
+      scope:
+        - {status: "Out of Scope", workstream: "Architecture", item: "Multiple business units, brands or currencies", quantity_limit: "", acceptance_criteria: ""}
+
+  mid_market:
+    label: "Mid-market (10–500 employees)"
+    description: "Several teams and locations using Sales, Marketing and Operations Hub together."
+    discovery:
+      answers:
+        Data:
+          volume: "10k–100k contacts"
+          org_structure: "Multiple locations (same country)"
+          cleansing_frequency: "Ad hoc / rarely"
+        Goals:
+          timeline: "3–6 months"
+        Solutions Design:
+          team_sizes: "21–50 users"
+          prior_tools: "Experienced with another CRM"
+          mvp_date: "3–6 months"
+    proposal:
+      scope:
+        - {status: "In Scope", workstream: "Governance", item: "Teams, permission sets and record-ownership rules", quantity_limit: "Up to 5 teams", acceptance_criteria: "Each team sees and edits only the agreed records"}
+        - {status: "In Scope", workstream: "Data", item: "Data migration from current CRM and spreadsheets with deduplication", quantity_limit: "Up to 3 sources, 4 objects", acceptance_criteria: "Record counts reconcile within 1% after import"}
+      risks:
+        - {risk: "Data quality issues across several legacy sources", likelihood: "High", impact: "Medium", mitigation: "Data audit and cleansing rules agreed before migration"}
+
+  enterprise:
+    label: "Enterprise / global"
+    description: "Multi-region, multi-entity organisations with complex sales structures and governance."
+    discovery:
+      answers:
+        Data:
+          volume: "100k–500k contacts"
+          org_structure: "Multi-region / international"
+          data_regions: ["United States", "EU / UK", "Asia-Pacific"]
+          compliance: ["Data residency requirements"]
+        Goals:
+          timeline: "6–12 months"
+        Solutions Design:
+          team_sizes: "51–200 users"
+          prior_tools: "Mixed across the team"
+          mvp_date: "6+ months"
+    proposal:
+      scope:
+        - {status: "In Scope", workstream: "Governance", item: "Business-unit partitioning, teams and permission sets", quantity_limit: "Up to 5 business units, 15 teams", acceptance_criteria: "Each business unit's users see only their own records; HQ sees all"}
+        - {status: "In Scope", workstream: "Governance", item: "Data governance model: owners, naming conventions and change control", quantity_limit: "1 governance document", acceptance_criteria: "Signed off by the client's data owners"}
+        - {status: "Out of Scope", workstream: "Architecture", item: "Separate regional HubSpot portals and cross-portal sync", quantity_limit: "", acceptance_criteria: ""}
+      assumptions:
+        - "Each region or business unit names a decision-maker and a data owner."
+        - "Data residency requirements are confirmed by the client's legal team before architecture sign-off."
+      risks:
+        - {risk: "Regions disagree on shared pipeline and property definitions", likelihood: "High", impact: "High", mitigation: "Global design authority with regional sign-off at each phase"}
+        - {risk: "Integration and migration volumes stretch the timeline", likelihood: "Medium", impact: "High", mitigation: "Phase migrations by region and test with full-volume samples"}

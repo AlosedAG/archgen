@@ -15,15 +15,19 @@ from fastapi import APIRouter, Request, Response
 from ..mail import Mailer
 from ..schemas.workspace import (
     Accepted,
+    Account,
     AuthConfig,
     CodeConfirm,
     EmailOnly,
     Me,
+    PasswordChange,
     PasswordResetConfirm,
+    ProfileUpdate,
+    SignedOutOthers,
     SignInRequest,
     SignUpRequest,
 )
-from ..services import auth, signup
+from ..services import account, auth, signup
 from ..services.auth import Principal
 from ..services.errors import Forbidden, Unavailable
 from ..settings import Settings
@@ -97,6 +101,51 @@ def sign_out(request: Request, db: DbDep, settings: SettingsDep) -> Response:
 @router.get("/me", response_model=Me, summary="The signed-in user")
 def me(principal: PrincipalDep) -> Me:
     return _me(principal)
+
+
+# ---- Your account (profile page) -------------------------------------------------
+
+
+def _account(result: account.Account, principal: Principal) -> Account:
+    return Account(
+        user_id=result.user.id,
+        email=result.user.email,
+        name=result.user.name,
+        workspace_name=principal.workspace_name,
+        role=principal.role,
+        has_password=result.has_password,
+        created_at=result.user.created_at,
+        last_login_at=result.user.last_login_at,
+        other_sessions=result.other_sessions,
+    )
+
+
+@router.get("/account", response_model=Account, summary="Your account")
+def get_account(request: Request, principal: PrincipalDep, db: DbDep, settings: SettingsDep) -> Account:
+    return _account(account.get_account(db, principal, request.cookies.get(settings.session_cookie)), principal)
+
+
+@router.patch("/account", response_model=Account, summary="Change your display name")
+def update_account(body: ProfileUpdate, request: Request, principal: PrincipalDep, db: DbDep, settings: SettingsDep) -> Account:
+    token = request.cookies.get(settings.session_cookie)
+    return _account(account.update_profile(db, principal, name=body.name, current_token=token), principal)
+
+
+@router.post("/account/password", response_model=Account, summary="Change your password (signs out your other browsers)")
+def change_password(body: PasswordChange, request: Request, principal: PrincipalDep, db: DbDep, settings: SettingsDep) -> Account:
+    result = account.change_password(
+        db,
+        principal,
+        current_password=body.current_password,
+        new_password=body.new_password,
+        current_token=request.cookies.get(settings.session_cookie),
+    )
+    return _account(result, principal)
+
+
+@router.post("/account/sign-out-others", response_model=SignedOutOthers, summary="Sign out every other browser")
+def sign_out_others(request: Request, principal: PrincipalDep, db: DbDep, settings: SettingsDep) -> SignedOutOthers:
+    return SignedOutOthers(signed_out=account.sign_out_others(db, principal, request.cookies.get(settings.session_cookie)))
 
 
 # ---- Self sign-up -----------------------------------------------------------------

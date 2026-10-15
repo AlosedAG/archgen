@@ -38,7 +38,6 @@ export default function SettingsPage() {
         eyebrow="START HERE / SETUP"
         breadcrumb={`${me.workspace_name}  /  ${me.name || me.email}`}
         title="Setup & API keys"
-        description="Connect HubSpot and AI drafting once for the whole workspace. Keys are stored encrypted and never shown again."
       />
       <div className="page-content">
         {!me.is_admin && (

@@ -29,7 +29,7 @@ export function PortalPage({
 }: {
   eyebrow?: string;
   title: string;
-  description: string;
+  description?: string;
   /** Show "Pull from HubSpot" (pages that only read the saved snapshot hide it). */
   pullBar?: boolean;
   children: (project: Project, store: ModuleStore<PortalState>) => React.ReactNode;

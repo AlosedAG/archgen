@@ -13,6 +13,7 @@ import { exportMarkdown, fileStub, textFile } from "@/lib/api";
 
 import { ExportFooter, TabPanel, Tabs } from "../ui";
 import { DraftProgress } from "./DraftProgress";
+import { fadeInUp } from "@/lib/motion";
 
 export function DocumentResult({
   markdown,
@@ -65,7 +66,7 @@ export function DocumentResult({
   );
 
   return (
-    <motion.section className="stack" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+    <motion.section className="stack" variants={fadeInUp} initial="hidden" animate="visible">
       {heading && (
         <div className="heading-row">
           <h2 className="t-section">{heading}</h2>

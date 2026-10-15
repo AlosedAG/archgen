@@ -13,6 +13,7 @@ import { DocumentResult } from "./DocumentResult";
 import { ModelPicker, useAiModel } from "./ModelPicker";
 import { StreamErrorCallout } from "./StreamErrorCallout";
 import { useDocumentStream } from "./useDocumentStream";
+import { fadeInUp, lift, press, staggerTiming } from "@/lib/motion";
 
 const HUBS: { id: HubSpotModule; icon: IconName; blurb: string }[] = [
   { id: "Marketing Hub", icon: "megaphone", blurb: "Turn interest into the right conversations." },
@@ -70,10 +71,12 @@ export function ExplainerTab({ store }: { store: DiscoveryStore }) {
               type="button"
               className="hub-card"
               aria-pressed={on}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0, transition: { delay: i * 0.04 } }}
-              whileHover={{ y: -2 }}
-              whileTap={{ scale: 0.98 }}
+              variants={fadeInUp}
+              initial="hidden"
+              animate="visible"
+              transition={{ delay: i * staggerTiming.cards }}
+              whileHover={lift}
+              whileTap={press}
               onClick={() => update({ ceModules: on ? selected.filter((m) => m !== hub.id) : [...selected, hub.id] })}
             >
               <Icon name={hub.icon} />
@@ -102,7 +105,6 @@ export function ExplainerTab({ store }: { store: DiscoveryStore }) {
           type="button"
           className={stream.streaming ? "btn btn-primary btn-busy" : "btn btn-primary"}
           disabled={selected.length === 0 || stream.streaming}
-          whileTap={{ scale: 0.97 }}
           onClick={() => stream.start({ modules: selected, business_type: state.businessType }, ai.model)}
         >
           {!stream.streaming && <Icon name="sparkles" />}

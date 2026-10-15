@@ -12,6 +12,8 @@
 import { useEffect, useId, useState } from "react";
 
 import { useAppSession } from "@/components/AppSession";
+import { AssistButton } from "@/components/AssistButton";
+import { IndustryTemplatePicker } from "@/components/IndustryTemplatePicker";
 import { TokenSelect } from "@/components/discovery/QuestionCard";
 import { DataTable } from "@/components/project/DataTable";
 import { EditableTable } from "@/components/project/EditableTable";
@@ -26,6 +28,8 @@ import {
   addScopeLibraryItems,
   analyseProposal,
   ApiError,
+  applyIndustryProposalTemplate,
+  assistProposal,
   defaultProposal,
   downloadFile,
   draftScopeFromRequirements,
@@ -42,9 +46,11 @@ import {
   type ProposalLibraries,
   type ScopeStatus,
 } from "@/lib/api";
+import { projectContext } from "@/lib/assist";
 import { JOINT_EVALUATION_PLAN, REQUIREMENTS_DOCUMENT } from "@/lib/documents";
 import { useModuleState, type ModuleStore } from "@/lib/module-state";
 import { assignIds, CURRENCIES, DOCUMENT_TYPES, fromRows, money, OPTIONAL_SECTIONS, SCOPE_HINTS, SCOPE_STATUSES, TABLES, toRows, type TableField } from "@/lib/proposal";
+import { Glyph } from "@/components/icons";
 
 type ProposalState = { doc: ProposalDocument | null };
 const normalizeProposal = (raw: unknown): ProposalState => ({ doc: ((raw as ProposalState | null)?.doc ?? null) as ProposalDocument | null });
@@ -138,7 +144,34 @@ const PARTY_FIELDS = [
   ["email", "Email"],
 ] as const;
 
-function Setup({ doc, set, project, apply, busy }: Props & { project: Project; apply: (label: string, work: () => Promise<ProposalDocument>) => void; busy: boolean }) {
+const SUGGESTED_PARTS: Record<string, string> = {
+  executive_summary: "executive summary",
+  problem_statement: "problem statement",
+  current_state: "current state",
+  solution_overview: "proposed solution",
+  objectives: "objectives",
+  scope: "scope items",
+  assumptions: "assumptions",
+  risks: "risks",
+  kpis: "KPIs",
+  glossary: "glossary",
+};
+
+function Setup({
+  doc,
+  set,
+  project,
+  apply,
+  busy,
+  suggest,
+  applyTemplate,
+}: Props & {
+  project: Project;
+  apply: (label: string, work: () => Promise<ProposalDocument>) => void;
+  busy: boolean;
+  suggest: () => Promise<string>;
+  applyTemplate: (industry: string, size: string | null) => Promise<string>;
+}) {
   const clientName = project.client_name || project.name;
   const sections = async (def: typeof REQUIREMENTS_DOCUMENT) => {
     const saved = await getModuleState(project.id, def.module);
@@ -153,9 +186,8 @@ function Setup({ doc, set, project, apply, busy }: Props & { project: Project; a
     <div className="stack" style={{ gap: 24 }}>
       <div className="card stack" style={{ gap: 12 }}>
         <span className="t-card-title">Start from existing work</span>
-        <span className="t-caption">
-          Imports merge: blank fields are filled and rows are appended — nothing typed here is overwritten. Requirements become the proposal&apos;s requirement list; the JEP&apos;s team, milestones and needs flow into Management and Technical.
-        </span>
+        <AssistButton label="Suggest a starting point" variant="primary" run={suggest} disabled={busy} />
+        <IndustryTemplatePicker apply={applyTemplate} disabled={busy} />
         <div className="row">
           <button
             type="button"
@@ -218,18 +250,28 @@ function Setup({ doc, set, project, apply, busy }: Props & { project: Project; a
         {fileError && <Callout tone="error" title="Couldn't load the file">{fileError}</Callout>}
       </div>
 
-      <section className="stack" style={{ gap: 12 }}>
-        <h2 className="t-section">Document</h2>
+      <section className="card commercial-settings" aria-label="Commercial settings">
         <div className="grid-3">
+          <label className="field">
+            <span className="field-label">Client / project</span>
+            <input
+              className="input"
+              value={doc.client?.company ?? ""}
+              onChange={(e) => set({ client: { address: "", contact: "", email: "", phone: "", ...doc.client, company: e.target.value } })}
+            />
+          </label>
           <Select label="Document type" value={doc.document_type || DOCUMENT_TYPES[0]} options={DOCUMENT_TYPES} onChange={(v) => set({ document_type: v as ProposalDocument["document_type"] })} />
-          <Text doc={doc} set={set} field="title" label="Engagement title" />
-          <Text doc={doc} set={set} field="reference_number" label="Reference / SOW number" />
+          <Text doc={doc} set={set} field="title" label="Proposal title" />
         </div>
-        <div className="grid-4">
+        <div className="grid-3">
+          <Select label="Currency" value={doc.currency || "USD"} options={CURRENCIES} onChange={(v) => set({ currency: v })} />
+          <Text doc={doc} set={set} field="reference_number" label="Reference / SOW number" />
+          <DateField doc={doc} set={set} field="valid_until" label="Proposal valid until" />
+        </div>
+        <div className="grid-3">
           <DateField doc={doc} set={set} field="issue_date" label="Issue date" />
           <DateField doc={doc} set={set} field="effective_date" label="Effective date" />
           <DateField doc={doc} set={set} field="expiration_date" label="Expiration date" />
-          <DateField doc={doc} set={set} field="valid_until" label="Proposal valid until" />
         </div>
       </section>
 
@@ -261,7 +303,7 @@ function Setup({ doc, set, project, apply, busy }: Props & { project: Project; a
 
 // ---- Scope --------------------------------------------------------------------------
 
-function ScopeTab({ doc, set, analysis, apply, busy }: Props & { analysis: ProposalAnalysis | null; apply: (label: string, work: () => Promise<ProposalDocument>) => void; busy: boolean }) {
+function ScopeTab({ doc, set, analysis, apply, busy, suggest }: Props & { analysis: ProposalAnalysis | null; apply: (label: string, work: () => Promise<ProposalDocument>) => void; busy: boolean; suggest: () => Promise<string> }) {
   const [libraries, setLibraries] = useState<ProposalLibraries | null>(null);
   const [items, setItems] = useState<string[]>([]);
   const [status, setStatus] = useState<ScopeStatus>("In Scope");
@@ -277,9 +319,6 @@ function ScopeTab({ doc, set, analysis, apply, busy }: Props & { analysis: Propo
 
   return (
     <div className="stack" style={{ gap: 24 }}>
-      <Callout tone="info" title="Scope is the section clients misread most">
-        Put every item a client might ask about into exactly one bucket. Give each In Scope item a quantity limit and acceptance criteria, and list common requests you are not doing as Out of Scope — that&apos;s what prevents disputes later.
-      </Callout>
 
       {libraries && (
         <div className="card stack" style={{ gap: 12 }}>
@@ -329,6 +368,7 @@ function ScopeTab({ doc, set, analysis, apply, busy }: Props & { analysis: Propo
         </div>
       )}
 
+      <AssistButton label="Suggest scope from earlier steps" run={suggest} disabled={busy} />
       <div className="row">
         <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => apply("Drafted scope items for uncovered requirements", () => draftScopeFromRequirements(doc))}>
           Draft a scope item for every uncovered requirement
@@ -340,7 +380,6 @@ function ScopeTab({ doc, set, analysis, apply, busy }: Props & { analysis: Propo
         set={set}
         field="scope"
         title="Scope items"
-        caption="Each new row gets the next ID (S-1, S-2…) automatically. 'Req. ID' links an item to the requirements it satisfies (comma-separated, e.g. R-1, R-3)."
         addLabel="+ Add scope item"
       />
 
@@ -450,6 +489,20 @@ function Builder({ project, store }: { project: Project; store: Store }) {
       .catch((e: unknown) => setNotice({ tone: "error", text: e instanceof ApiError ? e.message : "That didn't work." }))
       .finally(() => setBusy(false));
   };
+  /** Draft blank sections from earlier steps; typed text is never replaced and rows already there are skipped. */
+  const suggest = async () => {
+    const result = await assistProposal(await projectContext(project.id, clientName), doc);
+    if (!result.changed.length) return "Nothing to add: the proposal already covers what earlier steps mention.";
+    replace({ doc: result.proposal });
+    return `Suggested ${result.changed.map((c) => SUGGESTED_PARTS[c] ?? c).join(", ")}. Review and edit them in each tab.`;
+  };
+  /** Add an industry template's objectives, scope, assumptions, risks, KPIs and glossary (blanks only). */
+  const applyTemplate = async (industry: string, size: string | null) => {
+    const result = await applyIndustryProposalTemplate(industry, size, doc);
+    if (!result.changed.length) return "Nothing to add: the proposal already has this template's rows.";
+    replace({ doc: result.proposal });
+    return `Added the template's ${result.changed.map((c) => SUGGESTED_PARTS[c] ?? c).join(", ")}.`;
+  };
   const props = { doc, set };
   const currency = doc.currency || "USD";
   const pricing = analysis?.pricing;
@@ -488,18 +541,16 @@ function Builder({ project, store }: { project: Project; store: Store }) {
       )}
 
       <TabPanel panelKey={tab} id="proposal-tabs">
-        {tab === "setup" && <Setup {...props} project={project} apply={apply} busy={busy} />}
+        {tab === "setup" && <Setup {...props} project={project} apply={apply} busy={busy} suggest={suggest} applyTemplate={applyTemplate} />}
 
         {tab === "technical" && (
           <div className="stack" style={{ gap: 24 }}>
-            <Callout tone="info" title="Volume I — Technical approach">
-              Show that SonaMation understands the problem, and exactly how it will be solved: the tools, techniques and procedures used to implement it.
-            </Callout>
-            <Text {...props} field="problem_statement" label="1.1 Understanding of the problem" rows={5} help="Start lines with '- ' for bullets in the PDF." />
+            <AssistButton label="Suggest from earlier steps" run={suggest} disabled={busy} />
+            <Text {...props} field="problem_statement" label="1.1 Understanding of the problem" rows={5} />
             <Text {...props} field="current_state" label="Current state (optional)" rows={3} />
             <Table {...props} field="objectives" title="1.2 Objectives" addLabel="+ Add objective" />
-            <Table {...props} field="requirements" title="1.3 Requirements" caption="Each new row gets the next ID (R-1, R-2…) automatically; scope items cite them in the Scope tab." addLabel="+ Add requirement" />
-            <Text {...props} field="solution_overview" label="1.4 Proposed solution" rows={6} help="How the requirements will be met. Start lines with '- ' for bullets." />
+            <Table {...props} field="requirements" title="1.3 Requirements" addLabel="+ Add requirement" />
+            <Text {...props} field="solution_overview" label="1.4 Proposed solution" rows={6} />
             <Table {...props} field="methodology" title="1.5 Methodology" addLabel="+ Add phase" />
             <Table {...props} field="tools" title="1.6 Tools & platforms" addLabel="+ Add tool" />
             <Table {...props} field="techniques" title="1.7 Techniques & procedures" addLabel="+ Add technique" />
@@ -507,29 +558,22 @@ function Builder({ project, store }: { project: Project; store: Store }) {
           </div>
         )}
 
-        {tab === "scope" && <ScopeTab {...props} analysis={analysis} apply={apply} busy={busy} />}
+        {tab === "scope" && <ScopeTab {...props} analysis={analysis} apply={apply} busy={busy} suggest={suggest} />}
 
         {tab === "management" && (
           <div className="stack" style={{ gap: 24 }}>
-            <Callout tone="info" title="Volume II — Management approach">
-              How SonaMation will manage contract performance.
-            </Callout>
             <Table {...props} field="team" title="2.1 Project team & roles" addLabel="+ Add team member" />
             <Table {...props} field="governance" title="2.2 Governance & communication" addLabel="+ Add meeting" />
             <Table {...props} field="timeline" title="2.3 Schedule" addLabel="+ Add phase" />
             <Table {...props} field="risks" title="Risk management" addLabel="+ Add risk" />
-            <Table {...props} field="kpis" title="Targeted KPIs" caption="Primary: value drivers tied to ROI. Secondary: operational / marketing improvement." addLabel="+ Add KPI" />
+            <Table {...props} field="kpis" title="Targeted KPIs" addLabel="+ Add KPI" />
             <Text {...props} field="acceptance_process" label="Acceptance process (standard text)" rows={5} />
           </div>
         )}
 
         {tab === "cost" && (
           <div className="stack" style={{ gap: 24 }}>
-            <Callout tone="info" title="Volume III — Cost & pricing">
-              Milestone fees, the add-on menu, and the rate for anything beyond scope.
-            </Callout>
             <div className="grid-4">
-              <Select label="Currency" value={currency} options={CURRENCIES} onChange={(v) => set({ currency: v })} />
               <label className="field">
                 <span className="field-label">Discount (%)</span>
                 <input
@@ -542,8 +586,8 @@ function Builder({ project, store }: { project: Project; store: Store }) {
                 />
               </label>
             </div>
-            <Table {...props} field="milestones" title="3.1 Deliverables & milestone schedule" caption="What's delivered, when it can start, when it's due, and the fee due on acceptance." addLabel="+ Add milestone" />
-            <Table {...props} field="addons" title="Optional add-on services menu" caption="Tick 'Add to total' for add-ons the client has already chosen." addLabel="+ Add service" />
+            <Table {...props} field="milestones" title="3.1 Deliverables & milestone schedule" addLabel="+ Add milestone" />
+            <Table {...props} field="addons" title="Optional add-on services menu" addLabel="+ Add service" />
             <Table {...props} field="rate_card" title="Rate card (for Change Requests)" addLabel="+ Add role" />
             {pricing && (
               <>
@@ -572,7 +616,6 @@ function Builder({ project, store }: { project: Project; store: Store }) {
           <div className="stack" style={{ gap: 24 }}>
             <section className="stack" style={{ gap: 10 }}>
               <h2 className="t-section">Sections to include</h2>
-              <span className="t-caption">The cover, Scope at a Glance, and the Technical, Management and Cost volumes are always included.</span>
               <div className="grid-4">
                 {Object.entries(OPTIONAL_SECTIONS).map(([key, label]) => (
                   <Checkbox key={key} checked={doc.sections?.[key] !== false} onChange={(on) => set({ sections: { ...doc.sections, [key]: on } })}>
@@ -616,9 +659,8 @@ function Builder({ project, store }: { project: Project; store: Store }) {
                   downloadFile(textFile(JSON.stringify(await proposalTemplate(doc), null, 2), "SonaMation_proposal_template.json", "application/json"));
                 }}
               >
-                ↓ Download as a reusable template (.json)
+                <Glyph name="download" /> Download as a reusable template (.json)
               </button>
-              <span className="t-caption">Keeps only the reusable parts — SonaMation details, methodology, tools, governance, add-on menu, rate card, standard terms. Load it in Setup to start the next proposal.</span>
             </div>
           </div>
         )}
@@ -636,7 +678,6 @@ export default function ProposalPage() {
       <ProjectHeader
         eyebrow="STEP 4 / PROPOSE"
         title="Proposal & SOW Builder"
-        description="Build a seller's proposal and Statement of Work from the Requirements Document and Joint Evaluation Plan — technical approach, management approach and cost — with a scope that states plainly what is included, what isn't, and what can be added."
       />
       <div className="page-content">
         {!store.loaded ? (

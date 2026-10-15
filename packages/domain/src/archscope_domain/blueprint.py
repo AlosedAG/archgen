@@ -40,6 +40,36 @@ def _slug(text: str) -> str:
     return slug or "integration"
 
 
+def _generic_custom_object(keyword: str) -> dict[str, Any] | None:
+    """A minimal object template for a custom-object keyword with no rule:
+    singular PascalCase name ("equipment rentals" -> "EquipmentRental"), a
+    name property and a contact association. None for blank keywords."""
+    words = re.findall(r"[A-Za-z0-9]+", keyword)
+    if not words:
+        return None
+    if len(words[-1]) > 3 and words[-1].lower().endswith("s") and not words[-1].lower().endswith("ss"):
+        words[-1] = words[-1][:-1]
+    name = "".join(w[:1].upper() + w[1:] for w in words)
+    label = " ".join(w[:1].upper() + w[1:] for w in words)
+    slug = _slug(label)
+    return {
+        "object_name": name,
+        "plural_label": f"{label}s",
+        "description": f"Custom object for {keyword.strip()}; properties to be confirmed with the client.",
+        "properties": [
+            {
+                "name": f"{slug}_name",
+                "label": f"{label} Name",
+                "type": "string",
+                "field_type": "text",
+                "required": True,
+                "description": f"Primary display name of the {label.lower()}.",
+            }
+        ],
+        "associations": [{"to_object": "Contact", "label": f"{label} to Contact", "cardinality": "many-to-many"}],
+    }
+
+
 def _property_from_rule(rule: dict[str, Any]) -> PropertyDef:
     return PropertyDef(
         name=rule["name"],
@@ -103,8 +133,14 @@ class BlueprintGenerator:
         for keyword in bp_input.custom_object_keywords:
             template = keywords.get(keyword) or keywords.get(keyword.lower())
             if not template:
-                warnings.append(f"No template found for custom object keyword '{keyword}' — skipped.")
-                continue
+                # A keyword the user typed themselves: a generic object to define with the client.
+                template = _generic_custom_object(keyword)
+                if not template:
+                    continue
+                warnings.append(
+                    f"'{keyword}' has no template, so '{template['object_name']}' was added as a generic custom object "
+                    "with only a name and owner — define its properties and associations with the client."
+                )
             name = template["object_name"]
             is_valid, message = self.rules.check_naming(name, "custom_object")
             if not is_valid:
@@ -165,6 +201,8 @@ class BlueprintGenerator:
         for co in custom_objects:
             template = templates_by_object_name.get(co.name)
             if not template:
+                # A generic object (typed keyword): linked to contacts until the client says otherwise.
+                associations.append(AssociationDef(co.name, "Contact", f"{co.name} to Contact", "many-to-many"))
                 continue
             for assoc in template.get("associations", []):
                 associations.append(

@@ -222,7 +222,7 @@ function Diagram({ project, store }: { project: Project; store: ModuleStore<Diag
           ))}
           {state.seededAt && (
             <span className="t-caption">
-              Built from the {state.source === "snapshot" ? "portal snapshot" : "blueprint"} {new Date(state.seededAt).toLocaleString()} — choosing a source again resets your edits.
+              Built from the {state.source === "snapshot" ? "portal snapshot" : "blueprint"} {new Date(state.seededAt).toLocaleString()}
             </span>
           )}
         </div>
@@ -261,7 +261,7 @@ function Diagram({ project, store }: { project: Project; store: ModuleStore<Diag
             {dangling.length > 0 && (
               <Callout tone="warning" title="Some connections aren't drawn">
                 They reference an object that isn&apos;t in the table (or is outside the focus):{" "}
-                {dangling.map((r) => `${text(r.source)} → ${text(r.target)}`).join("; ")}
+                {dangling.map((r) => `${text(r.source)} to ${text(r.target)}`).join("; ")}
               </Callout>
             )}
             <p className="t-caption">
@@ -279,16 +279,10 @@ function Diagram({ project, store }: { project: Project; store: ModuleStore<Diag
 
           <section className="stack" style={{ gap: 12 }}>
             <h2 className="t-section">Objects</h2>
-            <span className="t-caption">Rename, change kind or risk, add or remove rows — the diagram follows.</span>
             <EditableTable columns={NODE_COLUMNS} rows={state.nodes} onChange={(nodes) => update({ nodes })} label="Diagram objects" addLabel="+ Add object" />
             <h2 className="t-section">Connections</h2>
-            <span className="t-caption">From / To must match an object name above to be drawn.</span>
             <EditableTable columns={EDGE_COLUMNS} rows={state.edges} onChange={(edges) => update({ edges })} label="Diagram connections" addLabel="+ Add connection" />
           </section>
-
-          <p className="t-caption">
-            The .drawio file opens in diagrams.net (free, no login) for drag-and-drop editing. The PNG uses the same layout, ready for a slide or doc.
-          </p>
           <ExportFooter
             library={{ projectId: project.id, documentType: "Architecture Diagram" }}
             actions={[
@@ -327,7 +321,6 @@ export default function DiagramPage() {
       <ProjectHeader
         eyebrow="STEP 3 / DESIGN"
         title="Architecture Diagram"
-        description="A visual, editable map of the objects in scope and how they connect — from the Architecture Generator blueprint or the live portal snapshot, with audit findings highlighted."
       />
       <div className="page-content">
         {!store.loaded ? (

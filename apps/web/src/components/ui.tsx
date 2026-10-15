@@ -6,9 +6,13 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 
 import { ApiError, downloadFile, saveToLibrary, type GeneratedFile } from "@/lib/api";
+import { collapse, dropdown, fadeInUp, offset, panelSwap, press, springs, stagger, staggerTiming, tween } from "@/lib/motion";
 
-export const spring = { type: "spring", stiffness: 500, damping: 38 } as const;
-export const fade = { duration: 0.2, ease: "easeOut" } as const;
+import { Glyph } from "./icons";
+
+// Motion presets come from the central tokens (lib/motion.ts).
+export const spring = springs.snappy;
+export const fade = tween.base;
 
 // ---- Icons ------------------------------------------------------------------
 
@@ -16,6 +20,7 @@ export const fade = { duration: 0.2, ease: "easeOut" } as const;
 export type IconName =
   | "chevron-right"
   | "chevron-down"
+  | "search"
   | "chevron-down-18"
   | "message-square"
   | "sparkles"
@@ -103,10 +108,10 @@ export function TabPanel({ panelKey, id, children }: { panelKey: string; id: str
         role="tabpanel"
         className="stack"
         style={{ gap: 24 }}
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -4 }}
-        transition={{ duration: 0.16, ease: "easeOut" }}
+        variants={panelSwap}
+        initial="hidden"
+        animate="visible"
+        exit="exit"
       >
         {children}
       </motion.div>
@@ -141,7 +146,7 @@ export function CheckMark({ checked }: { checked: boolean }) {
       className="check-box"
       data-checked={checked}
       animate={{ scale: checked ? [1, 1.15, 1] : 1 }}
-      transition={{ duration: 0.22 }}
+      transition={tween.base}
     >
       <svg width="10" height="10" viewBox="0 0 12 12" aria-hidden>
         <motion.path
@@ -153,7 +158,7 @@ export function CheckMark({ checked }: { checked: boolean }) {
           strokeLinejoin="round"
           initial={false}
           animate={{ pathLength: checked ? 1 : 0, opacity: checked ? 1 : 0 }}
-          transition={{ duration: 0.2, ease: "easeOut" }}
+          transition={tween.base}
         />
       </svg>
     </motion.span>
@@ -167,13 +172,7 @@ export function Reveal({ show, children }: { show: boolean; children: React.Reac
   return (
     <AnimatePresence initial={false}>
       {show && (
-        <motion.div
-          initial={{ height: 0, opacity: 0 }}
-          animate={{ height: "auto", opacity: 1 }}
-          exit={{ height: 0, opacity: 0 }}
-          transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
-          style={{ overflow: "hidden" }}
-        >
+        <motion.div variants={collapse} initial="closed" animate="open" exit="closed" style={{ overflow: "hidden" }}>
           {children}
         </motion.div>
       )}
@@ -187,9 +186,9 @@ export function AnimatedNumber({ value }: { value: number }) {
     <AnimatePresence mode="popLayout" initial={false}>
       <motion.span
         key={value}
-        initial={{ y: -8, opacity: 0 }}
+        initial={{ y: -offset.item, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 8, opacity: 0 }}
+        exit={{ y: offset.item, opacity: 0 }}
         transition={spring}
         style={{ display: "inline-block" }}
       >
@@ -199,9 +198,62 @@ export function AnimatedNumber({ value }: { value: number }) {
   );
 }
 
+// ---- Staggered entrance -------------------------------------------------------
+
+/**
+ * A list whose items rise in one after another the first time it renders
+ * (each child must be a <StaggerItem>). Long lists appear together — a long
+ * cascade reads as slow.
+ */
+export function StaggerList({
+  as = "div",
+  count,
+  each = staggerTiming.cards,
+  className,
+  style,
+  children,
+}: {
+  as?: "div" | "ul";
+  count: number;
+  each?: number;
+  className?: string;
+  style?: React.CSSProperties;
+  children: React.ReactNode;
+}) {
+  const Component = as === "ul" ? motion.ul : motion.div;
+  return (
+    <Component
+      className={className}
+      style={style}
+      variants={stagger(count > staggerTiming.maxStaggered ? 0 : each)}
+      initial="hidden"
+      animate="visible"
+    >
+      {children}
+    </Component>
+  );
+}
+
+export function StaggerItem({
+  as = "div",
+  className,
+  children,
+  ...rest
+}: { as?: "div" | "li"; className?: string; children: React.ReactNode } & Omit<
+  React.ComponentProps<typeof motion.div>,
+  "variants" | "children" | "className"
+>) {
+  const Component = as === "li" ? motion.li : motion.div;
+  return (
+    <Component className={className} variants={fadeInUp} {...(rest as object)}>
+      {children}
+    </Component>
+  );
+}
+
 // ---- Callout -----------------------------------------------------------------
 
-const CALLOUT_GLYPH = { info: "ⓘ", warning: "!", error: "!", success: "✓" } as const;
+const CALLOUT_GLYPH = { info: "info", warning: "alert-triangle", error: "alert-circle", success: "check-circle" } as const;
 
 /** Tinted callout with a bold first line and an optional body. */
 export function Callout({
@@ -217,12 +269,13 @@ export function Callout({
     <motion.div
       className={`callout callout-${tone}`}
       role={tone === "error" ? "alert" : "status"}
-      initial={{ opacity: 0, y: -4 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={fade}
+      variants={dropdown}
+      initial="hidden"
+      animate="visible"
     >
       <p className="callout-title">
-        {CALLOUT_GLYPH[tone]}&nbsp;&nbsp;{title}
+        <Glyph name={CALLOUT_GLYPH[tone]} />
+        <span>{title}</span>
       </p>
       {children && <div className="callout-body">{children}</div>}
     </motion.div>
@@ -278,11 +331,11 @@ export function ExportFooter({
               key={action.label}
               type="button"
               className="btn btn-secondary"
-              whileTap={{ scale: 0.97 }}
+              whileTap={press}
               disabled={busy !== null}
               onClick={() => run(action.label, async () => downloadFile(await action.make()))}
             >
-              {busy === action.label ? "Preparing…" : `↓  ${action.label}`}
+              {busy === action.label ? "Preparing…" : <><Glyph name="download" /> {action.label}</>}
             </motion.button>
           ))}
         </div>
@@ -290,7 +343,7 @@ export function ExportFooter({
           <motion.button
             type="button"
             className="btn btn-primary"
-            whileTap={{ scale: 0.97 }}
+            whileTap={press}
             disabled={busy !== null}
             onClick={() =>
               run("library", async () => {
@@ -309,7 +362,7 @@ export function ExportFooter({
         <Callout tone="success" title={`Saved ${saved} file${saved === 1 ? "" : "s"} to the project library`}>
           Filed under {library.documentType}.{" "}
           <a className="btn-link" href={`/projects/${library.projectId}/library`}>
-            View in Project Library →
+            View in Project Library <Glyph name="arrow-right" size={14} />
           </a>
         </Callout>
       )}

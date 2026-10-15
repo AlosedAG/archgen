@@ -14,6 +14,8 @@ import { ApiError, getMe, setUnauthorizedHandler, signOut as apiSignOut, type Me
 type AppSession = {
   me: Me;
   signOut: () => Promise<void>;
+  /** Reload the signed-in user (e.g. after changing your name). */
+  refreshMe: () => Promise<void>;
   /** The project the current page belongs to (set by project pages), or null. */
   project: Project | null;
   setProject: (project: Project | null) => void;
@@ -61,7 +63,9 @@ export function AppSessionProvider({ children, fallback }: { children: React.Rea
     router.replace("/login");
   }, [router]);
 
-  const value = useMemo(() => (me ? { me, signOut, project, setProject } : null), [me, signOut, project]);
+  const refreshMe = useCallback(async () => setMe(await getMe()), []);
+
+  const value = useMemo(() => (me ? { me, signOut, refreshMe, project, setProject } : null), [me, signOut, refreshMe, project]);
 
   if (error) {
     return (

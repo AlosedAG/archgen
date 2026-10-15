@@ -164,6 +164,24 @@ def test_import_from_wrd_fills_blanks_and_appends_rows():
     assert merged["assumptions"][-1]["Assumption"] == "To be confirmed: Which ERP?"
     assert p["requirements"][0]["Requirement"] == ""  # input not mutated
 
+    again = import_from_wrd(merged, wrd)  # importing the same document twice adds nothing
+    for table in ("objectives", "requirements", "glossary", "risks", "timeline", "assumptions"):
+        assert again[table] == merged[table], table
+
+
+def test_reimport_collapses_old_duplicates_but_keeps_cited_requirements():
+    p = default_proposal()
+    p["assumptions"] = [{"Assumption": "To be confirmed: Which ERP?"}, {"Assumption": "to be confirmed:  which ERP"}]
+    p["requirements"] = [
+        {"ID": "R-1", "Requirement": "Log SMS", "Priority": "Must Have", "Source": ""},
+        {"ID": "R-2", "Requirement": "Log SMS", "Priority": "Must Have", "Source": ""},
+        {"ID": "R-3", "Requirement": "Log SMS", "Priority": "Must Have", "Source": ""},
+    ]
+    p["scope"] = [{"ID": "S-1", "Item": "SMS logging", "Req. ID": "R-2", "Status": "In Scope"}]
+    merged = import_from_wrd(p, {"Customer Requirements": [{"Requirement": "log sms"}]})
+    assert [a["Assumption"] for a in merged["assumptions"]] == ["To be confirmed: Which ERP?"]
+    assert [r["ID"] for r in merged["requirements"]] == ["R-1", "R-2"]  # R-2 is cited, so it stays
+
 
 def test_import_from_jep_maps_team_needs_and_contact():
     jep = {

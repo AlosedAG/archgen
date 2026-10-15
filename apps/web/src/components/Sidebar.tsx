@@ -2,8 +2,9 @@
 
 /**
  * The process sidebar: wordmark, the current project, the five-step
- * navigation with its rails, the page guide, and the signed-in user.
- * Project pages link within the current project (/projects/:id/...).
+ * navigation, then the page guide, Feedback, the signed-in user and the
+ * read-only connection badge. Project pages link within the current
+ * project (/projects/:id/...).
  */
 
 import { AnimatePresence, motion } from "framer-motion";
@@ -12,45 +13,37 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 import { GUIDE } from "@/lib/guide";
+import { NAV, hrefFor, type NavIconKind } from "@/lib/nav";
 
 import { useAppSession } from "./AppSession";
+import { openFeedback } from "./FeedbackWidget";
+import { Glyph } from "./icons";
 import { Icon, spring } from "./ui";
+import { collapse } from "@/lib/motion";
 
-/** `page` = a project page at /projects/:id/<page>; `href` = a fixed route. */
-type NavItem = { label: string; page?: string; href?: string };
-
-const NAV: { group: string; rail: boolean; items: NavItem[] }[] = [
-  {
-    group: "Start here",
-    rail: false,
-    items: [{ label: "Projects", href: "/projects" }, { label: "Setup & API keys", href: "/settings" }, { label: "User guide", href: "/guide" }],
-  },
-  {
-    group: "Step 1 · Discover",
-    rail: true,
-    items: [
-      { label: "Discovery Call Assistant", page: "discovery" },
-      { label: "Deal Stage Planner", page: "stage-planner" },
-      { label: "Requirements Document", page: "requirements" },
-      { label: "Joint Evaluation Plan", page: "evaluation-plan" },
-    ],
-  },
-  {
-    group: "Step 2 · Assess current portal",
-    rail: true,
-    items: [
-      { label: "Portal Auditor", page: "portal-audit" },
-      { label: "Property Audit", page: "property-audit" },
-      { label: "Documentation Generator", page: "documentation" },
-      { label: "Executive Report", page: "executive-report" },
-    ],
-  },
-  { group: "Step 3 · Design", rail: true, items: [{ label: "Architecture Generator", page: "architecture" }, { label: "Architecture Diagram", page: "diagram" }] },
-  { group: "Step 4 · Propose", rail: true, items: [{ label: "Proposal & SOW Builder", page: "proposal" }] },
-  { group: "Step 5 · Deliver & test", rail: true, items: [{ label: "Test Case Document", page: "test-cases" }] },
-  { group: "Library", rail: false, items: [{ label: "Project Library", page: "library" }] },
-];
-
+/** The design's 16px navigation glyphs, drawn from simple shapes in the current colour. */
+function NavIcon({ kind }: { kind: NavIconKind }) {
+  return (
+    <span className={`nav-icon nav-icon-${kind}`} aria-hidden>
+      {kind === "doc" && (
+        <>
+          <span className="nav-icon-outline" />
+          <span className="nav-icon-line" style={{ top: 6, width: 6 }} />
+          <span className="nav-icon-line" style={{ top: 9, width: 4 }} />
+        </>
+      )}
+      {kind === "grid" && [0, 1, 2, 3].map((i) => <span key={i} className="nav-icon-tile" />)}
+      {kind === "list" && (
+        <>
+          <span className="nav-icon-stem" />
+          <span className="nav-icon-bar" style={{ top: 3, width: 7 }} />
+          <span className="nav-icon-bar" style={{ top: 7, width: 5 }} />
+          <span className="nav-icon-bar" style={{ top: 11, width: 6 }} />
+        </>
+      )}
+    </span>
+  );
+}
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -58,12 +51,6 @@ export function Sidebar() {
   const [guideOpen, setGuideOpen] = useState(false);
   const projectId = /^\/projects\/([^/]+)/.exec(pathname)?.[1] ?? null;
   const guide = GUIDE[pathname.split("/").filter(Boolean).at(-1) ?? ""];
-
-  const hrefFor = (item: NavItem): string | null => {
-    if (item.href) return item.href;
-    if (item.page) return projectId ? `/projects/${projectId}/${item.page}` : "/projects";
-    return null;
-  };
 
   return (
     <aside className="sidebar" aria-label="Main navigation">
@@ -75,35 +62,21 @@ export function Sidebar() {
         {projectId && project && (
           <Link href="/projects" className="sidebar-project" title="Switch project">
             <span className="sidebar-project-label">
-              Project{project.folder ? ` · ${project.folder}` : ""} · switch ↗
+              Project{project.folder ? ` · ${project.folder}` : ""} · switch
             </span>
             <span className="sidebar-project-name">{project.client_name || project.name}</span>
             <span className="sidebar-project-meta" title={project.lead?.email ?? ""}>
               In charge: <b>{project.lead?.name ?? "nobody yet"}</b>
             </span>
-            <span className="sidebar-project-meta" title={new Date(project.updated_at).toLocaleString()}>
-              Last edit: {project.last_edited_by?.name ?? "—"} ·{" "}
-              {new Date(project.updated_at).toLocaleDateString(undefined, { day: "numeric", month: "short" })}
-            </span>
           </Link>
         )}
         <div className="nav-groups">
-          {NAV.map(({ group, rail, items }) => (
+          {NAV.map(({ group, items }) => (
             <nav key={group} aria-label={group}>
               <div className="nav-group-label">{group}</div>
-              <ul className="nav-list" data-rail={rail}>
+              <ul className="nav-list">
                 {items.map((item) => {
-                  const href = hrefFor(item);
-                  if (!href) {
-                    return (
-                      <li key={item.label}>
-                        <span className="nav-item nav-item-soon" aria-disabled="true" title="Coming soon to the web app">
-                          <span className="nav-label">{item.label}</span>
-                          <span className="nav-soon">Soon</span>
-                        </span>
-                      </li>
-                    );
-                  }
+                  const href = hrefFor(item, projectId);
                   const active = item.page
                     ? Boolean(projectId) && pathname.startsWith(`/projects/${projectId}/${item.page}`)
                     : pathname === href;
@@ -116,6 +89,7 @@ export function Sidebar() {
                             <motion.span layoutId="nav-active-bar" className="nav-active-bar" transition={spring} />
                           </>
                         )}
+                        <NavIcon kind={item.icon} />
                         <span className="nav-label">{item.label}</span>
                       </Link>
                     </li>
@@ -132,7 +106,7 @@ export function Sidebar() {
           <div className="sidebar-guide">
             <button
               type="button"
-              className="accordion-summary"
+              className="sidebar-guide-summary"
               aria-expanded={guideOpen}
               onClick={() => setGuideOpen((open) => !open)}
             >
@@ -143,13 +117,7 @@ export function Sidebar() {
             </button>
             <AnimatePresence initial={false}>
               {guideOpen && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  style={{ overflow: "hidden" }}
-                >
+                <motion.div variants={collapse} initial="closed" animate="open" exit="closed" style={{ overflow: "hidden" }}>
                   <div className="sidebar-guide-body">
                     {guide.map((line) => (
                       <p key={line}>{line}</p>
@@ -160,11 +128,20 @@ export function Sidebar() {
             </AnimatePresence>
           </div>
         )}
+        <button type="button" className="sidebar-feedback" onClick={openFeedback}>
+          <Icon name="message-square" />
+          Feedback
+        </button>
         <div className="sidebar-user">
-          <span className="sidebar-user-name">
+        <Link href="/account" className="sidebar-user-name" title="Your profile and account settings" aria-current={pathname === "/account" ? "page" : undefined}>
+          <span className="avatar" aria-hidden>
+            <Glyph name="user" size={14} />
+          </span>
+          <span className="sidebar-user-text">
             <span style={{ fontWeight: 600 }}>{me.name || me.email}</span>
             <span className="t-caption">{me.workspace_name}</span>
           </span>
+        </Link>
           <button type="button" className="btn-link" onClick={() => void signOut()}>
             Sign out
           </button>
@@ -173,7 +150,8 @@ export function Sidebar() {
           className="badge badge-connection"
           title="ArchitectureScope only reads from HubSpot — it never creates, edits, or deletes anything."
         >
-          ● Read-only HubSpot connection
+          <span className="status-dot" aria-hidden />
+          Read-only HubSpot connection
         </span>
       </div>
     </aside>

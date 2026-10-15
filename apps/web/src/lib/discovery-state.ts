@@ -88,6 +88,20 @@ export function hasAnyNotes(state: DiscoveryState): boolean {
   );
 }
 
+/** Sections as returned by the API (optional fields omitted) in the page's shape. */
+export function normalizeSections(sections: DiscoveryNotes["sections"]): Record<string, SectionNotes> {
+  return Object.fromEntries(
+    Object.entries(sections ?? {}).map(([name, s]) => [
+      name,
+      {
+        notes: s.notes ?? "",
+        edge_cases: s.edge_cases ?? "",
+        answers: Object.fromEntries(Object.entries(s.answers ?? {}).map(([id, a]) => [id, { ...EMPTY_ANSWER, ...a, selected: a.selected ?? [] }])),
+      },
+    ]),
+  );
+}
+
 /** The notes in the API's DiscoveryNotes shape. */
 export function toDiscoveryNotes(state: DiscoveryState): DiscoveryNotes {
   return { client_name: state.clientName, business_type: state.businessType, client_website: state.clientWebsite, sections: state.sections };

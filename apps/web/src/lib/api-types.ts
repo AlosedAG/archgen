@@ -4,6 +4,57 @@
  */
 
 export interface paths {
+    "/api/v1/assist/architecture": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Fill the Architecture Generator's inputs from earlier steps */
+        post: operations["assist_architecture"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/assist/proposal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Suggest proposal content from earlier steps */
+        post: operations["assist_proposal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/assist/stage-planner": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Fill the Deal Stage Planner from earlier steps */
+        post: operations["assist_stage_planner"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/audits": {
         parameters: {
             query?: never;
@@ -19,6 +70,58 @@ export interface paths {
          *     rates, orphaned records) sample the live portal, read-only.
          */
         post: operations["portal_run_audit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/account": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Your account */
+        get: operations["auth_get_account"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change your display name */
+        patch: operations["auth_update_account"];
+        trace?: never;
+    };
+    "/api/v1/auth/account/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Change your password (signs out your other browsers) */
+        post: operations["auth_change_password"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/account/sign-out-others": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sign out every other browser */
+        post: operations["auth_sign_out_others"];
         delete?: never;
         options?: never;
         head?: never;
@@ -449,6 +552,57 @@ export interface paths {
         put?: never;
         /** Send a bug report, idea or question to the app owner */
         post: operations["feedback_send_feedback"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/industry-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The industries and company sizes available */
+        get: operations["industry templates_list_templates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/industry-templates/discovery": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pre-fill unanswered discovery questions */
+        post: operations["industry templates_apply_to_discovery"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/industry-templates/proposal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add an industry template's rows to a proposal */
+        post: operations["industry templates_apply_to_proposal"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1028,6 +1182,39 @@ export interface components {
             /** Message */
             message: string;
         };
+        /**
+         * Account
+         * @description The signed-in user's own account, for the profile page.
+         */
+        Account: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Email */
+            email: string;
+            /**
+             * Has Password
+             * @description False for accounts that only sign in with Google.
+             */
+            has_password: boolean;
+            /** Last Login At */
+            last_login_at: string | null;
+            /** Name */
+            name: string;
+            /**
+             * Other Sessions
+             * @description Other browsers currently signed in to this account.
+             */
+            other_sessions: number;
+            /** Role */
+            role: string;
+            /** User Id */
+            user_id: string;
+            /** Workspace Name */
+            workspace_name: string;
+        };
         /** AddLibraryAddonsRequest */
         AddLibraryAddonsRequest: {
             proposal: components["schemas"]["ProposalDocument"];
@@ -1165,6 +1352,80 @@ export interface components {
             other: string;
             /** Selected */
             selected?: string[];
+        };
+        /** ArchitectureAssistRequest */
+        ArchitectureAssistRequest: {
+            context: components["schemas"]["AssistContext"];
+            inputs: components["schemas"]["ArchitectureInputs"];
+        };
+        /** ArchitectureAssistResponse */
+        ArchitectureAssistResponse: {
+            /**
+             * Added
+             * @description How many values were added.
+             */
+            added: number;
+            inputs: components["schemas"]["ArchitectureInputs"];
+            /** Model */
+            model: string;
+        };
+        /** ArchitectureInputs */
+        ArchitectureInputs: {
+            /** Currencies */
+            currencies?: string[];
+            /** Custom Object Keywords */
+            custom_object_keywords?: string[];
+            /**
+             * Custom Object Notes
+             * @default
+             */
+            custom_object_notes: string;
+            /** Hubs In Scope */
+            hubs_in_scope?: string[];
+            /** Integrations */
+            integrations?: string[];
+            /**
+             * Other Integration Notes
+             * @default
+             */
+            other_integration_notes: string;
+            /** Pipelines Required */
+            pipelines_required?: string[];
+            /** Record Volumes */
+            record_volumes?: {
+                [key: string]: number;
+            };
+            /** Regions */
+            regions?: string[];
+            /** Standard Objects */
+            standard_objects?: string[];
+        };
+        /** AssistContext */
+        AssistContext: {
+            /**
+             * Business Analysis
+             * @description The drafted business analysis (Markdown).
+             * @default
+             */
+            business_analysis: string;
+            /** @description The discovery call notes, if any. */
+            discovery?: components["schemas"]["DiscoveryNotes"] | null;
+            /**
+             * Documents
+             * @description Earlier documents as {title: {section: rows}}, e.g. {"Requirements Document": {...}}.
+             */
+            documents?: {
+                [key: string]: {
+                    [key: string]: {
+                        [key: string]: unknown;
+                    }[];
+                };
+            };
+            /**
+             * Stage Planner
+             * @description An applied Deal Stage Planner's stages.
+             */
+            stage_planner?: components["schemas"]["PlannedStage"][];
         };
         /** AssociationDef */
         AssociationDef: {
@@ -1888,6 +2149,44 @@ export interface components {
             /** Version */
             version: string;
         };
+        /** IndustryDiscoveryRequest */
+        IndustryDiscoveryRequest: {
+            /** Industry */
+            industry: string;
+            notes: components["schemas"]["DiscoveryNotes"];
+            /** Size */
+            size?: string | null;
+        };
+        /** IndustryDiscoveryResponse */
+        IndustryDiscoveryResponse: {
+            /**
+             * Filled
+             * @description How many unanswered questions received the template's answer.
+             */
+            filled: number;
+            notes: components["schemas"]["DiscoveryNotes"];
+        };
+        /** IndustryProposalRequest */
+        IndustryProposalRequest: {
+            /** Industry */
+            industry: string;
+            proposal: components["schemas"]["ProposalDocument"];
+            /** Size */
+            size?: string | null;
+        };
+        /** IndustryProposalResponse */
+        IndustryProposalResponse: {
+            /** Changed */
+            changed: string[];
+            proposal: components["schemas"]["ProposalDocument"];
+        };
+        /** IndustryTemplates */
+        IndustryTemplates: {
+            /** Industries */
+            industries: components["schemas"]["TemplateChoice"][];
+            /** Sizes */
+            sizes: components["schemas"]["TemplateChoice"][];
+        };
         /** JepImportRequest */
         JepImportRequest: {
             /**
@@ -2176,6 +2475,17 @@ export interface components {
              */
             phone: string;
         };
+        /** PasswordChange */
+        PasswordChange: {
+            /**
+             * Current Password
+             * @description Required when the account has a password.
+             * @default
+             */
+            current_password: string;
+            /** New Password */
+            new_password: string;
+        };
         /** PasswordResetConfirm */
         PasswordResetConfirm: {
             /** Code */
@@ -2400,6 +2710,11 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** ProfileUpdate */
+        ProfileUpdate: {
+            /** Name */
+            name: string;
+        };
         /** Project */
         Project: {
             /** Archived */
@@ -2590,6 +2905,22 @@ export interface components {
              * @description Gaps a client would ask about. Advisory; they never block generation.
              */
             warnings: string[];
+        };
+        /** ProposalAssistRequest */
+        ProposalAssistRequest: {
+            context: components["schemas"]["AssistContext"];
+            proposal: components["schemas"]["ProposalDocument"];
+        };
+        /** ProposalAssistResponse */
+        ProposalAssistResponse: {
+            /**
+             * Changed
+             * @description Proposal fields that received suggestions, e.g. executive_summary, scope.
+             */
+            changed: string[];
+            /** Model */
+            model: string;
+            proposal: components["schemas"]["ProposalDocument"];
         };
         /**
          * ProposalDocument
@@ -3153,6 +3484,11 @@ export interface components {
             /** Password */
             password: string;
         };
+        /** SignedOutOthers */
+        SignedOutOthers: {
+            /** Signed Out */
+            signed_out: number;
+        };
         /** StageDef */
         StageDef: {
             /**
@@ -3179,6 +3515,27 @@ export interface components {
              * @description Win probability, 0–1.
              */
             probability?: number | null;
+        };
+        /** StagePlannerAssistRequest */
+        StagePlannerAssistRequest: {
+            context: components["schemas"]["AssistContext"];
+            /**
+             * Stages
+             * @description The planner's current stages (may be empty).
+             */
+            stages?: components["schemas"]["PlannedStage"][];
+        };
+        /** StagePlannerAssistResponse */
+        StagePlannerAssistResponse: {
+            /**
+             * Filled
+             * @description How many cells were filled.
+             */
+            filled: number;
+            /** Model */
+            model: string;
+            /** Stages */
+            stages: components["schemas"]["PlannedStage"][];
         };
         /**
          * StagePlannerImport
@@ -3294,6 +3651,18 @@ export interface components {
              */
             technique: string;
         };
+        /** TemplateChoice */
+        TemplateChoice: {
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+        };
         /** TimelineRow */
         TimelineRow: {
             /**
@@ -3391,6 +3760,105 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    assist_architecture: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ArchitectureAssistRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArchitectureAssistResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    assist_proposal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProposalAssistRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalAssistResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    assist_stage_planner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StagePlannerAssistRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StagePlannerAssistResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     portal_run_audit: {
         parameters: {
             query?: never;
@@ -3420,6 +3888,112 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    auth_get_account: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Account"];
+                };
+            };
+        };
+    };
+    auth_update_account: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProfileUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Account"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    auth_change_password: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordChange"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Account"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    auth_sign_out_others: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SignedOutOthers"];
                 };
             };
         };
@@ -4175,6 +4749,92 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Accepted"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "industry templates_list_templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IndustryTemplates"];
+                };
+            };
+        };
+    };
+    "industry templates_apply_to_discovery": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IndustryDiscoveryRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IndustryDiscoveryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "industry templates_apply_to_proposal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IndustryProposalRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IndustryProposalResponse"];
                 };
             };
             /** @description Validation Error */

@@ -32,6 +32,7 @@ export const GUIDE_PAGES: GuidePage[] = [
       "Create a project per client engagement, optionally in a folder (e.g. one folder per client), then open it.",
       "Search by name, client, folder or person, or filter by folder and by who is in charge.",
       "Each card shows who is in charge and who edited it last. Edit changes the name, client, folder or person in charge; Delete (for the person in charge, the creator or an admin) removes the project and its saved documents after a confirmation.",
+      "Rename a folder with the pencil next to its name; every project in it moves to the new name.",
     ],
   },
   {
@@ -42,6 +43,18 @@ export const GUIDE_PAGES: GuidePage[] = [
     steps: [
       "The HubSpot token and AI keys are stored encrypted for the whole workspace; only admins can change them.",
       "Use a HubSpot private app with read-only scopes — ArchitectureScope never creates, changes or deletes anything in HubSpot.",
+      "Gemini keys are free from aistudio.google.com/apikey; when one is set, drafting uses Gemini instead of Claude. Anthropic keys start with sk-ant-.",
+    ],
+  },
+  {
+    key: "account",
+    title: "Profile & account",
+    step: "Account",
+    summary: "Your name, your password and the browsers signed in to your account.",
+    steps: [
+      "Change your display name; it's what teammates see on projects you lead or edit.",
+      "Changing your password signs out every other browser; this one stays signed in.",
+      "Lost a laptop or used a shared computer? Sign out other browsers.",
     ],
   },
   {
@@ -50,10 +63,15 @@ export const GUIDE_PAGES: GuidePage[] = [
     step: "Step 1 · Discover",
     summary: "Live notes during the discovery call, with follow-ups, required tasks, a checklist and a build order.",
     steps: [
-      "Answer under Goals, Data, Processes and Solutions Design in any order — blanks become follow-up questions, never guesses.",
+      "Type notes live during the call — shorthand is fine, blanks are fine. Answer under Goals, Data, Processes and Solutions Design in any order; blanks become follow-up questions, never guesses.",
+      "Know the client's industry? Apply an industry template to pre-fill typical answers for unanswered questions, then confirm each one on the call.",
+      "The client's website is read when you generate the business analysis, for a client snapshot, advantages and upsell ideas.",
       "Some answers reveal follow-ups under them and add required tasks; tick tasks off as they're covered.",
       "After the call, generate the business analysis, then the client explainer, checklist and build order.",
       "Drafting takes a minute or two; the progress bar shows which section is being written. If the AI service is busy, the app retries and switches model automatically — or pick a model yourself in the “AI model” menu next to Generate.",
+      "The checklist is a client-ready record of what must be configured; Status / Notes is left blank for the delivery team. Required tasks come from answers — confirm scope, owners and commercial terms before treating it as a statement of work.",
+      "Build order: create consent assets and core fields first, then lists, pipelines and record pages. Review each template against the client's legal and operational needs before reuse. The .json export keeps task names, sources, template tags and completion for a task tool.",
+      "“Start a new call” clears this project's answers and notes only — download a backup first.",
     ],
   },
   {
@@ -61,7 +79,12 @@ export const GUIDE_PAGES: GuidePage[] = [
     title: "Deal Stage Planner",
     step: "Step 1 · Discover",
     summary: "A spreadsheet the client fills in before the call, imported back to shape discovery and the architecture.",
-    steps: ["Send the client the planner before the call; import the filled-out copy, review it, then apply it."],
+    steps: [
+      "Send the client the pre-call template: one column per pipeline stage with forecast %, entry and exit criteria, desired actions, automations and the deal properties required at that stage. It starts with HubSpot's default sales stages.",
+      "No planner from the client? “Fill from the discovery call” drafts the stages from your call notes; with stages already there, it only fills empty cells.",
+      "Import the filled-out copy: rows are matched by their label in column A, so inserted, moved or deleted rows are fine; blank and “Stage name” columns are skipped.",
+      "Review and edit the stages (in pipeline order), check what each target gets in the preview, then Apply — nothing is applied or sent to HubSpot until you click it.",
+    ],
   },
   {
     key: "requirements",
@@ -96,6 +119,7 @@ export const GUIDE_PAGES: GuidePage[] = [
     steps: [
       "Run it on the saved snapshot; only custom properties are ever flagged.",
       "Export the color-matched workbook for the client to confirm before anything is deleted — this tool never deletes.",
+      "“Uses” counts references in workflow actions only — forms, lists, reports and dashboards aren't pulled, so a property used only there still shows 0.",
     ],
   },
   {
@@ -103,7 +127,10 @@ export const GUIDE_PAGES: GuidePage[] = [
     title: "Documentation Generator",
     step: "Step 2 · Assess current portal",
     summary: "The portal's data dictionary, workflows, associations, pipelines, teams and owners.",
-    steps: ["Pull from HubSpot, review each section, then download Word or Markdown or save it to the library."],
+    steps: [
+      "Pull from HubSpot, review each section, then download Word or Markdown or save it to the library.",
+      "The association map comes from each custom object's schema; default associations between standard objects aren't exposed by HubSpot's endpoint and are omitted.",
+    ],
   },
   {
     key: "executive-report",
@@ -112,7 +139,7 @@ export const GUIDE_PAGES: GuidePage[] = [
     summary: "A plain-language report: what the portal has and what's worth fixing.",
     steps: [
       "Uses the saved snapshot and audit findings — run the Portal Auditor first for the “Things worth fixing” section.",
-      "The client version is safe to send as-is; the internal version has every finding.",
+      "The client version is polished and plain-language, safe to send as-is; the internal version has every finding and the raw property groups.",
     ],
   },
   {
@@ -121,7 +148,9 @@ export const GUIDE_PAGES: GuidePage[] = [
     step: "Step 3 · Design",
     summary: "A HubSpot blueprint from a few project questions.",
     steps: [
-      "Pick objects, pipelines, integrations, regions and hubs; an applied Deal Stage Planner replaces the default deal pipeline.",
+      "“Fill from earlier steps” adds what the discovery call, requirements and plan imply; nothing selected or typed is removed.",
+      "Pick objects, pipelines, integrations, regions and hubs. Not in the list? Type it and choose “Add”. Known custom-object keywords come with properties and associations; your own become a generic object to define with the client.",
+      "Record volumes go one per line as Object: count. An applied Deal Stage Planner replaces the default deal pipeline.",
       "Generate the blueprint, review it, and export or save it. No HubSpot access needed.",
     ],
   },
@@ -132,7 +161,10 @@ export const GUIDE_PAGES: GuidePage[] = [
     summary: "An editable map of objects and connections, with findings highlighted.",
     steps: [
       "Build it from the blueprint or the live snapshot, then fix anything in the Objects and Connections tables.",
-      "Focus on a few objects to narrow the drawing; download .drawio for drag-and-drop editing in diagrams.net.",
+      "Choosing a source again resets your edits. Run the Portal Auditor first to highlight findings on a snapshot diagram.",
+      "Colors: filled purple = custom object, white = standard, dashed grey = activity object; the border shows the worst finding (red High, orange Medium, yellow Low).",
+      "Connections are drawn only when From / To match an object name in the Objects table.",
+      "Focus on a few objects to narrow the drawing; the .drawio file opens in diagrams.net (free, no login) for drag-and-drop editing, and the PNG uses the same layout.",
     ],
   },
   {
@@ -141,11 +173,14 @@ export const GUIDE_PAGES: GuidePage[] = [
     step: "Step 4 · Propose",
     summary: "A proposal and Statement of Work: technical, scope, management and cost.",
     steps: [
+      "Starting from scratch? “Suggest a starting point” drafts the summary, problem, solution, objectives, scope, assumptions, risks and KPIs from earlier steps — only blanks are filled. Or apply an industry template for typical scope, risks and KPIs by industry and company size.",
       "New proposal for a client like one you've done before? Use “Start from a template” at the top — your team's saved proposals keep everything except the client's details.",
       "Finished a good one? “Save as template” makes it available to everyone in the workspace for similar clients.",
-      "Import the Requirements Document and Joint Evaluation Plan in Setup — imports only fill blanks and append rows.",
-      "Put every scope item in exactly one bucket; the coverage table shows requirements no scope item addresses.",
-      "Review & generate checks for gaps before you download the PDF.",
+      "Import the Requirements Document and Joint Evaluation Plan in Setup — imports only fill blanks and add rows the proposal doesn't have yet, so importing twice adds nothing.",
+      "Technical: show you understand the problem and how it will be solved. Start lines with “- ” for bullets in the PDF. Requirements and scope items get the next ID (R-1, S-1…) automatically.",
+      "Scope is the section clients misread most: put every item in exactly one bucket, give In Scope items a quantity limit and acceptance criteria, and list common requests you're not doing as Out of Scope. “Req. ID” links a scope item to the requirements it delivers (e.g. R-1, R-3); the coverage table shows any requirement no scope item addresses.",
+      "Management covers team, governance, schedule, risks and KPIs (Primary: value drivers tied to ROI; Secondary: operational or marketing improvements). Cost: milestone fees, the add-on menu (tick “Add to total” for add-ons already chosen) and the rate card for change requests.",
+      "Review & generate checks for gaps before you download the PDF. The reusable template download keeps only SonaMation's standard parts (methodology, tools, governance, add-ons, rate card, terms).",
     ],
   },
   {

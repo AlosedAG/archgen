@@ -14,6 +14,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useAppSession } from "@/components/AppSession";
+import { AssistButton } from "@/components/AssistButton";
 import { DataTable } from "@/components/project/DataTable";
 import { EditableTable, type Column, type Row } from "@/components/project/EditableTable";
 import { ProjectHeader } from "@/components/project/ProjectHeader";
@@ -21,6 +22,7 @@ import { SaveBanner } from "@/components/project/SaveBanner";
 import { Callout, Checkbox, ExportFooter, TabPanel, Tabs } from "@/components/ui";
 import {
   ApiError,
+  assistStagePlanner,
   getModuleState,
   importStagePlanner,
   previewStagePlanner,
@@ -29,8 +31,10 @@ import {
   type StagePlannerImport,
 } from "@/lib/api";
 import { normalizeArchitecture, type ArchitectureState } from "@/lib/architecture-state";
+import { projectContext } from "@/lib/assist";
 import { normalizeState as normalizeDiscovery, type DiscoveryState } from "@/lib/discovery-state";
 import { updateModuleState, useModuleState } from "@/lib/module-state";
+import { Glyph } from "@/components/icons";
 
 type Target = "discovery" | "build_order" | "architecture";
 const TARGETS: Record<Target, string> = {
@@ -171,6 +175,26 @@ export default function StagePlannerPage() {
 
   if (!project) return null;
 
+  /** Fill the planner from the discovery call: a whole pipeline when empty, otherwise only blank cells. */
+  const fillFromDiscovery = async () => {
+    const result = await assistStagePlanner(await projectContext(project.id, project.client_name || project.name), stages);
+    if (!result.filled && stages.length) return "Nothing to fill: every cell the discovery call covers is already filled in.";
+    const byName = new Map(result.stages.map((s) => [s.name.trim().toLowerCase(), s]));
+    change((s) => ({
+      ...s,
+      rows: stages.length
+        ? s.rows.map((r) => {
+            const match = byName.get(String(r.name ?? "").trim().toLowerCase());
+            return match ? toRows([match])[0]! : r;
+          })
+        : toRows(result.stages),
+      source: s.source || "Discovery call",
+    }));
+    return stages.length
+      ? `Filled ${result.filled} empty cell${result.filled === 1 ? "" : "s"} from the discovery call`
+      : `Drafted ${result.stages.length} stages from the discovery call. Review them below.`;
+  };
+
   const apply = async () => {
     if (!preview) return;
     setApplying(true);
@@ -229,18 +253,12 @@ export default function StagePlannerPage() {
       <ProjectHeader
         eyebrow="STEP 1 / DISCOVER"
         title="Deal Stage Planner"
-        description="Send the client the planner before the call. When it comes back filled in, import it, review what was read, and apply it to discovery, the architecture and the build order."
       />
       <div className="page-content">
         <SaveBanner store={store} />
 
         <section className="stack">
           <h2 className="t-section">1 · Send the pre-call template</h2>
-          <p className="t-description">
-            Each column is a pipeline stage: forecast %, entry / exit criteria, desired actions, automations, and the
-            deal properties required at that stage. Pre-filled with HubSpot&apos;s default sales stages for the client
-            to edit.
-          </p>
           <ExportFooter
             divider={false}
             actions={[{ label: ".xlsx", make: stagePlannerTemplate }]}
@@ -250,13 +268,9 @@ export default function StagePlannerPage() {
 
         <section className="stack">
           <h2 className="t-section">2 · Import a filled-out planner</h2>
-          <p className="t-description">
-            Rows are matched by their label in column A, so inserted, moved or deleted rows are fine. Every stage column
-            with a name is read; blank and &quot;Stage name&quot; columns are skipped. Nothing is applied until you click Apply.
-          </p>
           <div className="row">
             <button type="button" className="btn btn-secondary" disabled={importing} onClick={() => fileInput.current?.click()}>
-              {importing ? "Reading…" : "↑  Upload the client's planner (.xlsx)"}
+              {importing ? "Reading…" : <><Glyph name="upload" /> Upload the client&apos;s planner (.xlsx)</>}
             </button>
             {state.source && <span className="t-caption">Last imported: {state.source}</span>}
           </div>
@@ -281,6 +295,7 @@ export default function StagePlannerPage() {
             }}
           />
           {importError && <Callout tone="error" title="That didn't work">{importError}</Callout>}
+          <AssistButton label={stages.length ? "Fill empty cells from the discovery call" : "Fill from the discovery call"} run={fillFromDiscovery} />
           {state.warnings.length > 0 && (
             <Callout tone="warning" title={`${state.warnings.length} thing${state.warnings.length === 1 ? "" : "s"} to check`}>
               <ul style={{ margin: "4px 0 0", paddingLeft: 18 }}>
@@ -296,7 +311,6 @@ export default function StagePlannerPage() {
           <>
             <section className="stack">
               <h2 className="t-section">Review and edit the stages</h2>
-              <p className="t-description">Stages are in pipeline order. Edit any cell, or add and remove stages.</p>
               <EditableTable
                 label="Stages"
                 columns={COLUMNS}

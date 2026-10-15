@@ -110,9 +110,6 @@ function Documentation({ project, snapshot }: { project: Project; snapshot: Port
 
       <section className="stack" style={{ gap: 12 }}>
         <h2 className="t-section">Association map</h2>
-        <p className="t-caption">
-          From each custom object&apos;s schema. Default associations between standard objects aren&apos;t exposed by this endpoint and are omitted.
-        </p>
         <DataTable
           label="Associations"
           empty="None found."
@@ -189,7 +186,6 @@ export default function DocumentationPage() {
     <PortalPage
       eyebrow="STEP 2 / DOCUMENT"
       title="Documentation Generator"
-      description="The portal's documentation pack: data dictionary, workflow inventory, association map, pipelines & stages, and teams & owners. Every call is read-only."
     >
       {(project, store) =>
         store.state.snapshot ? (

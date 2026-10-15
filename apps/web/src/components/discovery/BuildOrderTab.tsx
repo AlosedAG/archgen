@@ -20,6 +20,8 @@ import {
 import type { DiscoveryStore } from "@/lib/discovery-state";
 
 import { AnimatedNumber, Callout, CheckMark, ExportFooter, spring } from "../ui";
+import { Glyph } from "@/components/icons";
+import { press, springs, tween } from "@/lib/motion";
 
 const FORMATS: SectionsFormat[] = ["docx", "xlsx", "csv", "pdf"];
 
@@ -77,7 +79,7 @@ export function BuildOrderTab({
               {order.title}
             </motion.h2>
             <p className="t-description">
-              {items.length} items · ♻ {templates} from reusable templates · {items.length - templates} from scratch · {done} done
+              {items.length} items · {templates} from reusable templates · {items.length - templates} from scratch · {done} done
             </p>
           </div>
           <div className="stats">
@@ -93,10 +95,6 @@ export function BuildOrderTab({
               }
             />
           </div>
-          <Callout tone="info" title="A practical starting order">
-            Create consent assets and core fields first, then lists, pipelines, and record pages. Review each template
-            against the client&apos;s legal and operational requirements before reuse.
-          </Callout>
 
           {order.sections.map((section) => {
             const fromTemplates = section.items.filter((i) => i.template);
@@ -116,7 +114,7 @@ export function BuildOrderTab({
                     {fromTemplates.length > 0 && (
                       <>
                         <div className="build-divider build-divider-template">
-                          ♻ From templates · {fromTemplates.length} item{fromTemplates.length === 1 ? "" : "s"}
+                          <Glyph name="layers" size={14} /> From templates · {fromTemplates.length} item{fromTemplates.length === 1 ? "" : "s"}
                         </div>
                         <Items items={fromTemplates} onToggle={(id) => toggleIn("buildDone", id)} />
                       </>
@@ -134,11 +132,6 @@ export function BuildOrderTab({
               </section>
             );
           })}
-
-          <p className="t-caption">
-            The .json export preserves task names, sources, template tags, and completion state for importing into a task
-            tool later.
-          </p>
           <ExportFooter
             library={{ projectId: store.projectId, documentType: "Discovery Build Order", title: order.title }}
             actions={[
@@ -193,8 +186,9 @@ function Items({ items, onToggle }: { items: BuildItem[]; onToggle: (id: string)
           layout
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0, height: 0 }}
-          transition={spring}
+          exit={{ opacity: 0, height: 0, transition: tween.fast }}
+          transition={springs.snappy}
+          whileTap={press}
           onClick={() => onToggle(item.id)}
         >
           <span className="build-item-body">
@@ -205,7 +199,7 @@ function Items({ items, onToggle }: { items: BuildItem[]; onToggle: (id: string)
             <span className="build-item-source">Source: {item.sources.join("; ")}</span>
           </span>
           {item.template ? (
-            <span className="badge badge-success">♻ Template · {item.template_label}</span>
+            <span className="badge badge-success"><Glyph name="layers" size={12} />Template · {item.template_label}</span>
           ) : (
             <span className="badge badge-neutral">Build from scratch</span>
           )}

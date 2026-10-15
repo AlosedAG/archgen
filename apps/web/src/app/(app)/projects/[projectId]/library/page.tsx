@@ -8,8 +8,10 @@ import { useCallback, useEffect, useState } from "react";
 
 import { useAppSession } from "@/components/AppSession";
 import { PageHeader } from "@/components/PageHeader";
-import { Callout, spring } from "@/components/ui";
+import { Callout } from "@/components/ui";
 import { ApiError, deleteDocument, downloadDocument, listDocuments, type LibraryDocument } from "@/lib/api";
+import { Glyph } from "@/components/icons";
+import { fadeInUp, staggerTiming, tween, useStagger } from "@/lib/motion";
 
 function size(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -19,6 +21,15 @@ function size(bytes: number): string {
 
 function ext(filename: string): string {
   return filename.includes(".") ? (filename.split(".").pop() ?? "") : "file";
+}
+
+/** A document group's rows, rising in one after another when the library loads. */
+function DocList({ count, children }: { count: number; children: React.ReactNode }) {
+  return (
+    <motion.div className="build-list" variants={useStagger(count, staggerTiming.rows)} initial="hidden" animate="visible">
+      {children}
+    </motion.div>
+  );
 }
 
 export default function LibraryPage() {
@@ -45,7 +56,6 @@ export default function LibraryPage() {
         eyebrow="LIBRARY"
         breadcrumb={`${project.client_name || project.name}  /  ${me.workspace_name}`}
         title="Project Library"
-        description="Every document saved from this project, with editable downloads."
       />
       <div className="page-content">
         {error && <Callout tone="error" title="Something went wrong">{error}</Callout>}
@@ -71,17 +81,15 @@ export default function LibraryPage() {
                   {docs.length} file{docs.length === 1 ? "" : "s"}
                 </span>
               </div>
-              <div className="build-list">
+              <DocList count={docs.length}>
                 <AnimatePresence initial={false}>
                   {docs.map((doc) => (
                     <motion.div
                       key={doc.id}
                       className="doc-row"
                       layout
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={spring}
+                      variants={fadeInUp}
+                      exit={{ opacity: 0, height: 0, transition: tween.fast }}
                     >
                       <span className="file-chip">{ext(doc.filename)}</span>
                       <span className="doc-row-body">
@@ -98,7 +106,7 @@ export default function LibraryPage() {
                         className="btn btn-secondary"
                         onClick={() => downloadDocument(project.id, doc).catch((e: unknown) => setError(e instanceof ApiError ? e.message : "Download failed."))}
                       >
-                        ↓  Download
+                        <Glyph name="download" /> Download
                       </button>
                       {confirming === doc.id ? (
                         <>
@@ -129,7 +137,7 @@ export default function LibraryPage() {
                     </motion.div>
                   ))}
                 </AnimatePresence>
-              </div>
+              </DocList>
             </section>
           ))
         )}

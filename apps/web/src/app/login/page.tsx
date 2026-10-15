@@ -23,6 +23,7 @@ import {
   verifySignUp,
   type AuthConfig,
 } from "@/lib/api";
+import { offset, pageEnter, tween } from "@/lib/motion";
 
 type Mode = "sign-in" | "sign-up" | "verify" | "forgot" | "reset";
 
@@ -98,7 +99,7 @@ function AuthForms() {
 
   return (
     <div className="login-page">
-      <motion.div className="login-card" layout initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+      <motion.div className="login-card" layout variants={pageEnter} initial="hidden" animate="visible">
         <div className="login-brand">
           <span className="wordmark-name">ArchitectureScope</span>
           <span className="wordmark-tagline">SOLUTIONS ARCHITECT WORKSPACE</span>
@@ -107,10 +108,9 @@ function AuthForms() {
           <motion.div
             key={mode}
             className="stack"
-            initial={{ opacity: 0, x: 12 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -12 }}
-            transition={{ duration: 0.18 }}
+            initial={{ opacity: 0, x: offset.item }}
+            animate={{ opacity: 1, x: 0, transition: tween.base }}
+            exit={{ opacity: 0, x: -offset.item, transition: tween.fast }}
           >
             <h1 className="t-section">{TITLES[mode]}</h1>
 

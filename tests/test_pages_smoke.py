@@ -323,7 +323,7 @@ def test_router_shows_page_guide_in_sidebar():
     at.switch_page("app_pages/2_Portal_Auditor.py")
     at.run(timeout=20)
     assert not at.exception, [str(e) for e in at.exception]
-    assert "📖 Guide for this page" in [e.label for e in at.sidebar.expander]
+    assert "Guide for this page" in [e.label for e in at.sidebar.expander]
 
 
 def test_pasted_key_survives_switching_pages():

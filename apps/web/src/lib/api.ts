@@ -58,16 +58,44 @@ async function toApiError(response: Response): Promise<ApiError> {
   }
 }
 
-async function request(path: string, init: RequestInit = {}, { auth = true } = {}): Promise<Response> {
-  let response: Response;
-  try {
-    response = await fetch(`${V1}${path}`, {
-      credentials: "same-origin",
-      ...init,
-      headers: { "Content-Type": "application/json", ...init.headers },
+// A host that sleeps idle services (Render's free plan) answers 502/503/504
+// for up to a minute while the API wakes. Reads are safe to repeat, so they
+// retry through that window instead of failing the page.
+const WAKING = new Set([502, 503, 504]);
+const WAKE_RETRY_MS = 90_000;
+
+function pause(ms: number, signal?: AbortSignal | null): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(resolve, ms);
+    signal?.addEventListener("abort", () => {
+      clearTimeout(timer);
+      reject(new DOMException("Aborted", "AbortError"));
     });
-  } catch (error) {
-    if ((error as Error).name === "AbortError") throw error;
+  });
+}
+
+async function request(path: string, init: RequestInit = {}, { auth = true } = {}): Promise<Response> {
+  const retryable = (init.method ?? "GET").toUpperCase() === "GET";
+  const giveUpAt = Date.now() + WAKE_RETRY_MS;
+  let delay = 2_000;
+  let response: Response | undefined;
+  for (;;) {
+    response = undefined;
+    try {
+      response = await fetch(`${V1}${path}`, {
+        credentials: "same-origin",
+        ...init,
+        headers: { "Content-Type": "application/json", ...init.headers },
+      });
+    } catch (error) {
+      if ((error as Error).name === "AbortError") throw error;
+    }
+    const waking = response === undefined || WAKING.has(response.status);
+    if (!(waking && retryable && Date.now() + delay < giveUpAt)) break;
+    await pause(delay, init.signal);
+    delay = Math.min(delay * 2, 10_000);
+  }
+  if (response === undefined) {
     throw new ApiError("Can't reach the ArchitectureScope service. Check your connection and try again.");
   }
   if (!response.ok) {
@@ -93,6 +121,14 @@ export const signIn = (email: string, password: string) =>
 export async function signOut(): Promise<void> {
   await request("/auth/sign-out", { method: "POST" }, { auth: false });
 }
+
+// Your own account (the profile page).
+export type Account = Schemas["Account"];
+export const getAccount = () => json<Account>("/auth/account");
+export const updateAccount = (name: string) => json<Account>("/auth/account", { method: "PATCH", body: JSON.stringify({ name }) });
+export const changePassword = (current_password: string, new_password: string) =>
+  post<Account>("/auth/account/password", { current_password, new_password });
+export const signOutOtherBrowsers = () => post<{ signed_out: number }>("/auth/account/sign-out-others", {});
 
 const noAuthPost = <T>(path: string, body: unknown) =>
   json<T>(path, { method: "POST", body: JSON.stringify(body) }, { auth: false });
@@ -130,6 +166,26 @@ export const listMembers = () => json<Member[]>("/workspace/members");
 export type FeedbackRequest = Schemas["FeedbackRequest"];
 /** Email a bug report, idea or question (with screenshots) to the app owner. */
 export const sendFeedback = (body: FeedbackRequest) => post<{ message: string }>("/feedback", body);
+
+// ---- Suggestions from earlier steps ("Fill from earlier steps" / "Suggest") ------------
+
+export type AssistContext = Schemas["AssistContext"];
+export type ArchitectureAssistInputs = Schemas["ArchitectureInputs"];
+export const assistStagePlanner = (context: AssistContext, stages: PlannedStage[]) =>
+  post<Schemas["StagePlannerAssistResponse"]>("/assist/stage-planner", { context, stages });
+export const assistArchitecture = (context: AssistContext, inputs: ArchitectureAssistInputs) =>
+  post<Schemas["ArchitectureAssistResponse"]>("/assist/architecture", { context, inputs });
+export const assistProposal = (context: AssistContext, proposal: ProposalDocument) =>
+  post<Schemas["ProposalAssistResponse"]>("/assist/proposal", { context, proposal });
+
+// ---- Industry templates -------------------------------------------------------------------
+
+export type IndustryTemplates = Schemas["IndustryTemplates"];
+export const listIndustryTemplates = () => json<IndustryTemplates>("/industry-templates");
+export const applyIndustryDiscoveryTemplate = (industry: string, size: string | null, notes: DiscoveryNotes) =>
+  post<Schemas["IndustryDiscoveryResponse"]>("/industry-templates/discovery", { industry, size, notes });
+export const applyIndustryProposalTemplate = (industry: string, size: string | null, proposal: ProposalDocument) =>
+  post<Schemas["IndustryProposalResponse"]>("/industry-templates/proposal", { industry, size, proposal });
 
 export const getModuleState = (projectId: string, module: string) =>
   json<ModuleState>(`/projects/${projectId}/state/${module}`);

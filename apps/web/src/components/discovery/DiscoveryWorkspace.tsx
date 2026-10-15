@@ -10,17 +10,19 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { ApiError, evaluateNotes, getDiscoveryConfig, type DiscoveryConfig, type Evaluation, type Project } from "@/lib/api";
-import { useDiscoveryState } from "@/lib/discovery-state";
+import { ApiError, applyIndustryDiscoveryTemplate, evaluateNotes, getDiscoveryConfig, type DiscoveryConfig, type Evaluation, type Project } from "@/lib/api";
+import { getAnswer, isAnswered, normalizeSections, toDiscoveryNotes, useDiscoveryState } from "@/lib/discovery-state";
 
 import { useAppSession } from "../AppSession";
 import { PageHeader } from "../PageHeader";
 import { SaveBanner } from "../project/SaveBanner";
+import { IndustryTemplatePicker } from "../IndustryTemplatePicker";
 import { Callout, TabPanel, Tabs } from "../ui";
 import { BuildOrderTab } from "./BuildOrderTab";
 import { BusinessAnalysisTab } from "./BusinessAnalysisTab";
 import { ChecklistTab } from "./ChecklistTab";
 import { ExplainerTab } from "./ExplainerTab";
+import { Glyph } from "@/components/icons";
 
 type TabId = "analysis" | "explainer" | "checklist" | "build";
 
@@ -89,12 +91,30 @@ export function DiscoveryWorkspace({ project }: { project: Project }) {
     };
   }, [loaded, config, sections, clientName, businessType, projectType, buildDone, stagePlanner]);
 
+  const TAB_IDS: TabId[] = ["analysis", "explainer", "checklist", "build"];
+  const bank = config?.question_bank.sections ?? [];
+  const totalQuestions = bank.reduce((n, s) => n + s.questions.length, 0);
+  const answeredQuestions = bank.reduce(
+    (n, s) => n + s.questions.filter((q) => isAnswered(getAnswer(state, s.name, q.id))).length,
+    0,
+  );
   const header = (
     <PageHeader
       eyebrow="STEP 1 / DISCOVER"
       breadcrumb={`${clientName.trim() || project.client_name || project.name}  /  ${me.workspace_name}`}
       title="Discovery Call Assistant"
-      description="Type notes live during the discovery call — shorthand is fine, blanks are fine."
+      meta={
+        <>
+          <span className="status-chip status-chip-success">
+            Step {TAB_IDS.indexOf(tab) + 1} of {TAB_IDS.length}
+          </span>
+          {totalQuestions > 0 && (
+            <span className="status-chip">
+              {answeredQuestions} of {totalQuestions} answered
+            </span>
+          )}
+        </>
+      }
     />
   );
 
@@ -179,7 +199,7 @@ export function DiscoveryWorkspace({ project }: { project: Project }) {
               Client&apos;s website
               {websiteHref(state.clientWebsite) && (
                 <a className="btn-link website-open" href={websiteHref(state.clientWebsite)} target="_blank" rel="noopener noreferrer">
-                  Open ↗
+                  Open <Glyph name="external-link" size={12} />
                 </a>
               )}
             </span>
@@ -192,9 +212,17 @@ export function DiscoveryWorkspace({ project }: { project: Project }) {
               value={state.clientWebsite}
               onChange={(e) => update({ clientWebsite: e.target.value })}
             />
-            <span className="t-caption">Read when you generate the business analysis — for a client snapshot, advantages and upsell ideas.</span>
           </label>
         </div>
+
+        <IndustryTemplatePicker
+          apply={async (industry, size) => {
+            const result = await applyIndustryDiscoveryTemplate(industry, size, toDiscoveryNotes(state));
+            if (!result.filled) return "Nothing to fill: those questions are already answered.";
+            update({ businessType: result.notes.business_type, sections: normalizeSections(result.notes.sections) });
+            return `Pre-filled ${result.filled} unanswered question${result.filled === 1 ? "" : "s"}. Confirm each one on the call.`;
+          }}
+        />
 
         <Tabs<TabId>
           label="Discovery Call Assistant"

@@ -9,7 +9,8 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 
-import { spring } from "../ui";
+import { Glyph } from "@/components/icons";
+import { dropdown, tween } from "@/lib/motion";
 
 export type Cell = string | boolean;
 export type Row = Record<string, Cell>;
@@ -79,10 +80,10 @@ export function EditableTable({
               className="etable-row"
               role="row"
               style={{ gridTemplateColumns: template, minWidth }}
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={spring}
+              variants={dropdown}
+              initial="hidden"
+              animate="visible"
+              exit={{ opacity: 0, height: 0, transition: tween.fast }}
             >
               {columns.map((c) => (
                 <span key={c.key} role="cell" className="etable-cell">
@@ -96,7 +97,7 @@ export function EditableTable({
                 title="Remove row"
                 onClick={() => onChange(rows.filter((_, i) => i !== index))}
               >
-                ×
+                <Glyph name="x" size={14} />
               </button>
             </motion.div>
           ))}
