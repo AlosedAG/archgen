@@ -36,7 +36,7 @@ from ..persistence.models import (
     Workspace,
 )
 from ..persistence.security import hash_password
-from .auth import Principal, start_session
+from .auth import Principal, clear_failed_sign_ins, start_session
 from .errors import Conflict, InvalidCode, TooManyRequests, WeakPassword
 
 CODE_TTL = timedelta(minutes=15)
@@ -241,6 +241,7 @@ def confirm_reset(
     if user is None:
         raise InvalidCode("That code has expired. Ask for a new one.")
     user.password_hash = hash_password(password)
+    clear_failed_sign_ins(user.email)
     db.execute(delete(AuthSession).where(AuthSession.user_id == user.id))
     db.delete(record)
     db.flush()

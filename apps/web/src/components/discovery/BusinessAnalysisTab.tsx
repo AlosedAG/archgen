@@ -26,7 +26,11 @@ import { DocumentResult } from "./DocumentResult";
 import { QuestionBlock, type QuestionContext } from "./QuestionCard";
 import { RequiredTasksPanel, RequiredTasksSnapshot } from "./RequiredTasks";
 import { StreamErrorCallout } from "./StreamErrorCallout";
+import { ModelPicker, useAiModel } from "./ModelPicker";
 import { useDocumentStream } from "./useDocumentStream";
+
+/** The business analysis always has these 12 sections (see the system prompt), so progress can count them. */
+const BUSINESS_ANALYSIS_SECTIONS = 12;
 
 export function BusinessAnalysisTab({
   config,
@@ -56,6 +60,7 @@ export function BusinessAnalysisTab({
 
   const onDone = useCallback((text: string) => update({ baOutput: text }), [update]);
   const stream = useDocumentStream("business-analysis", onDone);
+  const ai = useAiModel();
 
   const flagged = sections.flatMap((section) =>
     [...section.questions, ...revealed.filter((f) => f.home_section === section.name)]
@@ -163,18 +168,28 @@ export function BusinessAnalysisTab({
             className={stream.streaming ? "btn btn-primary btn-busy" : "btn btn-primary"}
             disabled={!hasAnyNotes(state) || stream.streaming}
             whileTap={{ scale: 0.97 }}
-            onClick={() => stream.start(toDiscoveryNotes(state))}
+            onClick={() => stream.start(toDiscoveryNotes(state), ai.model)}
           >
             {!stream.streaming && <Icon name="sparkles" />}
             {stream.streaming ? "Generating…" : state.baOutput ? "Regenerate business analysis" : "Generate business analysis"}
           </motion.button>
+          <ModelPicker models={ai.models} value={ai.model} onChange={ai.setModel} disabled={stream.streaming} />
           <p className="t-caption">
             {hasAnyNotes(state)
               ? "Uses captured answers and notes. Review the draft before sharing."
               : "Capture at least one answer or note to enable generating."}
           </p>
         </div>
-        {stream.error && <StreamErrorCallout error={stream.error} />}
+        {stream.error && (
+          <StreamErrorCallout
+            error={stream.error}
+            lighter={ai.lightest}
+            onRetryWith={(id) => {
+              ai.setModel(id);
+              void stream.start(toDiscoveryNotes(state), id);
+            }}
+          />
+        )}
       </div>
 
       <DocumentResult
@@ -189,6 +204,7 @@ export function BusinessAnalysisTab({
         fileSuffix="discovery_business_analysis"
         projectId={store.projectId}
         documentType="Discovery Business Analysis"
+        progress={{ sections: BUSINESS_ANALYSIS_SECTIONS, startedAt: stream.startedAt, status: stream.status }}
       />
 
       <BackupAccordion store={store} />

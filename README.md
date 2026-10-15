@@ -785,7 +785,10 @@ the session cookie is first-party and no CORS is involved.
   only a SHA-256 of its token is stored, and signing out kills it.
   Every `/api/v1` route requires a session. Admins can also create
   accounts with `python -m archscope_api.cli create-user`; `set-password`
-  resets one.
+  resets one. After 5 wrong passwords for one email within 15 minutes,
+  sign-in for that email is refused (HTTP 429) until the window passes or
+  the password is reset; unknown emails take as long to reject as known
+  ones, so timing doesn't reveal who has an account.
 - **Self sign-up:** "Create an account" on the sign-in page asks for name,
   email and password (at least 10 characters), then emails a 6-digit code;
   the account exists only once the code is confirmed. Codes are stored as
@@ -795,13 +798,25 @@ the session cookie is first-party and no CORS is involved.
   workspace whose sign-up domains match their email
   (`python -m archscope_api.cli signup-domains --workspace "<name>" sonamation.com`),
   otherwise gets a workspace of their own as its owner. Turn sign-up off
-  with `ARCHSCOPE_SIGNUP_ENABLED=false`.
+  with `ARCHSCOPE_SIGNUP_ENABLED=false`, or limit who may sign up at all
+  with `ARCHSCOPE_SIGNUP_ALLOWED_DOMAINS=sonamation.com` (comma-separated;
+  empty = any domain; other emails get HTTP 403).
 - **Email:** set `ARCHSCOPE_SMTP_HOST`, `_PORT` (587), `_USERNAME`,
   `_PASSWORD`, `ARCHSCOPE_SMTP_SECURITY` (`starttls` / `ssl` / `none`) and
   `ARCHSCOPE_MAIL_FROM`; the legacy `FEEDBACK_SMTP_*` / `FEEDBACK_FROM`
   variables work too. Without SMTP, local and test environments write each
   email to `var/outbox/` (and log the code) instead of sending it; staging
   and production turn sign-up off until SMTP is configured.
+- **Feedback button:** every signed-in page has a Feedback button (Bug /
+  Idea / Question, with screenshots) that emails the report — with the
+  sender, page and project — to `ARCHSCOPE_FEEDBACK_TO` (or the legacy
+  `FEEDBACK_TO`; default `aylin@sonamation.com`) over the SMTP settings
+  above. Replies go straight to the sender.
+- **Projects:** each project has an optional folder (to group projects,
+  e.g. per client), a person in charge (any workspace member) and its last
+  editor (recorded on every save). The Projects page searches and filters
+  by them; the person in charge, the creator and admins can delete a
+  project (with its saved work and library files).
 - **Tenancy:** users belong to workspaces with a role (owner / admin /
   member); projects, documents and credentials are scoped to the
   workspace.
@@ -811,11 +826,15 @@ the session cookie is first-party and no CORS is involved.
 - **Storage:** SQLAlchemy 2.0 + Alembic migrations
   (`src/archscope_api/migrations`; `python -m archscope_api.cli migrate`).
   SQLite locally and in tests, PostgreSQL in staging / production. Saved
-  documents' bytes go to a blob store (a directory today, `ARCHSCOPE_BLOB_DIR`).
+  documents' bytes go to a blob store: a directory by default
+  (`ARCHSCOPE_BLOB_DIR`), or the database itself (`stored_files` table) with
+  `ARCHSCOPE_BLOB_STORE=database` — use that on hosts whose disk is wiped on
+  restart, such as Cloud Run.
 - **Environment** (prefix `ARCHSCOPE_`): `DATABASE_URL`
   (`postgresql+psycopg://…` in production), `SECRET_KEY` (required outside
-  local/test — `python -m archscope_api.cli secret-key`), `BLOB_DIR`,
-  `SESSION_DAYS`, `ENVIRONMENT`.
+  local/test — `python -m archscope_api.cli secret-key`; never change it
+  once set, or saved credentials can't be decrypted), `BLOB_STORE`,
+  `BLOB_DIR`, `SIGNUP_ALLOWED_DOMAINS`, `SESSION_DAYS`, `ENVIRONMENT`.
 
 **Golden parity.** `packages/domain/tests/golden/` pins every domain output
 (structured results, and the extracted text of every .docx/.xlsx/.pdf) to
@@ -840,11 +859,62 @@ environment — discovery drafting uses Google Gemini instead of Claude; remove
 the key to switch back. Get a free key at https://aistudio.google.com/apikey.
 Models are tried most accurate first, each with its own free quota:
 `gemini-3.8-flash` (the strongest model on the free tier — Gemini 3.1 Pro
-isn't free), then `gemini-2.5-pro`, then `gemini-3.6-flash`. A model whose
-free quota is used up (or that the key can't use) is skipped before any text
-streams, so one document always comes from one model. Override the list with
+isn't free), `gemini-3-flash-preview`, `gemini-3.6-flash`, then the lighter
+`gemini-3.1-flash-lite` and `gemini-3.5-flash-lite`. A model whose free quota
+is used up (or that the key can't use) is skipped before any text streams, so
+one document always comes from one model; a busy model (503) is retried once
+after 3 seconds first. The model menu next to each Generate button picks the
+first model to try. Override the list with
 `GEMINI_MODELS` (comma-separated). Free quotas reset at midnight Pacific. HubSpot calls use the workspace's stored token; an
 `X-HubSpot-Token` request header overrides it for scripts.
+
+### Free test deployment (Render + Neon)
+
+For a trial without a billing account, [`render.yaml`](render.yaml) runs
+the same two containers on Render's free tier, with the database on Neon.
+Step by step: [`deploy/RENDER.md`](deploy/RENDER.md). The free services
+sleep when idle and can't send email, so accounts are created from the
+laptop.
+
+### Deploying (Google Cloud Run + Neon PostgreSQL)
+
+The step-by-step guide (accounts, commands, costs, troubleshooting) is the
+"ArchitectureScope Deployment Guide" PDF. The pieces it uses:
+
+- [`deploy/`](deploy/) holds the scripts the guide runs from PowerShell:
+  `setup-project.ps1` (once: turns on the Google services and lets Cloud
+  Run build the app and read its secrets), `deploy-api.ps1` and
+  `deploy-web.ps1` (first deploy and every update; `deploy-web.ps1` writes
+  `apps/web/.env.production` from the deployed API's address the first time).
+- [`deploy/cloudrun-api.env.yaml`](deploy/cloudrun-api.env.yaml) is the
+  config file for the API's non-secret Cloud Run settings (production mode,
+  database file storage, sign-up domain, Feedback address, Gmail sender).
+  `deploy-api.ps1` sends the whole file on every deploy, so change settings
+  there rather than in the Cloud Run console. Email turns on when the
+  `archscope-smtp-password` secret exists.
+
+- [`Dockerfile`](Dockerfile) (repo root) builds the API image from
+  `pyproject.toml`, `uv.lock`, `packages/` and `apps/api/`. It runs
+  migrations on start, then uvicorn on `$PORT`, with
+  `ARCHSCOPE_ENVIRONMENT=production` and `ARCHSCOPE_BLOB_STORE=database`.
+  [`.gcloudignore`](.gcloudignore) / [`.dockerignore`](.dockerignore) keep
+  `.env`, `.streamlit/secrets.toml`, `var/`, `project_library/` and the
+  legacy app out of the upload.
+- [`apps/web/Dockerfile`](apps/web/Dockerfile) builds the Next.js app as a
+  standalone server (`output: "standalone"` in `next.config.ts`). The API's
+  public address is read at build time from `apps/web/.env.production`
+  (`API_URL=https://…`), which you create before deploying; the build stops
+  if it's missing.
+- `next.config.ts` also sends security headers on every page (no framing,
+  `nosniff`, a same-origin Content-Security-Policy), lets uploads up to
+  26 MB through the `/api` proxy (the API's library limit is 25 MB), and
+  waits up to 5 minutes for a slow API answer (the proxy's default is 30 s).
+- Production API settings: `ARCHSCOPE_DATABASE_URL`
+  (`postgresql+psycopg://…?sslmode=require`) and `ARCHSCOPE_SECRET_KEY` from
+  Secret Manager; optional SMTP (`ARCHSCOPE_SMTP_*`, for sign-up codes,
+  password resets and the Feedback button) and
+  `ARCHSCOPE_SIGNUP_ALLOWED_DOMAINS`. `CORS_ORIGINS` and `WEB_URL` aren't
+  needed: the browser only talks to the web app, which proxies `/api`.
 
 ## Known limitations (MVP scope)
 

@@ -11,6 +11,7 @@ export const QUICK_START: string[] = [
   "An admin adds the workspace's HubSpot private app token (read-only scopes) and an AI key (Gemini or Anthropic) under Setup & API keys — once, for everyone.",
   "Open the project and work left to right through the five steps in the sidebar. Every page saves to the project as you go; there is no Save button.",
   "Anything you export can also be filed in the project's library with “Save to Project Library”.",
+  "Found a bug or have an idea? Use the Feedback button (bottom right of every page) — attach screenshots with + or paste them.",
 ];
 
 export const PROCESS: { step: string; text: string }[] = [
@@ -27,7 +28,11 @@ export const GUIDE_PAGES: GuidePage[] = [
     title: "Projects",
     step: "Start here",
     summary: "Each client engagement is a project; everything you write is saved to it.",
-    steps: ["Create a project per client engagement, then open it to work on its discovery call and documents."],
+    steps: [
+      "Create a project per client engagement, optionally in a folder (e.g. one folder per client), then open it.",
+      "Search by name, client, folder or person, or filter by folder and by who is in charge.",
+      "Each card shows who is in charge and who edited it last. Edit changes the name, client, folder or person in charge; Delete (for the person in charge, the creator or an admin) removes the project and its saved documents after a confirmation.",
+    ],
   },
   {
     key: "settings",
@@ -48,6 +53,7 @@ export const GUIDE_PAGES: GuidePage[] = [
       "Answer under Goals, Data, Processes and Solutions Design in any order — blanks become follow-up questions, never guesses.",
       "Some answers reveal follow-ups under them and add required tasks; tick tasks off as they're covered.",
       "After the call, generate the business analysis, then the client explainer, checklist and build order.",
+      "Drafting takes a minute or two; the progress bar shows which section is being written. If the AI service is busy, the app retries and switches model automatically — or pick a model yourself in the “AI model” menu next to Generate.",
     ],
   },
   {
@@ -135,6 +141,8 @@ export const GUIDE_PAGES: GuidePage[] = [
     step: "Step 4 · Propose",
     summary: "A proposal and Statement of Work: technical, scope, management and cost.",
     steps: [
+      "New proposal for a client like one you've done before? Use “Start from a template” at the top — your team's saved proposals keep everything except the client's details.",
+      "Finished a good one? “Save as template” makes it available to everyone in the workspace for similar clients.",
       "Import the Requirements Document and Joint Evaluation Plan in Setup — imports only fill blanks and append rows.",
       "Put every scope item in exactly one bucket; the coverage table shows requirements no scope item addresses.",
       "Review & generate checks for gaps before you download the PDF.",

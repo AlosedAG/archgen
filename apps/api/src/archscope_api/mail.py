@@ -18,10 +18,19 @@ log = logging.getLogger("archscope_api.mail")
 
 
 @dataclass(frozen=True)
+class Attachment:
+    filename: str
+    content_type: str  # e.g. "image/png"
+    data: bytes
+
+
+@dataclass(frozen=True)
 class Message:
     to: str
     subject: str
     text: str
+    attachments: tuple[Attachment, ...] = ()
+    reply_to: str | None = None
 
 
 class Mailer(Protocol):
@@ -38,7 +47,17 @@ class SmtpMailer:
         email["From"] = f"ArchitectureScope <{self.sender}>"
         email["To"] = message.to
         email["Subject"] = message.subject
+        if message.reply_to:
+            email["Reply-To"] = message.reply_to
         email.set_content(message.text)
+        for attachment in message.attachments:
+            maintype, _, subtype = attachment.content_type.partition("/")
+            email.add_attachment(
+                attachment.data,
+                maintype=maintype or "application",
+                subtype=subtype or "octet-stream",
+                filename=attachment.filename,
+            )
         context = ssl.create_default_context()
         if self.security == "ssl":
             with smtplib.SMTP_SSL(self.host, self.port, context=context, timeout=20) as smtp:
@@ -69,4 +88,7 @@ class OutboxMailer:
         (self.directory / f"{stamp}_{safe_to}.txt").write_text(
             f"To: {message.to}\nSubject: {message.subject}\n\n{message.text}\n", encoding="utf-8"
         )
+        for i, attachment in enumerate(message.attachments, 1):
+            safe_name = "".join(c if c.isalnum() or c in "._-" else "_" for c in attachment.filename)[:80]
+            (self.directory / f"{stamp}_{safe_to}_{i}_{safe_name}").write_bytes(attachment.data)
         log.warning("Email (outbox, not sent) to %s — %s\n%s", message.to, message.subject, message.text)

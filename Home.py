@@ -114,7 +114,7 @@ for _key in [k for k in st.session_state.keys() if str(k).startswith("disc_")]:
 _guide = page_guide(pg.title)
 if _guide:
     with st.sidebar:
-        with st.expander("📖 Guide for this page"):
+        with st.expander("Guide for this page"):
             st.markdown(_guide)
             st.page_link(user_guide, label="Open the full user guide")
 

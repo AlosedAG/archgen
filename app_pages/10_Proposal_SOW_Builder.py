@@ -242,7 +242,7 @@ with tab_tech:
     st.markdown("**1.2 Objectives**")
     proposal["objectives"] = _table("objectives", column_config={"Objective": _WIDE})
     st.markdown("**1.3 Requirements**")
-    st.caption("IDs (R-01, R-02...) are assigned automatically if left blank; scope items cite them in the Scope tab.")
+    st.caption("IDs (R-1, R-2...) are assigned automatically if left blank; scope items cite them in the Scope tab.")
     proposal["requirements"] = _table(
         "requirements",
         column_config={
@@ -308,8 +308,8 @@ with tab_scope:
 
     st.markdown("**Scope items**")
     st.caption(
-        "IDs (S-01, S-02...) are assigned automatically. 'Req. ID' links an item to the requirements it "
-        "satisfies (comma-separated, e.g. R-01, R-03)."
+        "IDs (S-1, S-2...) are assigned automatically. 'Req. ID' links an item to the requirements it "
+        "satisfies (comma-separated, e.g. R-1, R-3)."
     )
     proposal["scope"] = _table(
         "scope",

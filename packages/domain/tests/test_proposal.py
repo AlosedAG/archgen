@@ -59,8 +59,8 @@ def test_scope_by_status_numbers_items_and_drops_blank_rows():
     p = default_proposal()
     p["scope"] = [_scope("Workflows"), _scope(""), _scope("Migration", SCOPE_OUT), _scope("Access", SCOPE_CLIENT, ID="S-09")]
     groups = scope_by_status(p)
-    assert [i["ID"] for i in groups[SCOPE_IN]] == ["S-01"]
-    assert [i["ID"] for i in groups[SCOPE_OUT]] == ["S-02"]
+    assert [i["ID"] for i in groups[SCOPE_IN]] == ["S-1"]
+    assert [i["ID"] for i in groups[SCOPE_OUT]] == ["S-2"]
     assert [i["ID"] for i in groups[SCOPE_CLIENT]] == ["S-09"]
     assert groups[SCOPE_OPTIONAL] == []
 
@@ -103,7 +103,7 @@ def test_scope_from_requirements_only_drafts_uncovered_ones():
     p["scope"] = [_scope("Integration", **{"Req. ID": "R-01"})]
     drafted = scope_from_requirements(p)
     assert [s["Item"] for s in drafted["scope"]] == ["Integration", "Renewals pipeline"]
-    assert drafted["scope"][1]["Req. ID"] == "R-02"
+    assert drafted["scope"][1]["Req. ID"] == "R-2"
     assert all(r["Coverage"] == "Covered" for r in requirement_coverage(drafted))
 
 
@@ -155,8 +155,8 @@ def test_import_from_wrd_fills_blanks_and_appends_rows():
     assert merged["problem_statement"] == "Already written"  # never overwritten
     assert [o["Objective"] for o in merged["objectives"]] == ["One source of truth"]
     assert [(r["ID"], r["Requirement"]) for r in merged["requirements"]] == [
-        ("R-01", "Sync contacts nightly"),
-        ("R-02", "Log SMS"),
+        ("R-1", "Sync contacts nightly"),
+        ("R-2", "Log SMS"),
     ]
     assert merged["glossary"] == [{"Term": "Member", "Definition": "Paying customer"}]
     assert merged["risks"][0]["Risk"] == "Risk: Dirty data"
@@ -177,9 +177,20 @@ def test_import_from_jep_maps_team_needs_and_contact():
     merged = import_from_jep(default_proposal(), jep, prospect_name="Acme")
     assert merged["client"]["company"] == "Acme"
     assert merged["seller"]["contact"] == "Aylin"
-    assert merged["team"] == [
-        {"Side": "Client", "Role": "Sponsor", "Name": "Jane", "Email": "j@acme.com", "Responsibilities": ""}
+    # SonaMation's default roles stay; the client's people are added after them.
+    assert [r["Role"] for r in merged["team"]] == [
+        "Executive Sponsor",
+        "Team Lead of Client Delivery",
+        "Onboarding Lead",
+        "Sponsor",
     ]
+    assert merged["team"][-1] == {
+        "Side": "Client",
+        "Role": "Sponsor",
+        "Name": "Jane",
+        "Email": "j@acme.com",
+        "Responsibilities": "",
+    }
     assert [(r["Requirement"], r["Priority"]) for r in merged["requirements"]] == [
         ("ERP sync", "Must Have"),
         ("Forecasting", "To Confirm"),
@@ -272,3 +283,59 @@ def test_pdf_has_no_blank_page_after_contents():
             if not line.startswith(("SonaMation", "Page ", "Confidential", "Proposal"))
         ]
         assert body, f"page {number} is blank"
+
+
+def test_new_ids_continue_after_existing_ones_and_old_style_ids_still_match():
+    rows = [{"ID": ""}, {"ID": "R-02"}, {"ID": ""}, {"ID": "S-1"}]
+    from archscope_domain.proposal import number_requirements
+
+    assert [r["ID"] for r in number_requirements(rows)] == ["R-1", "R-02", "R-3", "S-1"]
+    p = default_proposal()
+    p["requirements"] = [{"ID": "R-1", "Requirement": "Sync contacts", "Priority": "", "Source": ""}]
+    p["scope"] = [_scope("Integration", **{"Req. ID": "r-01"})]
+    assert requirement_coverage(p)[0]["Coverage"] == "Covered"
+
+
+def test_default_team_lists_sonamation_roles_with_descriptions():
+    team = default_proposal()["team"]
+    assert [r["Role"] for r in team if r["Side"] == "SonaMation"] == [
+        "Executive Sponsor",
+        "Team Lead of Client Delivery",
+        "Onboarding Lead",
+    ]
+    assert all(r["Responsibilities"] for r in team if r["Side"] == "SonaMation")
+
+
+def test_saved_template_keeps_the_work_and_clears_the_client():
+    from archscope_domain.proposal import apply_saved_template, as_saved_template
+
+    p = default_proposal()
+    p["client"] = {"company": "Acme", "contact": "Jane", "address": "1 Main St", "phone": "555", "email": "j@acme.com"}
+    p["reference_number"] = "SOW-7"
+    p["issue_date"] = "2026-10-01"
+    p["title"] = "HubSpot Implementation"
+    p["requirements"] = [{"ID": "R-1", "Requirement": "Sync contacts", "Priority": "Must Have", "Source": ""}]
+    p["scope"] = [_scope("Workflows")]
+    p["team"].append({"Side": "Client", "Role": "Sponsor", "Name": "Jane", "Email": "j@acme.com", "Responsibilities": "Approves"})
+    p["milestones"][0]["Fee"] = 5000.0
+
+    t = as_saved_template(p)
+    assert t["client"]["company"] == ""
+    assert t["client"]["email"] == ""
+    assert t["reference_number"] == ""
+    assert t["issue_date"] == ""
+    assert t["title"] == "HubSpot Implementation"
+    assert t["requirements"][0]["Requirement"] == "Sync contacts"
+    assert t["scope"][0]["Item"] == "Workflows"
+    assert t["milestones"][0]["Fee"] == 5000.0
+    client_rows = [r for r in t["team"] if r["Side"] == "Client" and r["Role"] == "Sponsor"]
+    assert client_rows == [{"Side": "Client", "Role": "Sponsor", "Name": "", "Email": "", "Responsibilities": "Approves"}]
+    assert p["client"]["company"] == "Acme"  # input not mutated
+
+    current = default_proposal()
+    current["client"]["company"] = "Bright Smiles"
+    current["valid_until"] = "2026-12-31"
+    started = apply_saved_template(t, current)
+    assert started["client"]["company"] == "Bright Smiles"
+    assert started["valid_until"] == "2026-12-31"
+    assert started["scope"][0]["Item"] == "Workflows"

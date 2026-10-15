@@ -16,6 +16,7 @@ import { TokenSelect } from "@/components/discovery/QuestionCard";
 import { DataTable } from "@/components/project/DataTable";
 import { EditableTable } from "@/components/project/EditableTable";
 import { ProjectHeader } from "@/components/project/ProjectHeader";
+import { ProposalTemplatesBar } from "@/components/project/ProposalTemplatesBar";
 import { SaveBanner } from "@/components/project/SaveBanner";
 import { Stats } from "@/components/project/Stats";
 import { normalizeDocument } from "@/components/project/TableDocument";
@@ -43,7 +44,7 @@ import {
 } from "@/lib/api";
 import { JOINT_EVALUATION_PLAN, REQUIREMENTS_DOCUMENT } from "@/lib/documents";
 import { useModuleState, type ModuleStore } from "@/lib/module-state";
-import { CURRENCIES, DOCUMENT_TYPES, fromRows, money, OPTIONAL_SECTIONS, SCOPE_HINTS, SCOPE_STATUSES, TABLES, toRows, type TableField } from "@/lib/proposal";
+import { assignIds, CURRENCIES, DOCUMENT_TYPES, fromRows, money, OPTIONAL_SECTIONS, SCOPE_HINTS, SCOPE_STATUSES, TABLES, toRows, type TableField } from "@/lib/proposal";
 
 type ProposalState = { doc: ProposalDocument | null };
 const normalizeProposal = (raw: unknown): ProposalState => ({ doc: ((raw as ProposalState | null)?.doc ?? null) as ProposalDocument | null });
@@ -105,8 +106,8 @@ function Table({ doc, set, field, title, caption, addLabel }: Props & { field: T
       {caption && <span className="t-caption">{caption}</span>}
       <EditableTable
         columns={TABLES[field]}
-        rows={toRows(doc, field)}
-        onChange={(rows) => set({ [field]: fromRows(field, rows) } as Partial<ProposalDocument>)}
+        rows={assignIds(field, toRows(doc, field))}
+        onChange={(rows) => set({ [field]: fromRows(field, assignIds(field, rows)) } as Partial<ProposalDocument>)}
         label={title}
         addLabel={addLabel}
       />
@@ -339,7 +340,7 @@ function ScopeTab({ doc, set, analysis, apply, busy }: Props & { analysis: Propo
         set={set}
         field="scope"
         title="Scope items"
-        caption="IDs (S-01, S-02…) are assigned automatically. 'Req. ID' links an item to the requirements it satisfies (comma-separated, e.g. R-01, R-03)."
+        caption="Each new row gets the next ID (S-1, S-2…) automatically. 'Req. ID' links an item to the requirements it satisfies (comma-separated, e.g. R-1, R-3)."
         addLabel="+ Add scope item"
       />
 
@@ -457,6 +458,11 @@ function Builder({ project, store }: { project: Project; store: Store }) {
 
   return (
     <>
+      <ProposalTemplatesBar
+        doc={doc}
+        defaultName={clientName ? `${clientName} — ${doc.document_type || "Proposal"}` : ""}
+        onApplied={(next) => replace({ doc: next })}
+      />
       <Tabs<TabId>
         label="Proposal & SOW Builder"
         layoutId="proposal-tabs"
@@ -492,7 +498,7 @@ function Builder({ project, store }: { project: Project; store: Store }) {
             <Text {...props} field="problem_statement" label="1.1 Understanding of the problem" rows={5} help="Start lines with '- ' for bullets in the PDF." />
             <Text {...props} field="current_state" label="Current state (optional)" rows={3} />
             <Table {...props} field="objectives" title="1.2 Objectives" addLabel="+ Add objective" />
-            <Table {...props} field="requirements" title="1.3 Requirements" caption="IDs (R-01, R-02…) are assigned automatically if left blank; scope items cite them in the Scope tab." addLabel="+ Add requirement" />
+            <Table {...props} field="requirements" title="1.3 Requirements" caption="Each new row gets the next ID (R-1, R-2…) automatically; scope items cite them in the Scope tab." addLabel="+ Add requirement" />
             <Text {...props} field="solution_overview" label="1.4 Proposed solution" rows={6} help="How the requirements will be met. Start lines with '- ' for bullets." />
             <Table {...props} field="methodology" title="1.5 Methodology" addLabel="+ Add phase" />
             <Table {...props} field="tools" title="1.6 Tools & platforms" addLabel="+ Add tool" />

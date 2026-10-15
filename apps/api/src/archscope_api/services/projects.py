@@ -8,13 +8,13 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from ..persistence.blobs import BlobStore
-from ..persistence.models import Document, Project, ProjectState, new_id
+from ..persistence.models import Document, Membership, Project, ProjectState, User, new_id
 from .auth import Principal
-from .errors import Conflict, NotFound, VersionConflict
+from .errors import Conflict, Forbidden, NotFound, VersionConflict
 
 # Modules whose working state is stored per project (the web pages that use it).
 MODULES = (
@@ -34,9 +34,54 @@ MAX_DOCUMENT_BYTES = 25 * 1024 * 1024
 
 
 @dataclass(frozen=True)
+class Person:
+    """A workspace member as shown on a project (in charge / last edited by)."""
+
+    id: str
+    name: str
+    email: str
+
+
+@dataclass(frozen=True)
 class ProjectSummary:
     project: Project
     document_count: int
+    lead: Person | None = None
+    last_edited_by: Person | None = None
+
+
+def _people(db: Session, ids: set[str | None]) -> dict[str, Person]:
+    wanted = {i for i in ids if i}
+    if not wanted:
+        return {}
+    return {u.id: Person(u.id, u.name or u.email, u.email) for u in db.scalars(select(User).where(User.id.in_(wanted)))}
+
+
+def summarize(db: Session, project: Project, document_count: int) -> ProjectSummary:
+    """One project with its document count and the people shown on it."""
+    people = _people(db, {project.lead_user_id, project.updated_by})
+    return ProjectSummary(project, document_count, people.get(project.lead_user_id or ""), people.get(project.updated_by or ""))
+
+
+def _touch(project: Project, principal: Principal) -> None:
+    """Record that ``principal`` just changed something in the project."""
+    project.updated_at = datetime.now(UTC)
+    project.updated_by = principal.user_id
+
+
+def list_members(db: Session, principal: Principal) -> list[tuple[Person, str]]:
+    """Everyone in the caller's workspace, with their role, by name."""
+    rows = db.execute(
+        select(User, Membership.role)
+        .join(Membership, Membership.user_id == User.id)
+        .where(Membership.workspace_id == principal.workspace_id)
+    ).all()
+    return sorted(((Person(u.id, u.name or u.email, u.email), role) for u, role in rows), key=lambda r: r[0].name.lower())
+
+
+def _check_member(db: Session, principal: Principal, user_id: str) -> None:
+    if db.get(Membership, (user_id, principal.workspace_id)) is None:
+        raise NotFound("That person isn't in your workspace.")
 
 
 def _get(db: Session, principal: Principal, project_id: str) -> Project:
@@ -56,7 +101,9 @@ def list_projects(db: Session, principal: Principal, *, include_archived: bool =
     )
     if not include_archived:
         query = query.where(Project.archived.is_(False))
-    return [ProjectSummary(project, int(n)) for project, n in db.execute(query).all()]
+    rows = db.execute(query).all()
+    people = _people(db, {p.lead_user_id for p, _ in rows} | {p.updated_by for p, _ in rows})
+    return [ProjectSummary(p, int(n), people.get(p.lead_user_id or ""), people.get(p.updated_by or "")) for p, n in rows]
 
 
 def _ensure_unique_name(db: Session, principal: Principal, name: str, *, exclude_id: str | None = None) -> None:
@@ -65,13 +112,21 @@ def _ensure_unique_name(db: Session, principal: Principal, name: str, *, exclude
         raise Conflict(f"A project named '{name}' already exists.")
 
 
-def create_project(db: Session, principal: Principal, *, name: str, client_name: str = "") -> Project:
+def create_project(
+    db: Session, principal: Principal, *, name: str, client_name: str = "", folder: str = "", lead_user_id: str | None = None
+) -> Project:
+    """A new project. The creator is in charge unless someone else is named."""
     _ensure_unique_name(db, principal, name.strip())
+    if lead_user_id:
+        _check_member(db, principal, lead_user_id)
     project = Project(
         workspace_id=principal.workspace_id,
         name=name.strip(),
         client_name=(client_name or name).strip(),
+        folder=folder.strip(),
         created_by=principal.user_id,
+        lead_user_id=lead_user_id or principal.user_id,
+        updated_by=principal.user_id,
     )
     db.add(project)
     db.flush()
@@ -89,6 +144,9 @@ def update_project(
     *,
     name: str | None = None,
     client_name: str | None = None,
+    folder: str | None = None,
+    lead_user_id: str | None = None,
+    clear_lead: bool = False,
     archived: bool | None = None,
 ) -> Project:
     project = _get(db, principal, project_id)
@@ -97,11 +155,33 @@ def update_project(
         project.name = name.strip()
     if client_name is not None:
         project.client_name = client_name.strip()
+    if folder is not None:
+        project.folder = folder.strip()
+    if lead_user_id:
+        _check_member(db, principal, lead_user_id)
+        project.lead_user_id = lead_user_id
+    elif clear_lead:
+        project.lead_user_id = None
     if archived is not None:
         project.archived = archived
-    project.updated_at = datetime.now(UTC)
+    _touch(project, principal)
     db.flush()
     return project
+
+
+def delete_project(db: Session, blobs: BlobStore, principal: Principal, project_id: str) -> None:
+    """Delete a project with all its saved work and library files. Allowed
+    for workspace owners/admins, the person in charge, and its creator."""
+    project = _get(db, principal, project_id)
+    if not (principal.is_admin or principal.user_id in (project.created_by, project.lead_user_id)):
+        raise Forbidden("Only the person in charge, the project's creator or a workspace admin can delete it.")
+    keys = list(db.scalars(select(Document.storage_key).where(Document.project_id == project_id)))
+    db.execute(delete(ProjectState).where(ProjectState.project_id == project_id))
+    db.execute(delete(Document).where(Document.project_id == project_id))
+    db.delete(project)
+    db.flush()
+    for key in keys:
+        blobs.delete(key)
 
 
 # ---- Module state ------------------------------------------------------------
@@ -138,7 +218,7 @@ def save_state(
         state.version = current + 1
         state.updated_at = now
         state.updated_by = principal.user_id
-    project.updated_at = now
+    _touch(project, principal)
     db.flush()
     return state
 
@@ -182,7 +262,7 @@ def save_document(
     )
     blobs.put(document.storage_key, content)
     db.add(document)
-    project.updated_at = datetime.now(UTC)
+    _touch(project, principal)
     db.flush()
     return document
 
@@ -198,10 +278,11 @@ def get_document(
 
 
 def delete_document(db: Session, blobs: BlobStore, principal: Principal, project_id: str, document_id: str) -> None:
-    _get(db, principal, project_id)
+    project = _get(db, principal, project_id)
     document = db.get(Document, document_id)
     if document is None or document.project_id != project_id:
         raise NotFound("No such document in this project.")
+    _touch(project, principal)
     db.delete(document)
     db.flush()
     blobs.delete(document.storage_key)

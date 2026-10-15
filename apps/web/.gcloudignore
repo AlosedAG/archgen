@@ -1,0 +1,7 @@
+# What `gcloud run deploy archscope-web --source apps/web` does NOT upload.
+# .env.production (the API's public address) IS uploaded — the build needs it.
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+.env*.local

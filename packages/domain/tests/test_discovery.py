@@ -216,3 +216,37 @@ def test_every_module_has_aliases():
     from archscope_domain.discovery import _MODULE_ALIASES
 
     assert set(_MODULE_ALIASES) == set(HUBSPOT_MODULES)
+
+
+def test_models_without_documented_thinking_levels_get_the_default():
+    client, calls = _fake_gemini([_gemini_chunk(("x", False), finish="STOP")])
+    list(stream_document_gemini(client, build_client_explainer_input(["Sales Hub"]), model="gemini-3.1-flash-lite"))
+    assert "thinking_config" not in calls[0]["config"]
+
+
+def test_default_models_avoid_the_limited_access_2_5_family():
+    from archscope_domain.discovery import DEFAULT_GEMINI_MODELS, GEMINI_MODEL_NOTES
+
+    assert DEFAULT_GEMINI_MODELS[0] == "gemini-3.8-flash"
+    assert not any(m.startswith("gemini-2") for m in DEFAULT_GEMINI_MODELS)
+    assert set(GEMINI_MODEL_NOTES) == set(DEFAULT_GEMINI_MODELS)
+
+
+def test_website_goes_into_the_payload_only_when_given():
+    plain = build_business_analysis_input(empty_notes(), client_name="Acme")
+    assert set(plain["client"]) == {"name", "business_type"}
+    with_site = build_business_analysis_input(
+        empty_notes(), client_name="Acme", client_website="https://acme.example", website_excerpt="Title: Acme Dental"
+    )
+    assert with_site["client"]["website"] == "https://acme.example"
+    assert with_site["client"]["website_excerpt"] == "Title: Acme Dental"
+
+
+def test_business_analysis_asks_for_the_relationship_sections():
+    for heading in (
+        "Client Snapshot",
+        "Gotchas to Raise with the Client",
+        "Potential Upsells & Expansion",
+        "How to Communicate with This Client",
+    ):
+        assert heading in SYSTEM_PROMPT

@@ -23,6 +23,18 @@ import { ChecklistTab } from "./ChecklistTab";
 import { ExplainerTab } from "./ExplainerTab";
 
 type TabId = "analysis" | "explainer" | "checklist" | "build";
+
+/** A safe link for the typed website ("acme.com" → "https://acme.com"), or "" if it isn't a web address. */
+function websiteHref(raw: string): string {
+  const value = raw.trim();
+  if (!value) return "";
+  try {
+    const url = new URL(/^https?:\/\//i.test(value) ? value : `https://${value}`);
+    return url.hostname.includes(".") ? url.href : "";
+  } catch {
+    return "";
+  }
+}
 const EVALUATE_DEBOUNCE_MS = 250;
 
 export function DiscoveryWorkspace({ project }: { project: Project }) {
@@ -54,6 +66,7 @@ export function DiscoveryWorkspace({ project }: { project: Project }) {
         {
           client_name: clientName,
           business_type: businessType,
+          client_website: "", // not used by the rules
           sections,
           project_type: projectType,
           done_build_items: buildDone,
@@ -141,7 +154,7 @@ export function DiscoveryWorkspace({ project }: { project: Project }) {
           </Callout>
         )}
 
-        <div className="grid-2">
+        <div className="grid-3" style={{ alignItems: "start" }}>
           <label className="field">
             <span className="field-label">Client / project name</span>
             <input
@@ -160,6 +173,26 @@ export function DiscoveryWorkspace({ project }: { project: Project }) {
               value={state.businessType}
               onChange={(e) => update({ businessType: e.target.value })}
             />
+          </label>
+          <label className="field">
+            <span className="field-label">
+              Client&apos;s website
+              {websiteHref(state.clientWebsite) && (
+                <a className="btn-link website-open" href={websiteHref(state.clientWebsite)} target="_blank" rel="noopener noreferrer">
+                  Open ↗
+                </a>
+              )}
+            </span>
+            <input
+              className="input"
+              type="url"
+              inputMode="url"
+              placeholder="e.g. brightsmiles.com"
+              title="The business analysis reads the homepage for a quick client snapshot, advantages and upsell ideas."
+              value={state.clientWebsite}
+              onChange={(e) => update({ clientWebsite: e.target.value })}
+            />
+            <span className="t-caption">Read when you generate the business analysis — for a client snapshot, advantages and upsell ideas.</span>
           </label>
         </div>
 

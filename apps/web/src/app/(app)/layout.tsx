@@ -1,7 +1,8 @@
 import { AppSessionProvider } from "@/components/AppSession";
+import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { Sidebar } from "@/components/Sidebar";
 
-/** Every signed-in page: the session guard, the sidebar, the workspace. */
+/** Every signed-in page: the session guard, the sidebar, the workspace, the Feedback button. */
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <AppSessionProvider
@@ -21,6 +22,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="shell">
         <Sidebar />
         <main className="workspace">{children}</main>
+        <FeedbackWidget />
       </div>
     </AppSessionProvider>
   );

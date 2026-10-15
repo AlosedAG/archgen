@@ -1,0 +1,48 @@
+# Free test deployment on Render (no billing needed), with the database on
+# Neon's free tier. Step by step: deploy/RENDER.md.
+#
+# Values marked `sync: false` are asked for when the Blueprint is created
+# (Render dashboard → New → Blueprint) and never stored in this file.
+
+services:
+  # The API (FastAPI). Built from the repository root's Dockerfile; applies
+  # database migrations on every start.
+  - type: web
+    name: archscope-api
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /healthz
+    envVars:
+      - key: ARCHSCOPE_ENVIRONMENT
+        value: production
+      # Library files go in the database: a free Render disk is wiped on restart.
+      - key: ARCHSCOPE_BLOB_STORE
+        value: database
+      - key: ARCHSCOPE_SIGNUP_ALLOWED_DOMAINS
+        value: sonamation.com
+      - key: ARCHSCOPE_FEEDBACK_TO
+        value: aylin@sonamation.com
+      # Neon connection string, starting postgresql+psycopg:// (see deploy/RENDER.md).
+      - key: ARCHSCOPE_DATABASE_URL
+        sync: false
+      # From `python -m archscope_api.cli secret-key`. Keep a copy: changing it
+      # makes saved HubSpot / AI keys unreadable.
+      - key: ARCHSCOPE_SECRET_KEY
+        sync: false
+
+  # The web app (Next.js). It proxies /api/* to the API, so API_URL is the
+  # API's public address — baked in at build time.
+  - type: web
+    name: archscope-web
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./apps/web/Dockerfile
+    dockerContext: ./apps/web
+    envVars:
+      # e.g. https://archscope-api.onrender.com (no slash at the end).
+      - key: API_URL
+        sync: false

@@ -89,7 +89,7 @@ export const TABLES: Record<TableField, Column[]> = {
     { key: "item", label: "Item", kind: "textarea", width: wide },
     { key: "quantity_limit", label: "Quantity / limit", width: "150px" },
     { key: "acceptance_criteria", label: "Acceptance criteria", kind: "textarea", width: wide },
-    { key: "requirement_ids", label: "Req. ID", width: "100px", placeholder: "R-01, R-03" },
+    { key: "requirement_ids", label: "Req. ID", width: "100px", placeholder: "R-1, R-3" },
     { key: "milestone", label: "Milestone", width: "130px" },
     { key: "tools_techniques", label: "Tools / techniques", width: "160px" },
   ],
@@ -145,6 +145,32 @@ export const TABLES: Record<TableField, Column[]> = {
     { key: "hourly_rate", label: "Hourly rate", kind: "number", width: "140px" },
   ],
 };
+
+const ID_PREFIX: Partial<Record<TableField, string>> = { requirements: "R", scope: "S" };
+const ID_RE = /^\s*([A-Za-z]+)\s*-\s*0*(\d+)\s*$/;
+
+/**
+ * Give every requirement / scope row without an ID the next free R-N / S-N
+ * (after the numbers already used, so existing references never change) —
+ * the same rule the API uses when it numbers rows for the PDF.
+ */
+export function assignIds(field: TableField, rows: Row[]): Row[] {
+  const prefix = ID_PREFIX[field];
+  if (!prefix) return rows;
+  const used = new Set<number>();
+  for (const row of rows) {
+    const m = ID_RE.exec(String(row.id ?? ""));
+    if (m && m[1]?.toUpperCase() === prefix) used.add(Number(m[2]));
+  }
+  let n = 0;
+  return rows.map((row) => {
+    if (String(row.id ?? "").trim()) return row;
+    n += 1;
+    while (used.has(n)) n += 1;
+    used.add(n);
+    return { ...row, id: `${prefix}-${n}` };
+  });
+}
 
 /** Proposal rows → editable rows (numbers shown as text, missing cells blank). */
 export function toRows(doc: ProposalDocument, field: TableField): Row[] {

@@ -187,3 +187,33 @@ def test_migrations_create_exactly_the_models_schema(tmp_path: Path) -> None:
     with get_engine(url).connect() as connection:
         diff = compare_metadata(MigrationContext.configure(connection), Base.metadata)
     assert diff == [], diff
+
+
+def _blob_dir_exists(path: str) -> bool:
+    return Path(path).exists()
+
+
+async def test_library_files_can_live_in_the_database(settings: Settings, principal: Principal) -> None:
+    """ARCHSCOPE_BLOB_STORE=database (Cloud Run): bytes go to stored_files, not the disk."""
+    from archscope_api.persistence.models import StoredFile
+
+    in_db = settings.model_copy(update={"blob_store": "database", "blob_dir": str(Path(settings.blob_dir) / "unused")})
+    application = create_app(in_db)
+    application.dependency_overrides[get_settings] = lambda: in_db
+    application.dependency_overrides[current_principal] = lambda: principal
+    async with AsyncClient(transport=ASGITransport(app=application), base_url="http://test") as http:
+        pid = (await http.post("/api/v1/projects", json={"name": "Acme"})).json()["id"]
+        saved = await http.post(
+            f"/api/v1/projects/{pid}/documents",
+            params={"document_type": "Notes", "filename": "notes.txt"},
+            content=b"hello from the database",
+            headers={"Content-Type": "text/plain"},
+        )
+        doc_id = saved.json()["id"]
+        assert (await http.get(f"/api/v1/projects/{pid}/documents/{doc_id}")).content == b"hello from the database"
+        with session_scope(in_db.database_url) as db:
+            assert db.query(StoredFile).count() == 1
+        assert not _blob_dir_exists(in_db.blob_dir)
+        assert (await http.delete(f"/api/v1/projects/{pid}/documents/{doc_id}")).status_code == 204
+        with session_scope(in_db.database_url) as db:
+            assert db.query(StoredFile).count() == 0

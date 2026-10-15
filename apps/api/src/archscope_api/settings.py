@@ -34,6 +34,9 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./var/archscope.db"
     # Where saved documents' bytes live (a directory; swap for object storage later).
     blob_dir: str = "./var/blobs"
+    # "local" keeps library files in blob_dir; "database" keeps them in the
+    # database (use it on hosts whose disk is wiped on restart, e.g. Cloud Run).
+    blob_store: Literal["local", "database"] = "local"
     # Encrypts stored credentials (HubSpot token, AI keys). Required
     # outside local/test; generate with `python -m archscope_api.cli secret-key`.
     secret_key: SecretStr | None = None
@@ -51,6 +54,9 @@ class Settings(BaseSettings):
 
     # Self sign-up (email + password, confirmed with a code sent by email).
     signup_enabled: bool = True
+    # Only these email domains may create an account themselves
+    # (comma-separated, e.g. "sonamation.com"); empty = any domain.
+    signup_allowed_domains: str = ""
     # Outgoing email (verification codes). The legacy app's FEEDBACK_SMTP_*
     # variables are accepted too. Without SMTP, local/test environments write
     # emails to `outbox_dir` (and log the code); elsewhere sign-up is off.
@@ -66,6 +72,15 @@ class Settings(BaseSettings):
     smtp_security: str = "starttls"
     mail_from: str | None = Field(default=None, validation_alias=AliasChoices("ARCHSCOPE_MAIL_FROM", "FEEDBACK_FROM"))
     outbox_dir: str = "./var/outbox"
+    # Where the in-app Feedback button sends bug reports and ideas (the legacy
+    # app's FEEDBACK_TO works too). Uses the SMTP settings above.
+    feedback_to: str = Field(
+        default="aylin@sonamation.com", validation_alias=AliasChoices("ARCHSCOPE_FEEDBACK_TO", "FEEDBACK_TO")
+    )
+
+    @property
+    def signup_domains_allowed(self) -> list[str]:
+        return [d.strip().lower().lstrip("@") for d in self.signup_allowed_domains.split(",") if d.strip()]
 
     @property
     def docs_enabled(self) -> bool:

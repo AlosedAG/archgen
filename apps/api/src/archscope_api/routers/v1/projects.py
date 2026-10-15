@@ -1,4 +1,4 @@
-"""Client projects: list / create / rename / archive, each module's saved
+"""Client projects: list / create / edit / delete, each module's saved
 working state (versioned), and the project library of saved documents."""
 
 from __future__ import annotations
@@ -7,46 +7,76 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query, Request, Response
 
-from ...schemas.workspace import Document, ModuleState, ModuleStateSave, Project, ProjectCreate, ProjectUpdate
+from ...persistence.models import Project as ProjectRow
+from ...schemas.workspace import Document, ModuleState, ModuleStateSave, Person, Project, ProjectCreate, ProjectUpdate
 from ...services import projects
+from ...services.auth import Principal
 from ...services.errors import Conflict
 from ..deps import BlobStoreDep, DbDep, PrincipalDep, offload
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
 
-def _project(p: object, document_count: int = 0) -> Project:
+def _person(p: projects.Person | None) -> Person | None:
+    return Person(id=p.id, name=p.name, email=p.email) if p else None
+
+
+def _project(s: projects.ProjectSummary, principal: Principal) -> Project:
+    p = s.project
     return Project.model_validate(
         {
-            **{k: getattr(p, k) for k in ("id", "name", "client_name", "archived", "created_at", "updated_at")},
-            "document_count": document_count,
+            **{k: getattr(p, k) for k in ("id", "name", "client_name", "folder", "archived", "created_at", "updated_at")},
+            "document_count": s.document_count,
+            "lead": _person(s.lead),
+            "last_edited_by": _person(s.last_edited_by),
+            "can_delete": principal.is_admin or principal.user_id in (p.created_by, p.lead_user_id),
         }
     )
 
 
+def _one(db: DbDep, principal: Principal, project: ProjectRow) -> Project:
+    count = len(projects.list_documents(db, principal, project.id))
+    return _project(projects.summarize(db, project, count), principal)
+
+
 @router.get("", response_model=list[Project], summary="Projects in your workspace, most recently active first")
 def list_projects(principal: PrincipalDep, db: DbDep, include_archived: bool = False) -> list[Project]:
-    return [
-        _project(s.project, s.document_count) for s in projects.list_projects(db, principal, include_archived=include_archived)
-    ]
+    return [_project(s, principal) for s in projects.list_projects(db, principal, include_archived=include_archived)]
 
 
 @router.post("", response_model=Project, status_code=201, summary="Create a project")
 def create_project(body: ProjectCreate, principal: PrincipalDep, db: DbDep) -> Project:
-    return _project(projects.create_project(db, principal, name=body.name, client_name=body.client_name))
+    project = projects.create_project(
+        db, principal, name=body.name, client_name=body.client_name, folder=body.folder, lead_user_id=body.lead_user_id
+    )
+    return _one(db, principal, project)
 
 
 @router.get("/{project_id}", response_model=Project, summary="One project")
 def get_project(project_id: str, principal: PrincipalDep, db: DbDep) -> Project:
-    project = projects.get_project(db, principal, project_id)
-    return _project(project, len(projects.list_documents(db, principal, project_id)))
+    return _one(db, principal, projects.get_project(db, principal, project_id))
 
 
-@router.patch("/{project_id}", response_model=Project, summary="Rename or archive a project")
+@router.patch("/{project_id}", response_model=Project, summary="Edit a project: name, client, folder, person in charge, archive")
 def update_project(project_id: str, body: ProjectUpdate, principal: PrincipalDep, db: DbDep) -> Project:
-    return _project(
-        projects.update_project(db, principal, project_id, name=body.name, client_name=body.client_name, archived=body.archived)
+    project = projects.update_project(
+        db,
+        principal,
+        project_id,
+        name=body.name,
+        client_name=body.client_name,
+        folder=body.folder,
+        lead_user_id=body.lead_user_id,
+        clear_lead="lead_user_id" in body.model_fields_set and body.lead_user_id is None,
+        archived=body.archived,
     )
+    return _one(db, principal, project)
+
+
+@router.delete("/{project_id}", status_code=204, summary="Delete a project with all its saved work and documents")
+def delete_project(project_id: str, principal: PrincipalDep, db: DbDep, blobs: BlobStoreDep) -> Response:
+    projects.delete_project(db, blobs, principal, project_id)
+    return Response(status_code=204)
 
 
 @router.get("/{project_id}/state/{module}", response_model=ModuleState, summary="A module's saved working state")

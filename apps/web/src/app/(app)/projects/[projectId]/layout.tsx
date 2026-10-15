@@ -2,7 +2,7 @@
 
 /** Loads the project for every page under /projects/:id and shares it with the shell. */
 
-import { useParams } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { useAppSession } from "@/components/AppSession";
@@ -11,15 +11,17 @@ import { ApiError, getProject } from "@/lib/api";
 
 export default function ProjectLayout({ children }: { children: React.ReactNode }) {
   const { projectId } = useParams<{ projectId: string }>();
+  const pathname = usePathname();
   const { project, setProject } = useAppSession();
   const [error, setError] = useState<string | null>(null);
 
+  // Reloaded on every page change too, so "last edited by" in the sidebar stays current.
   useEffect(() => {
     setError(null);
     getProject(projectId)
       .then(setProject)
       .catch((e: unknown) => setError(e instanceof ApiError ? e.message : "Couldn't load this project."));
-  }, [projectId, setProject]);
+  }, [projectId, pathname, setProject]);
 
   if (error) {
     return (

@@ -74,8 +74,17 @@ export function Sidebar() {
         </Link>
         {projectId && project && (
           <Link href="/projects" className="sidebar-project" title="Switch project">
-            <span className="sidebar-project-label">Project · switch ↗</span>
+            <span className="sidebar-project-label">
+              Project{project.folder ? ` · ${project.folder}` : ""} · switch ↗
+            </span>
             <span className="sidebar-project-name">{project.client_name || project.name}</span>
+            <span className="sidebar-project-meta" title={project.lead?.email ?? ""}>
+              In charge: <b>{project.lead?.name ?? "nobody yet"}</b>
+            </span>
+            <span className="sidebar-project-meta" title={new Date(project.updated_at).toLocaleString()}>
+              Last edit: {project.last_edited_by?.name ?? "—"} ·{" "}
+              {new Date(project.updated_at).toLocaleDateString(undefined, { day: "numeric", month: "short" })}
+            </span>
           </Link>
         )}
         <div className="nav-groups">

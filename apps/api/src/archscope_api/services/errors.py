@@ -45,6 +45,10 @@ class WeakPassword(ServiceError):
     status, slug, title = 422, "weak-password", "Choose a stronger password"
 
 
+class InvalidInput(ServiceError):
+    status, slug, title = 422, "invalid-input", "Something in the request isn't valid"
+
+
 class TooManyRequests(ServiceError):
     status, slug, title = 429, "too-many-requests", "Please wait a moment"
 

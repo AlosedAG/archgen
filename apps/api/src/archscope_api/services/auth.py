@@ -2,18 +2,51 @@
 
 from __future__ import annotations
 
+import threading
+import time
+from collections import deque
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from functools import cache
 
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from ..persistence.models import ROLE_ADMIN, ROLE_MEMBER, ROLE_OWNER, ROLES, AuthSession, Membership, User, Workspace
 from ..persistence.security import hash_password, new_session_token, token_id, verify_password
-from .errors import Conflict, Forbidden, NotSignedIn, SignInFailed
+from .errors import Conflict, Forbidden, NotSignedIn, SignInFailed, TooManyRequests
 
 # How often a session's last-seen time is refreshed (avoids a write per request).
 _TOUCH_EVERY = timedelta(minutes=5)
+
+# Password guessing: after this many wrong passwords for one email within
+# the window, sign-in for that email is refused until the window passes.
+# Kept in memory per server process (enough for a small team; a restart
+# clears it).
+MAX_FAILED_SIGN_INS = 5
+FAILED_SIGN_IN_WINDOW = 15 * 60
+_failures: dict[str, deque[float]] = {}
+_failures_lock = threading.Lock()
+
+
+def _recent_failures(email: str, now: float) -> deque[float]:
+    attempts = _failures.setdefault(email, deque())
+    while attempts and now - attempts[0] > FAILED_SIGN_IN_WINDOW:
+        attempts.popleft()
+    return attempts
+
+
+def clear_failed_sign_ins(email: str) -> None:
+    """Lift the wrong-password lock for an email (after a password reset)."""
+    with _failures_lock:
+        _failures.pop(_normalize_email(email), None)
+
+
+@cache
+def _timing_equalizer() -> str:
+    """A real-strength hash checked when the email has no account, so a
+    wrong password takes as long for unknown emails as for real ones."""
+    return hash_password("timing-equalizer")
 
 
 @dataclass(frozen=True)
@@ -80,11 +113,19 @@ def start_session(db: Session, user: User, *, session_days: int, user_agent: str
 
 
 def sign_in(db: Session, email: str, password: str, *, session_days: int, user_agent: str = "") -> tuple[str, Principal]:
-    user = db.scalar(select(User).where(User.email == _normalize_email(email)))
+    key = _normalize_email(email)
+    now = time.monotonic()
+    with _failures_lock:
+        if len(_recent_failures(key, now)) >= MAX_FAILED_SIGN_INS:
+            raise TooManyRequests("Too many wrong passwords. Wait 15 minutes, or reset your password with “Forgot password?”.")
+    user = db.scalar(select(User).where(User.email == key))
     # Verify even when the user doesn't exist, so timing doesn't reveal which emails have accounts.
-    valid = verify_password(password, user.password_hash if user else hash_password("timing-equalizer", iterations=1000))
+    valid = verify_password(password, user.password_hash if user and user.password_hash else _timing_equalizer())
     if user is None or not valid:
+        with _failures_lock:
+            _recent_failures(key, now).append(now)
         raise SignInFailed()
+    clear_failed_sign_ins(key)
     return start_session(db, user, session_days=session_days, user_agent=user_agent)
 
 
@@ -150,3 +191,4 @@ def set_password(db: Session, email: str, password: str) -> None:
         raise Conflict(f"No user with email {email}.")
     user.password_hash = hash_password(password)
     db.execute(delete(AuthSession).where(AuthSession.user_id == user.id))
+    clear_failed_sign_ins(user.email)

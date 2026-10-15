@@ -378,7 +378,7 @@ def _scope_at_a_glance(pdf: _ProposalPDF) -> None:
     pdf.para(
         "Every item a client might ask about sits in exactly one of the lists below. If something is not "
         "listed as Included, it is not part of this agreement - it can still be added through the Change "
-        "Request process described in the Technical volume. Item IDs (S-01, S-02...) are the reference to use "
+        "Request process described in the Technical volume. Item IDs (S-1, S-2...) are the reference to use "
         "when asking about scope."
     )
 

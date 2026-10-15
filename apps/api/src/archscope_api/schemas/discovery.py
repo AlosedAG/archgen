@@ -71,6 +71,9 @@ class SectionNotes(ApiModel):
 class DiscoveryNotes(ApiModel):
     client_name: str = Field("", max_length=200)
     business_type: str = Field("", max_length=200)
+    client_website: str = Field(
+        "", max_length=300, description="The client's website; its homepage is read for the business analysis."
+    )
     sections: dict[str, SectionNotes] = Field(default_factory=dict, description="Keyed by section name.")
 
     def to_domain(self) -> dict[str, dict[str, Any]]:
@@ -188,3 +191,16 @@ class Evaluation(ApiModel):
     checklist: list[ExportSection] = Field(description="Required tasks and scope items, ready for /exports/sections.")
     build_order: BuildOrder
     build_order_sections: list[ExportSection] = Field(description="The build order as export sections.")
+
+
+class AiModel(ApiModel):
+    id: str
+    label: str
+    note: str = ""
+
+
+class AiModels(ApiModel):
+    """The AI models drafting can use, in the order they're tried."""
+
+    provider: Literal["gemini", "anthropic", "none"]
+    models: list[AiModel] = Field(default_factory=list)

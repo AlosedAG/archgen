@@ -41,14 +41,37 @@ DEFAULT_MODEL = "claude-opus-5-5"
 FALLBACK_BETA = "server-side-fallback-2026-07-01"
 MAX_TOKENS = 32000
 
-# Gemini, for testing on Google's free tier. Tried in order: when a model's
-# free quota is used up (or it isn't available to the key) the next one is
-# used, so a day of testing gets more runs. Most accurate first:
-# gemini-3.8-flash is the strongest model on the free tier (Gemini 3.1 Pro
-# isn't free); gemini-2.5-pro is the free Pro model, with its own quota;
-# gemini-3.6-flash is the previous-generation Flash. ``GEMINI_MODELS``
-# (comma-separated) overrides the list.
-DEFAULT_GEMINI_MODELS = ("gemini-3.8-flash", "gemini-2.5-pro", "gemini-3.6-flash")
+# Gemini, for testing on Google's free tier. Tried in order, most accurate
+# first: when a model is overloaded (503), its free quota is used up (429)
+# or it isn't available to the key, the next one is used. Spread across
+# model families, which have separate capacity, so one busy model doesn't
+# sink a draft. (Gemini 3.1 Pro isn't on the free tier; the 2.5 family is
+# "limited access" and wasn't usable on the free keys we saw.) The user can
+# also pick one to try first. ``GEMINI_MODELS`` (comma-separated) overrides.
+DEFAULT_GEMINI_MODELS = (
+    "gemini-3.8-flash",
+    "gemini-3-flash-preview",
+    "gemini-3.6-flash",
+    "gemini-3.1-flash-lite",
+    "gemini-3.5-flash-lite",
+)
+# How each model is described in the model menu.
+GEMINI_MODEL_NOTES = {
+    "gemini-3.8-flash": "Most accurate · often busy",
+    "gemini-3-flash-preview": "Very accurate",
+    "gemini-3.6-flash": "Accurate",
+    "gemini-3.1-flash-lite": "Good · usually available",
+    "gemini-3.5-flash-lite": "Fastest · least busy",
+}
+# Gemini 3 models documented to accept thinking_level "high" (others get the
+# model's default thinking, so an unsupported setting can't fail a draft).
+_HIGH_THINKING = {
+    "gemini-3.8-flash",
+    "gemini-3-flash-preview",
+    "gemini-3.6-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-pro-preview",
+}
 # Gemini counts thinking tokens against the output limit, so leave room for
 # both the reasoning and a long document.
 GEMINI_MAX_OUTPUT_TOKENS = 65536
@@ -154,11 +177,14 @@ MODE 1 — business_analysis
 
 INPUT
 You receive notes grouped under four sections (Goals, Data, Processes, Solutions Design). Each section contains the specialist's answers to discovery questions, plus a free-form notes field and any flagged edge_cases. Fields may be blank.
+The client object may also include the client's website URL and a website_excerpt: text taken from their public homepage (title, description, page text, and technology seen in the page source). Treat it as public marketing material — use it for context and to spot opportunities, attribute anything taken from it to the website, and never present it as something the client told the specialist.
 
 OUTPUT — produce a document with these sections, in this order:
 
 Executive Summary (3–5 sentences)
 The client's business in one line, their core goal for this engagement, their current situation, and what they want HubSpot to achieve. Written so a colleague who wasn't on the call understands the engagement immediately.
+Client Snapshot
+Link the client's website as a Markdown link when one was provided. In 3–6 bullets, summarize what the website shows that is useful going into the engagement: what they sell and to whom, markets or locations, how customers engage with them today (forms, booking, chat, e-commerce, newsletters), tools visible on the site, and advantages or differentiators worth knowing. Mark these "From their website". If no website or excerpt was provided, say so in one line and list what to look up before the next call.
 Goals & Success Criteria
 Summarize the client's growth areas, long-term goals, and the KPIs they'll measure success by.
 List each stated goal with its associated success metric where captured.
@@ -180,6 +206,12 @@ Flag: integrations or features whose feasibility needs technical validation.
 Preliminary Scope Signals (bridge to SOW)
 Based only on what was captured, list what appears in scope, what the client is likely to assume is included but wasn't discussed (flag for explicit exclusion), and what looks like a potential add-on.
 Do NOT produce a final SOW — produce the inputs a SOW builder needs.
+Gotchas to Raise with the Client
+The non-obvious items that change scope, timeline or risk if missed — e.g. data in regions with privacy law (GDPR, PIPEDA, CCPA), dirty or never-cleaned data before a migration, multi-location or multi-entity ownership, compliance, aggressive timelines, users new to CRMs. For each: what to tell the client, why it matters, and how it affects the build (extra steps, time, cost). Base these only on the notes, required tasks and edge cases, and say when a gotcha is a possibility to confirm rather than a fact.
+Potential Upsells & Expansion
+Opportunities to add value beyond the core scope, each tied to something in the notes or the website: higher hub tiers or additional hubs, add-on services (data cleanup, training and enablement, reporting dashboards, integrations, ongoing managed services), and later phases. For each: the opportunity, the client need it answers, and when to raise it (now, or after go-live). Frame these as suggestions for the seller, not commitments.
+How to Communicate with This Client
+Practical guidance for the people working with this client, inferred from the notes (who the contacts are and their seniority, CRM experience, the vocabulary they used, their goals and urgency): the recommended tone (formal or conversational), technical depth (plain language or technical detail), what to lead with (their needs and pain points, their objectives and KPIs, ROI and cost, or the timeline), what to avoid, and 3–5 talking points or questions for the next conversation. Name the signal behind each recommendation.
 Open Questions & Gaps
 A bulleted list of everything the specialist did NOT capture that is needed before scoping. This is the follow-up checklist. Be specific ("Did not confirm data volume for the Deals object" not "need more data info").
 Recommended HubSpot Modules (if the client's needs map to specific hubs)
@@ -315,7 +347,12 @@ def has_any_notes(notes: dict[str, dict[str, Any]]) -> bool:
 
 
 def build_business_analysis_input(
-    notes: dict[str, dict[str, Any]], *, client_name: str = "", business_type: str = ""
+    notes: dict[str, dict[str, Any]],
+    *,
+    client_name: str = "",
+    business_type: str = "",
+    client_website: str = "",
+    website_excerpt: str = "",
 ) -> dict[str, Any]:
     """Request payload for ``business_analysis`` mode. Every question is
     included even when blank — a blank answer is itself information (it
@@ -351,9 +388,13 @@ def build_business_analysis_input(
             "notes": str(section_notes.get("notes", "") or "").strip(),
             "edge_cases": edge_cases,
         }
+    client = {"name": client_name.strip(), "business_type": business_type.strip()}
+    if client_website.strip():
+        client["website"] = client_website.strip()
+        client["website_excerpt"] = website_excerpt.strip()
     return {
         "mode": MODE_BUSINESS_ANALYSIS,
-        "client": {"name": client_name.strip(), "business_type": business_type.strip()},
+        "client": client,
         "sections": payload_sections,
     }
 
@@ -428,22 +469,17 @@ def build_gemini_request(payload: dict[str, Any], *, model: str) -> dict[str, An
     """Keyword arguments for ``client.models.generate_content_stream`` (the
     google-genai SDK) — the same system prompt and input as the Claude
     request. Plain dicts, so this module stays free of the SDK."""
-    thinking: dict[str, Any] = (
-        # Gemini 3 models take a level; high = the most careful reasoning
-        # over fragmentary notes (accuracy over speed while testing).
-        {"thinking_level": "high"}
-        if not model.startswith("gemini-2")
+    config: dict[str, Any] = {"system_instruction": SYSTEM_PROMPT, "max_output_tokens": GEMINI_MAX_OUTPUT_TOKENS}
+    if model in _HIGH_THINKING:
+        # High = the most careful reasoning over fragmentary notes.
+        config["thinking_config"] = {"thinking_level": "high"}
+    elif model.startswith("gemini-2"):
         # Gemini 2.5 takes a token budget; -1 = let the model decide.
-        else {"thinking_budget": -1}
-    )
+        config["thinking_config"] = {"thinking_budget": -1}
     return {
         "model": model,
         "contents": json.dumps(payload, ensure_ascii=False, indent=2) + "\n\n" + _FORMAT_NOTE,
-        "config": {
-            "system_instruction": SYSTEM_PROMPT,
-            "max_output_tokens": GEMINI_MAX_OUTPUT_TOKENS,
-            "thinking_config": thinking,
-        },
+        "config": config,
     }
 
 

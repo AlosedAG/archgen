@@ -144,12 +144,17 @@ def _fake_ai(chunks: list[str], stop_reason: str = "end_turn") -> tuple[Any, lis
     return AiBackend("anthropic", SimpleNamespace(beta=SimpleNamespace(messages=SimpleNamespace(stream=stream)))), calls
 
 
-def _events(body: str) -> list[tuple[str, dict[str, Any]]]:
+def _all_events(body: str) -> list[tuple[str, dict[str, Any]]]:
     events = []
     for block in body.strip().split("\n\n"):
         lines = dict(line.split(": ", 1) for line in block.splitlines())
         events.append((lines["event"], json.loads(lines["data"])))
     return events
+
+
+def _events(body: str) -> list[tuple[str, dict[str, Any]]]:
+    """The document's events (``status`` progress notes left out)."""
+    return [e for e in _all_events(body) if e[0] != "status"]
 
 
 async def test_business_analysis_streams_sse(app: FastAPI) -> None:
@@ -185,12 +190,15 @@ async def test_model_override_from_settings(app: FastAPI) -> None:
 
 
 def _fake_gemini(per_model: dict[str, Any]) -> tuple[AiBackend, list[str]]:
-    """A Gemini backend whose models either stream text or raise (e.g. a 429)."""
+    """A Gemini backend whose models either stream text or raise (e.g. a 429).
+    A list of outcomes is consumed one per call (to fail, then succeed)."""
     tried: list[str] = []
 
     def generate_content_stream(**kwargs: Any) -> Any:
         tried.append(kwargs["model"])
         outcome = per_model[kwargs["model"]]
+        if isinstance(outcome, list):
+            outcome = outcome.pop(0)
         if isinstance(outcome, Exception):
             raise outcome
         content = SimpleNamespace(parts=[SimpleNamespace(text=outcome, thought=False)])
@@ -247,3 +255,91 @@ def test_schema_names_are_unique() -> None:
     names, which breaks the web app's generated types — rename one instead."""
     names = json.loads(render_openapi())["components"]["schemas"]
     assert not [n for n in names if "__" in n], sorted(n for n in names if "__" in n)
+
+
+def _busy() -> genai_errors.ServerError:
+    return genai_errors.ServerError(
+        503, {"error": {"code": 503, "message": "This model is currently experiencing high demand.", "status": "UNAVAILABLE"}}
+    )
+
+
+async def test_busy_gemini_model_is_retried_then_replaced(app: FastAPI, monkeypatch: pytest.MonkeyPatch) -> None:
+    from archscope_api.services import discovery as svc
+
+    monkeypatch.setattr(svc, "RETRY_DELAYS", (0.0,))
+    ai, tried = _fake_gemini({"gemini-3.8-flash": [_busy(), _busy()], "gemini-2.5-pro": "# Drafted"})
+    app.dependency_overrides[get_ai_client] = lambda: ai
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as http:
+        response = await http.post("/api/v1/discovery/business-analysis", json={"client_name": "Acme"})
+    assert tried == ["gemini-3.8-flash", "gemini-3.8-flash", "gemini-2.5-pro"]
+    assert _events(response.text) == [("delta", {"text": "# Drafted"}), ("done", {})]
+    notes = [d["message"] for e, d in _all_events(response.text) if e == "status"]
+    assert notes[0] == "Drafting with Gemini 3.8 Flash"
+    assert any("busy" in n and "Gemini 2.5 Pro" in n for n in notes)
+
+
+async def test_busy_gemini_recovers_on_retry(app: FastAPI, monkeypatch: pytest.MonkeyPatch) -> None:
+    from archscope_api.services import discovery as svc
+
+    monkeypatch.setattr(svc, "RETRY_DELAYS", (0.0,))
+    ai, tried = _fake_gemini({"gemini-3.8-flash": [_busy(), "# Second try"], "gemini-2.5-pro": "unused"})
+    app.dependency_overrides[get_ai_client] = lambda: ai
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as http:
+        response = await http.post("/api/v1/discovery/business-analysis", json={"client_name": "Acme"})
+    assert tried == ["gemini-3.8-flash", "gemini-3.8-flash"]
+    assert _events(response.text)[0] == ("delta", {"text": "# Second try"})
+
+
+async def test_every_gemini_model_busy_is_a_friendly_error(app: FastAPI, monkeypatch: pytest.MonkeyPatch) -> None:
+    from archscope_api.services import discovery as svc
+
+    monkeypatch.setattr(svc, "RETRY_DELAYS", (0.0,))
+    ai, _ = _fake_gemini({"gemini-3.8-flash": [_busy(), _busy()], "gemini-2.5-pro": [_busy(), _busy()]})
+    app.dependency_overrides[get_ai_client] = lambda: ai
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as http:
+        response = await http.post("/api/v1/discovery/business-analysis", json={"client_name": "Acme"})
+    ((event, problem),) = _events(response.text)
+    assert event == "error"
+    assert problem["type"].endswith("/ai-busy")
+    assert "wait a minute" in problem["detail"]
+
+
+async def test_ai_models_lists_gemini_models_in_order(app: FastAPI) -> None:
+    ai, _ = _fake_gemini({"gemini-3.8-flash": "x", "gemini-3.5-flash-lite": "y"})
+    from archscope_api.routers.deps import find_ai_backend
+
+    app.dependency_overrides[find_ai_backend] = lambda: ai
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as http:
+        body = (await http.get("/api/v1/discovery/ai-models")).json()
+    assert body["provider"] == "gemini"
+    assert [(m["id"], m["label"]) for m in body["models"]] == [
+        ("gemini-3.8-flash", "Gemini 3.8 Flash"),
+        ("gemini-3.5-flash-lite", "Gemini 3.5 Flash Lite"),
+    ]
+    assert body["models"][1]["note"] == "Fastest · least busy"
+
+
+async def test_ai_models_without_a_key_is_none(app: FastAPI) -> None:
+    from archscope_api.routers.deps import find_ai_backend
+
+    app.dependency_overrides[find_ai_backend] = lambda: None
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as http:
+        assert (await http.get("/api/v1/discovery/ai-models")).json() == {"provider": "none", "models": []}
+
+
+async def test_chosen_model_is_tried_first_then_the_rest(app: FastAPI, monkeypatch: pytest.MonkeyPatch) -> None:
+    from archscope_api.services import discovery as svc
+
+    monkeypatch.setattr(svc, "RETRY_DELAYS", (0.0,))
+    ai, tried = _fake_gemini(
+        {"gemini-3.8-flash": "unused", "gemini-3.5-flash-lite": [_busy(), _busy()], "gemini-3.6-flash": "# From 3.6"}
+    )
+    app.dependency_overrides[get_ai_client] = lambda: ai
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as http:
+        response = await http.post(
+            "/api/v1/discovery/business-analysis?model=gemini-3.5-flash-lite", json={"client_name": "Acme"}
+        )
+        unknown = await http.post("/api/v1/discovery/business-analysis?model=gpt-9", json={"client_name": "Acme"})
+    assert tried[:3] == ["gemini-3.5-flash-lite", "gemini-3.5-flash-lite", "gemini-3.8-flash"]
+    assert _events(response.text)[0] == ("delta", {"text": "unused"})
+    assert unknown.status_code == 422

@@ -10,6 +10,7 @@ import type { DiscoveryStore } from "@/lib/discovery-state";
 
 import { CheckMark, Icon, type IconName } from "../ui";
 import { DocumentResult } from "./DocumentResult";
+import { ModelPicker, useAiModel } from "./ModelPicker";
 import { StreamErrorCallout } from "./StreamErrorCallout";
 import { useDocumentStream } from "./useDocumentStream";
 
@@ -26,6 +27,7 @@ export function ExplainerTab({ store }: { store: DiscoveryStore }) {
   const { state, update } = store;
   const onDone = useCallback((text: string) => update({ ceOutput: text }), [update]);
   const stream = useDocumentStream("client-explainer", onDone);
+  const ai = useAiModel();
   const [recommended, setRecommended] = useState<HubSpotModule[]>([]);
   const selected = state.ceModules;
 
@@ -101,13 +103,23 @@ export function ExplainerTab({ store }: { store: DiscoveryStore }) {
           className={stream.streaming ? "btn btn-primary btn-busy" : "btn btn-primary"}
           disabled={selected.length === 0 || stream.streaming}
           whileTap={{ scale: 0.97 }}
-          onClick={() => stream.start({ modules: selected, business_type: state.businessType })}
+          onClick={() => stream.start({ modules: selected, business_type: state.businessType }, ai.model)}
         >
           {!stream.streaming && <Icon name="sparkles" />}
           {stream.streaming ? "Generating…" : "Generate client explainer"}
         </motion.button>
+        <ModelPicker models={ai.models} value={ai.model} onChange={ai.setModel} disabled={stream.streaming} />
       </div>
-      {stream.error && <StreamErrorCallout error={stream.error} />}
+      {stream.error && (
+        <StreamErrorCallout
+          error={stream.error}
+          lighter={ai.lightest}
+          onRetryWith={(id) => {
+            ai.setModel(id);
+            void stream.start({ modules: selected, business_type: state.businessType }, id);
+          }}
+        />
+      )}
 
       <DocumentResult
         markdown={stream.streaming ? stream.text : state.ceOutput}
@@ -120,6 +132,7 @@ export function ExplainerTab({ store }: { store: DiscoveryStore }) {
         fileSuffix="hubspot_explainer"
         projectId={store.projectId}
         documentType="Discovery Client Explainer"
+        progress={{ sections: Math.max(selected.length, 1), startedAt: stream.startedAt, status: stream.status }}
       />
     </>
   );

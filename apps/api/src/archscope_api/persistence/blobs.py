@@ -1,12 +1,17 @@
-"""Where saved documents' bytes live. A directory on disk today; the
-interface is small so an object store (S3, GCS, Azure Blob) can replace
-it without touching callers."""
+"""Where saved documents' bytes live: a directory on disk (local
+development), or the database itself (hosts whose disk is wiped on
+restart, like Cloud Run). The interface is small so an object store (S3,
+GCS, Azure Blob) can replace either without touching callers."""
 
 from __future__ import annotations
 
 import re
 from pathlib import Path
 from typing import Protocol
+
+from sqlalchemy.orm import Session
+
+from .models import StoredFile
 
 _KEY_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9/_.-]{0,299}$")
 
@@ -43,3 +48,39 @@ class LocalBlobStore:
 
     def delete(self, key: str) -> None:
         self._path(key).unlink(missing_ok=True)
+
+
+class DatabaseBlobStore:
+    """Files as rows in ``stored_files``, written in the request's own
+    transaction — so a document and its bytes are saved (or rolled back)
+    together. Fine for a small team's library; large volumes belong in an
+    object store."""
+
+    def __init__(self, db: Session):
+        self.db = db
+
+    @staticmethod
+    def _check(key: str) -> str:
+        if not _KEY_RE.match(key) or ".." in key:
+            raise ValueError(f"invalid blob key {key!r}")
+        return key
+
+    def put(self, key: str, content: bytes) -> None:
+        row = self.db.get(StoredFile, self._check(key))
+        if row is None:
+            self.db.add(StoredFile(key=key, data=content, size_bytes=len(content)))
+        else:
+            row.data, row.size_bytes = content, len(content)
+        self.db.flush()
+
+    def get(self, key: str) -> bytes:
+        row = self.db.get(StoredFile, self._check(key))
+        if row is None:
+            raise FileNotFoundError(key)
+        return row.data
+
+    def delete(self, key: str) -> None:
+        row = self.db.get(StoredFile, self._check(key))
+        if row is not None:
+            self.db.delete(row)
+            self.db.flush()

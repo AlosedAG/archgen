@@ -111,11 +111,25 @@ export const confirmPasswordReset = (email: string, code: string, password: stri
 
 export const listProjects = (includeArchived = false) =>
   json<Project[]>(`/projects${includeArchived ? "?include_archived=true" : ""}`);
-export const createProject = (name: string, clientName = "") =>
-  post<Project>("/projects", { name, client_name: clientName });
+export const createProject = (name: string, extra: { client_name?: string; folder?: string; lead_user_id?: string | null } = {}) =>
+  post<Project>("/projects", { name, client_name: "", ...extra });
 export const getProject = (id: string) => json<Project>(`/projects/${id}`);
-export const updateProject = (id: string, patch: { name?: string; client_name?: string; archived?: boolean }) =>
+export const updateProject = (id: string, patch: Schemas["ProjectUpdate"]) =>
   json<Project>(`/projects/${id}`, { method: "PATCH", body: JSON.stringify(patch) });
+/** Delete a project with all its saved work and library documents. */
+export async function deleteProject(id: string): Promise<void> {
+  await request(`/projects/${id}`, { method: "DELETE" });
+}
+
+export type Member = Schemas["Member"];
+export type Person = Schemas["Person"];
+export const listMembers = () => json<Member[]>("/workspace/members");
+
+// ---- Feedback ---------------------------------------------------------------------------
+
+export type FeedbackRequest = Schemas["FeedbackRequest"];
+/** Email a bug report, idea or question (with screenshots) to the app owner. */
+export const sendFeedback = (body: FeedbackRequest) => post<{ message: string }>("/feedback", body);
 
 export const getModuleState = (projectId: string, module: string) =>
   json<ModuleState>(`/projects/${projectId}/state/${module}`);
@@ -238,7 +252,20 @@ export const addLibraryAddons = (proposal: ProposalDocument, services: string[])
 export const draftScopeFromRequirements = (proposal: ProposalDocument) =>
   post<ProposalDocument>("/proposals/scope/from-requirements", { proposal });
 export const proposalTemplate = (proposal: ProposalDocument) => post<ProposalDocument>("/proposals/template", { proposal });
-export const proposalPdf = (proposal: ProposalDocument, stub: string) => fileFrom("/proposals/pdf", { proposal }, `${stub}.pdf`);
+// Shared templates: a filled-in proposal saved (client details cleared) for similar clients.
+export type ProposalTemplateSummary = Schemas["ProposalTemplateSummary"];
+export const listProposalTemplates = () => json<ProposalTemplateSummary[]>("/proposals/templates");
+export const saveProposalTemplate = (body: { name: string; description: string; proposal: ProposalDocument; replace?: boolean }) =>
+  post<ProposalTemplateSummary>("/proposals/templates", body);
+export const renameProposalTemplate = (id: string, patch: { name?: string; description?: string }) =>
+  json<ProposalTemplateSummary>(`/proposals/templates/${id}`, { method: "PATCH", body: JSON.stringify(patch) });
+export async function deleteProposalTemplate(id: string): Promise<void> {
+  await request(`/proposals/templates/${id}`, { method: "DELETE" });
+}
+/** The given proposal restarted from a template (its client details, dates and reference kept). */
+export const applyProposalTemplate = (id: string, proposal: ProposalDocument) =>
+  post<ProposalDocument>(`/proposals/templates/${id}/apply`, { proposal });
+export const proposalPdf =(proposal: ProposalDocument, stub: string) => fileFrom("/proposals/pdf", { proposal }, `${stub}.pdf`);
 
 // ---- Deal Stage Planner ------------------------------------------------------------
 
@@ -262,6 +289,10 @@ export const previewStagePlanner = (stages: PlannedStage[], signal?: AbortSignal
 
 // ---- Discovery -----------------------------------------------------------------
 
+export type AiModels = Schemas["AiModels"];
+/** The AI models drafting can use, most accurate first. */
+export const getAiModels = () => json<AiModels>("/discovery/ai-models");
+
 export const getDiscoveryConfig = (signal?: AbortSignal) => json<DiscoveryConfig>("/discovery/config", { signal });
 
 /** What the notes trigger: follow-ups, required tasks, checklist, build order. */
@@ -276,16 +307,22 @@ export async function suggestModules(businessAnalysisMarkdown: string): Promise<
 }
 
 /**
- * Stream an AI-drafted document (Server-Sent Events: `delta` chunks, then
- * `done` or an `error` problem). Calls `onText` with each chunk.
+ * Stream an AI-drafted document (Server-Sent Events: `status` notes and
+ * `delta` chunks, then `done` or an `error` problem). Calls `onText` with
+ * each chunk and `onStatus` with each progress note (e.g. which model is
+ * drafting, or that a busy one is being replaced).
  */
 export async function streamDocument(
   kind: "business-analysis" | "client-explainer",
   body: unknown,
   onText: (text: string) => void,
   signal?: AbortSignal,
+  onStatus?: (message: string) => void,
+  /** A model to try first (from getAiModels); the others stay as fallbacks. */
+  model?: string,
 ): Promise<void> {
-  const response = await request(`/discovery/${kind}`, { method: "POST", body: JSON.stringify(body), signal });
+  const query = model ? `?model=${encodeURIComponent(model)}` : "";
+  const response = await request(`/discovery/${kind}${query}`, { method: "POST", body: JSON.stringify(body), signal });
   const reader = response.body?.getReader();
   if (!reader) throw new ApiError("The service returned an empty stream.");
   const decoder = new TextDecoder();
@@ -299,9 +336,17 @@ export async function streamDocument(
       const frame = buffer.slice(0, boundary);
       buffer = buffer.slice(boundary + 2);
       const event = /^event: (.*)$/m.exec(frame)?.[1];
-      const data = JSON.parse(/^data: (.*)$/m.exec(frame)?.[1] ?? "{}") as { text?: string; detail?: string; title?: string };
+      const data = JSON.parse(/^data: (.*)$/m.exec(frame)?.[1] ?? "{}") as {
+        text?: string;
+        detail?: string;
+        title?: string;
+        message?: string;
+        status?: number;
+        type?: string;
+      };
       if (event === "delta" && data.text) onText(data.text);
-      else if (event === "error") throw new ApiError(data.detail || data.title || "The document was not completed.");
+      else if (event === "status" && data.message) onStatus?.(data.message);
+      else if (event === "error") throw new ApiError(data.detail || data.title || "The document was not completed.", data.status, data.type);
       else if (event === "done") return;
     }
   }

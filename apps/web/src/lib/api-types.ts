@@ -268,6 +268,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/discovery/ai-models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The AI models drafting can use, in the order they're tried */
+        get: operations["discovery_ai_models"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/discovery/business-analysis": {
         parameters: {
             query?: never;
@@ -421,6 +438,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/feedback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send a bug report, idea or question to the app owner */
+        post: operations["feedback_send_feedback"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/portal/snapshot": {
         parameters: {
             query?: never;
@@ -488,10 +522,11 @@ export interface paths {
         get: operations["projects_get_project"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete a project with all its saved work and documents */
+        delete: operations["projects_delete_project"];
         options?: never;
         head?: never;
-        /** Rename or archive a project */
+        /** Edit a project: name, client, folder, person in charge, archive */
         patch: operations["projects_update_project"];
         trace?: never;
     };
@@ -753,6 +788,62 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/proposals/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The workspace's saved proposal templates */
+        get: operations["proposals_list_templates"];
+        put?: never;
+        /** Save a proposal as a shared template */
+        post: operations["proposals_save_template"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/proposals/templates/{template_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a template (its creator or an admin) */
+        delete: operations["proposals_delete_template"];
+        options?: never;
+        head?: never;
+        /** Rename or re-describe a template */
+        patch: operations["proposals_update_template"];
+        trace?: never;
+    };
+    "/api/v1/proposals/templates/{template_id}/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start the given proposal from a template
+         * @description The template's content, keeping this proposal's client details, dates and reference.
+         */
+        post: operations["proposals_apply_template"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reports/context": {
         parameters: {
             query?: never;
@@ -830,6 +921,23 @@ export interface paths {
         };
         /** Download the blank pre-call template */
         get: operations["stage planner_template"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspace/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Everyone in your workspace (for assigning projects) */
+        get: operations["workspace_list_members"];
         put?: never;
         post?: never;
         delete?: never;
@@ -986,6 +1094,31 @@ export interface components {
              * @default
              */
             service: string;
+        };
+        /** AiModel */
+        AiModel: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+        };
+        /**
+         * AiModels
+         * @description The AI models drafting can use, in the order they're tried.
+         */
+        AiModels: {
+            /** Models */
+            models?: components["schemas"]["AiModel"][];
+            /**
+             * Provider
+             * @enum {string}
+             */
+            provider: "gemini" | "anthropic" | "none";
         };
         /**
          * AnalysisPayload
@@ -1460,6 +1593,12 @@ export interface components {
              */
             client_name: string;
             /**
+             * Client Website
+             * @description The client's website; its homepage is read for the business analysis.
+             * @default
+             */
+            client_website: string;
+            /**
              * Sections
              * @description Keyed by section name.
              */
@@ -1504,6 +1643,12 @@ export interface components {
              * @default
              */
             client_name: string;
+            /**
+             * Client Website
+             * @description The client's website; its homepage is read for the business analysis.
+             * @default
+             */
+            client_website: string;
             /**
              * Done Build Items
              * @description Ids of build-order items ticked as done.
@@ -1572,6 +1717,53 @@ export interface components {
             }[];
             /** Title */
             title: string;
+        };
+        /** FeedbackAttachment */
+        FeedbackAttachment: {
+            /**
+             * Content Type
+             * @description Screenshots only (image/png, image/jpeg, …).
+             */
+            content_type: string;
+            /**
+             * Data
+             * @description The file, base64-encoded.
+             */
+            data: string;
+            /** Filename */
+            filename: string;
+        };
+        /** FeedbackRequest */
+        FeedbackRequest: {
+            /** Attachments */
+            attachments?: components["schemas"]["FeedbackAttachment"][];
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "bug" | "idea" | "question";
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            /**
+             * Page
+             * @description The page's title, e.g. 'Proposal & SOW Builder'.
+             * @default
+             */
+            page: string;
+            /**
+             * Path
+             * @description The page's URL path.
+             * @default
+             */
+            path: string;
+            /**
+             * Project Name
+             * @default
+             */
+            project_name: string;
         };
         /** Finding */
         Finding: {
@@ -1770,6 +1962,17 @@ export interface components {
             workspace_id: string;
             /** Workspace Name */
             workspace_name: string;
+        };
+        /** Member */
+        Member: {
+            /** Email */
+            email: string;
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Role */
+            role: string;
         };
         /** MethodologyRow */
         MethodologyRow: {
@@ -1982,6 +2185,18 @@ export interface components {
             /** Password */
             password: string;
         };
+        /**
+         * Person
+         * @description A workspace member as shown on a project.
+         */
+        Person: {
+            /** Email */
+            email: string;
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+        };
         /** PipelineDef */
         PipelineDef: {
             /** Name */
@@ -2189,6 +2404,12 @@ export interface components {
         Project: {
             /** Archived */
             archived: boolean;
+            /**
+             * Can Delete
+             * @description Whether the signed-in user may delete it.
+             * @default false
+             */
+            can_delete: boolean;
             /** Client Name */
             client_name: string;
             /**
@@ -2201,8 +2422,17 @@ export interface components {
              * @default 0
              */
             document_count: number;
+            /**
+             * Folder
+             * @default
+             */
+            folder: string;
             /** Id */
             id: string;
+            /** @description Who last changed anything in it. */
+            last_edited_by?: components["schemas"]["Person"] | null;
+            /** @description Who is in charge of the project. */
+            lead?: components["schemas"]["Person"] | null;
             /** Name */
             name: string;
             /**
@@ -2218,6 +2448,17 @@ export interface components {
              * @default
              */
             client_name: string;
+            /**
+             * Folder
+             * @description Optional folder to group projects, e.g. per client.
+             * @default
+             */
+            folder: string;
+            /**
+             * Lead User Id
+             * @description Who is in charge; defaults to the creator.
+             */
+            lead_user_id?: string | null;
             /** Name */
             name: string;
         };
@@ -2227,6 +2468,16 @@ export interface components {
             archived?: boolean | null;
             /** Client Name */
             client_name?: string | null;
+            /**
+             * Folder
+             * @description "" removes the project from its folder.
+             */
+            folder?: string | null;
+            /**
+             * Lead User Id
+             * @description A workspace member's id; send null to clear.
+             */
+            lead_user_id?: string | null;
             /** Name */
             name?: string | null;
         };
@@ -2499,6 +2750,70 @@ export interface components {
         ProposalRequest: {
             proposal: components["schemas"]["ProposalDocument"];
         };
+        /** ProposalTemplateSave */
+        ProposalTemplateSave: {
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /** Name */
+            name: string;
+            proposal: components["schemas"]["ProposalDocument"];
+            /**
+             * Replace
+             * @description Overwrite a template that already has this name.
+             * @default false
+             */
+            replace: boolean;
+        };
+        /**
+         * ProposalTemplateSummary
+         * @description A saved template, as listed in the builder.
+         */
+        ProposalTemplateSummary: {
+            /**
+             * Can Delete
+             * @default false
+             */
+            can_delete: boolean;
+            /**
+             * Created By
+             * @description Name of who saved it.
+             */
+            created_by?: string | null;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /**
+             * Requirement Count
+             * @default 0
+             */
+            requirement_count: number;
+            /**
+             * Scope Count
+             * @default 0
+             */
+            scope_count: number;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** ProposalTemplateUpdate */
+        ProposalTemplateUpdate: {
+            /** Description */
+            description?: string | null;
+            /** Name */
+            name?: string | null;
+        };
         /** Question */
         Question: {
             /**
@@ -2653,7 +2968,7 @@ export interface components {
         RequirementRow: {
             /**
              * ID
-             * @description Assigned (R-01, R-02, ...) when blank.
+             * @description Assigned (R-1, R-2, ...) when blank.
              * @default
              */
             id: string;
@@ -2723,7 +3038,7 @@ export interface components {
             acceptance_criteria: string;
             /**
              * ID
-             * @description Assigned (S-01, S-02, ...) when blank.
+             * @description Assigned (S-1, S-2, ...) when blank.
              * @default
              */
             id: string;
@@ -3535,9 +3850,32 @@ export interface operations {
             };
         };
     };
-    discovery_business_analysis: {
+    discovery_ai_models: {
         parameters: {
             query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiModels"];
+                };
+            };
+        };
+    };
+    discovery_business_analysis: {
+        parameters: {
+            query?: {
+                /** @description Gemini model to try first (one of GET /discovery/ai-models); the others stay as fallbacks. */
+                model?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -3548,7 +3886,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Server-Sent Events: `delta`, then `done` or `error`. */
+            /** @description Server-Sent Events: `status` notes and `delta` chunks, then `done` or `error`. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -3603,7 +3941,10 @@ export interface operations {
     };
     discovery_client_explainer: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Gemini model to try first (one of GET /discovery/ai-models); the others stay as fallbacks. */
+                model?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -3614,7 +3955,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Server-Sent Events: `delta`, then `done` or `error`. */
+            /** @description Server-Sent Events: `status` notes and `delta` chunks, then `done` or `error`. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -3814,6 +4155,39 @@ export interface operations {
             };
         };
     };
+    feedback_send_feedback: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FeedbackRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Accepted"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     portal_pull_snapshot: {
         parameters: {
             query?: never;
@@ -3953,6 +4327,35 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Project"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    projects_delete_project: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -4571,6 +4974,158 @@ export interface operations {
             };
         };
     };
+    proposals_list_templates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalTemplateSummary"][];
+                };
+            };
+        };
+    };
+    proposals_save_template: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProposalTemplateSave"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalTemplateSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    proposals_delete_template: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    proposals_update_template: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProposalTemplateUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalTemplateSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    proposals_apply_template: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProposalRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalDocument"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     portal_report_context: {
         parameters: {
             query?: never;
@@ -4712,6 +5267,26 @@ export interface operations {
                 };
                 content: {
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": string;
+                };
+            };
+        };
+    };
+    workspace_list_members: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Member"][];
                 };
             };
         };

@@ -64,22 +64,42 @@ class Accepted(ApiModel):
 class ProjectCreate(ApiModel):
     name: str = Field(min_length=1, max_length=200)
     client_name: str = Field("", max_length=200)
+    folder: str = Field("", max_length=120, description="Optional folder to group projects, e.g. per client.")
+    lead_user_id: str | None = Field(None, description="Who is in charge; defaults to the creator.")
 
 
 class ProjectUpdate(ApiModel):
     name: str | None = Field(None, min_length=1, max_length=200)
     client_name: str | None = Field(None, max_length=200)
+    folder: str | None = Field(None, max_length=120, description='"" removes the project from its folder.')
+    lead_user_id: str | None = Field(None, description="A workspace member's id; send null to clear.")
     archived: bool | None = None
+
+
+class Person(ApiModel):
+    """A workspace member as shown on a project."""
+
+    id: str
+    name: str
+    email: str
+
+
+class Member(Person):
+    role: str
 
 
 class Project(ApiModel):
     id: str
     name: str
     client_name: str
+    folder: str = ""
     archived: bool
     created_at: datetime
     updated_at: datetime
     document_count: int = 0
+    lead: Person | None = Field(None, description="Who is in charge of the project.")
+    last_edited_by: Person | None = Field(None, description="Who last changed anything in it.")
+    can_delete: bool = Field(False, description="Whether the signed-in user may delete it.")
 
 
 class ModuleState(ApiModel):

@@ -148,6 +148,57 @@
         "title": "AddonRow",
         "type": "object"
       },
+      "AiModel": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label"
+        ],
+        "title": "AiModel",
+        "type": "object"
+      },
+      "AiModels": {
+        "additionalProperties": false,
+        "description": "The AI models drafting can use, in the order they're tried.",
+        "properties": {
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/AiModel"
+            },
+            "title": "Models",
+            "type": "array"
+          },
+          "provider": {
+            "enum": [
+              "gemini",
+              "anthropic",
+              "none"
+            ],
+            "title": "Provider",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider"
+        ],
+        "title": "AiModels",
+        "type": "object"
+      },
       "AnalysisPayload": {
         "additionalProperties": false,
         "description": "Exactly what is sent to the model for a business analysis —\nreturned for preview/debugging without calling the model.",
@@ -1094,6 +1145,13 @@
             "title": "Client Name",
             "type": "string"
           },
+          "client_website": {
+            "default": "",
+            "description": "The client's website; its homepage is read for the business analysis.",
+            "maxLength": 300,
+            "title": "Client Website",
+            "type": "string"
+          },
           "sections": {
             "additionalProperties": {
               "$ref": "#/components/schemas/SectionNotes"
@@ -1180,6 +1238,13 @@
             "default": "",
             "maxLength": 200,
             "title": "Client Name",
+            "type": "string"
+          },
+          "client_website": {
+            "default": "",
+            "description": "The client's website; its homepage is read for the business analysis.",
+            "maxLength": 300,
+            "title": "Client Website",
             "type": "string"
           },
           "done_build_items": {
@@ -1312,6 +1377,87 @@
           "title"
         ],
         "title": "ExportSection",
+        "type": "object"
+      },
+      "FeedbackAttachment": {
+        "additionalProperties": false,
+        "properties": {
+          "content_type": {
+            "description": "Screenshots only (image/png, image/jpeg, …).",
+            "pattern": "^image/[a-z0-9.+-]+$",
+            "title": "Content Type",
+            "type": "string"
+          },
+          "data": {
+            "description": "The file, base64-encoded.",
+            "title": "Data",
+            "type": "string"
+          },
+          "filename": {
+            "maxLength": 200,
+            "title": "Filename",
+            "type": "string"
+          }
+        },
+        "required": [
+          "filename",
+          "content_type",
+          "data"
+        ],
+        "title": "FeedbackAttachment",
+        "type": "object"
+      },
+      "FeedbackRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/FeedbackAttachment"
+            },
+            "maxItems": 5,
+            "title": "Attachments",
+            "type": "array"
+          },
+          "kind": {
+            "enum": [
+              "bug",
+              "idea",
+              "question"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "message": {
+            "default": "",
+            "maxLength": 5000,
+            "title": "Message",
+            "type": "string"
+          },
+          "page": {
+            "default": "",
+            "description": "The page's title, e.g. 'Proposal & SOW Builder'.",
+            "maxLength": 200,
+            "title": "Page",
+            "type": "string"
+          },
+          "path": {
+            "default": "",
+            "description": "The page's URL path.",
+            "maxLength": 300,
+            "title": "Path",
+            "type": "string"
+          },
+          "project_name": {
+            "default": "",
+            "maxLength": 200,
+            "title": "Project Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "FeedbackRequest",
         "type": "object"
       },
       "Finding": {
@@ -1678,6 +1824,35 @@
           "is_admin"
         ],
         "title": "Me",
+        "type": "object"
+      },
+      "Member": {
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "role"
+        ],
+        "title": "Member",
         "type": "object"
       },
       "MethodologyRow": {
@@ -2075,6 +2250,31 @@
           "password"
         ],
         "title": "PasswordResetConfirm",
+        "type": "object"
+      },
+      "Person": {
+        "additionalProperties": false,
+        "description": "A workspace member as shown on a project.",
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email"
+        ],
+        "title": "Person",
         "type": "object"
       },
       "PipelineDef": {
@@ -2517,6 +2717,12 @@
             "title": "Archived",
             "type": "boolean"
           },
+          "can_delete": {
+            "default": false,
+            "description": "Whether the signed-in user may delete it.",
+            "title": "Can Delete",
+            "type": "boolean"
+          },
           "client_name": {
             "title": "Client Name",
             "type": "string"
@@ -2531,9 +2737,36 @@
             "title": "Document Count",
             "type": "integer"
           },
+          "folder": {
+            "default": "",
+            "title": "Folder",
+            "type": "string"
+          },
           "id": {
             "title": "Id",
             "type": "string"
+          },
+          "last_edited_by": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Person"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Who last changed anything in it."
+          },
+          "lead": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Person"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Who is in charge of the project."
           },
           "name": {
             "title": "Name",
@@ -2564,6 +2797,25 @@
             "maxLength": 200,
             "title": "Client Name",
             "type": "string"
+          },
+          "folder": {
+            "default": "",
+            "description": "Optional folder to group projects, e.g. per client.",
+            "maxLength": 120,
+            "title": "Folder",
+            "type": "string"
+          },
+          "lead_user_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Who is in charge; defaults to the creator.",
+            "title": "Lead User Id"
           },
           "name": {
             "maxLength": 200,
@@ -2603,6 +2855,31 @@
               }
             ],
             "title": "Client Name"
+          },
+          "folder": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "\"\" removes the project from its folder.",
+            "title": "Folder"
+          },
+          "lead_user_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A workspace member's id; send null to clear.",
+            "title": "Lead User Id"
           },
           "name": {
             "anyOf": [
@@ -3151,6 +3428,128 @@
         "title": "ProposalRequest",
         "type": "object"
       },
+      "ProposalTemplateSave": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "default": "",
+            "maxLength": 500,
+            "title": "Description",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "proposal": {
+            "$ref": "#/components/schemas/ProposalDocument"
+          },
+          "replace": {
+            "default": false,
+            "description": "Overwrite a template that already has this name.",
+            "title": "Replace",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "proposal"
+        ],
+        "title": "ProposalTemplateSave",
+        "type": "object"
+      },
+      "ProposalTemplateSummary": {
+        "additionalProperties": false,
+        "description": "A saved template, as listed in the builder.",
+        "properties": {
+          "can_delete": {
+            "default": false,
+            "title": "Can Delete",
+            "type": "boolean"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Name of who saved it.",
+            "title": "Created By"
+          },
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "requirement_count": {
+            "default": 0,
+            "title": "Requirement Count",
+            "type": "integer"
+          },
+          "scope_count": {
+            "default": 0,
+            "title": "Scope Count",
+            "type": "integer"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "updated_at"
+        ],
+        "title": "ProposalTemplateSummary",
+        "type": "object"
+      },
+      "ProposalTemplateUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "title": "ProposalTemplateUpdate",
+        "type": "object"
+      },
       "Question": {
         "additionalProperties": false,
         "properties": {
@@ -3485,7 +3884,7 @@
         "properties": {
           "id": {
             "default": "",
-            "description": "Assigned (R-01, R-02, ...) when blank.",
+            "description": "Assigned (R-1, R-2, ...) when blank.",
             "title": "ID",
             "type": "string"
           },
@@ -3584,7 +3983,7 @@
           },
           "id": {
             "default": "",
-            "description": "Assigned (S-01, S-02, ...) when blank.",
+            "description": "Assigned (S-1, S-2, ...) when blank.",
             "title": "ID",
             "type": "string"
           },
@@ -4865,9 +5264,55 @@
         ]
       }
     },
+    "/api/v1/discovery/ai-models": {
+      "get": {
+        "operationId": "discovery_ai_models",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiModels"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "The AI models drafting can use, in the order they're tried",
+        "tags": [
+          "discovery"
+        ]
+      }
+    },
     "/api/v1/discovery/business-analysis": {
       "post": {
         "operationId": "discovery_business_analysis",
+        "parameters": [
+          {
+            "description": "Gemini model to try first (one of GET /discovery/ai-models); the others stay as fallbacks.",
+            "in": "query",
+            "name": "model",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Gemini model to try first (one of GET /discovery/ai-models); the others stay as fallbacks.",
+              "title": "Model"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -4883,7 +5328,7 @@
             "content": {
               "text/event-stream": {}
             },
-            "description": "Server-Sent Events: `delta`, then `done` or `error`."
+            "description": "Server-Sent Events: `status` notes and `delta` chunks, then `done` or `error`."
           },
           "422": {
             "content": {
@@ -4956,6 +5401,26 @@
     "/api/v1/discovery/client-explainer": {
       "post": {
         "operationId": "discovery_client_explainer",
+        "parameters": [
+          {
+            "description": "Gemini model to try first (one of GET /discovery/ai-models); the others stay as fallbacks.",
+            "in": "query",
+            "name": "model",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Gemini model to try first (one of GET /discovery/ai-models); the others stay as fallbacks.",
+              "title": "Model"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -4971,7 +5436,7 @@
             "content": {
               "text/event-stream": {}
             },
-            "description": "Server-Sent Events: `delta`, then `done` or `error`."
+            "description": "Server-Sent Events: `status` notes and `delta` chunks, then `done` or `error`."
           },
           "422": {
             "content": {
@@ -5291,6 +5756,52 @@
         ]
       }
     },
+    "/api/v1/feedback": {
+      "post": {
+        "operationId": "feedback_send_feedback",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Accepted"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Send a bug report, idea or question to the app owner",
+        "tags": [
+          "feedback"
+        ]
+      }
+    },
     "/api/v1/portal/snapshot": {
       "post": {
         "description": "Schemas, properties, pipelines, workflows, owners and teams. A\nmissing scope degrades to a ``warnings`` entry instead of failing.",
@@ -5487,6 +5998,44 @@
       }
     },
     "/api/v1/projects/{project_id}": {
+      "delete": {
+        "operationId": "projects_delete_project",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Delete a project with all its saved work and documents",
+        "tags": [
+          "projects"
+        ]
+      },
       "get": {
         "operationId": "projects_get_project",
         "parameters": [
@@ -5582,7 +6131,7 @@
             "SessionCookie": []
           }
         ],
-        "summary": "Rename or archive a project",
+        "summary": "Edit a project: name, client, folder, person in charge, archive",
         "tags": [
           "projects"
         ]
@@ -6483,6 +7032,233 @@
         ]
       }
     },
+    "/api/v1/proposals/templates": {
+      "get": {
+        "operationId": "proposals_list_templates",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProposalTemplateSummary"
+                  },
+                  "title": "Response Proposals List Templates",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "The workspace's saved proposal templates",
+        "tags": [
+          "proposals"
+        ]
+      },
+      "post": {
+        "operationId": "proposals_save_template",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposalTemplateSave"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalTemplateSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Save a proposal as a shared template",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/api/v1/proposals/templates/{template_id}": {
+      "delete": {
+        "operationId": "proposals_delete_template",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "template_id",
+            "required": true,
+            "schema": {
+              "title": "Template Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Delete a template (its creator or an admin)",
+        "tags": [
+          "proposals"
+        ]
+      },
+      "patch": {
+        "operationId": "proposals_update_template",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "template_id",
+            "required": true,
+            "schema": {
+              "title": "Template Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposalTemplateUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalTemplateSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Rename or re-describe a template",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/api/v1/proposals/templates/{template_id}/apply": {
+      "post": {
+        "description": "The template's content, keeping this proposal's client details, dates and reference.",
+        "operationId": "proposals_apply_template",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "template_id",
+            "required": true,
+            "schema": {
+              "title": "Template Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalDocument"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Start the given proposal from a template",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
     "/api/v1/reports/context": {
       "post": {
         "operationId": "portal_report_context",
@@ -6699,6 +7475,36 @@
         "summary": "Download the blank pre-call template",
         "tags": [
           "stage planner"
+        ]
+      }
+    },
+    "/api/v1/workspace/members": {
+      "get": {
+        "operationId": "workspace_list_members",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Member"
+                  },
+                  "title": "Response Workspace List Members",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Everyone in your workspace (for assigning projects)",
+        "tags": [
+          "workspace"
         ]
       }
     },

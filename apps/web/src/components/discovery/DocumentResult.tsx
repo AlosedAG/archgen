@@ -12,6 +12,7 @@ import ReactMarkdown from "react-markdown";
 import { exportMarkdown, fileStub, textFile } from "@/lib/api";
 
 import { ExportFooter, TabPanel, Tabs } from "../ui";
+import { DraftProgress } from "./DraftProgress";
 
 export function DocumentResult({
   markdown,
@@ -25,6 +26,7 @@ export function DocumentResult({
   fileSuffix,
   projectId,
   documentType,
+  progress,
 }: {
   markdown: string;
   streaming: boolean;
@@ -42,6 +44,8 @@ export function DocumentResult({
   /** Saving to the library files it under this project and document type. */
   projectId: string;
   documentType: string;
+  /** While drafting: sections the document should have, when it started, the latest status note. */
+  progress?: { sections: number; startedAt: number; status: string | null };
 }) {
   const [view, setView] = useState<"preview" | "edit">("preview");
   if (!markdown && !streaming) return null;
@@ -71,14 +75,13 @@ export function DocumentResult({
       {tabs}
       {streaming ? (
         <div className="stack" aria-busy="true">
-          <div className="progress-track" aria-hidden>
-            <motion.div
-              className="progress-bar"
-              animate={{ x: ["-100%", "340%"] }}
-              transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
-            />
-          </div>
           <p className="drafting-label">Drafting your {heading ? heading.toLowerCase() : "document"}…</p>
+          <DraftProgress
+            text={markdown}
+            sections={progress?.sections ?? 1}
+            startedAt={progress?.startedAt ?? Date.now()}
+            status={progress?.status ?? null}
+          />
           <div className="doc">
             <ReactMarkdown>{markdown}</ReactMarkdown>
           </div>

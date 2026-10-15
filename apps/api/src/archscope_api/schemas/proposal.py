@@ -11,6 +11,7 @@ directions generic and lossless (:meth:`TableRow.to_row` /
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any, ClassVar, Literal, Self
 
 from pydantic import Field, model_validator
@@ -44,7 +45,7 @@ class ObjectiveRow(TableRow):
 
 
 class RequirementRow(TableRow):
-    id: str = Field("", title="ID", description="Assigned (R-01, R-02, ...) when blank.")
+    id: str = Field("", title="ID", description="Assigned (R-1, R-2, ...) when blank.")
     requirement: str = Field("", title="Requirement")
     priority: str = Field("Must Have", title="Priority")
     source: str = Field("", title="Source")
@@ -68,7 +69,7 @@ class TechniqueRow(TableRow):
 
 
 class ScopeRow(TableRow):
-    id: str = Field("", title="ID", description="Assigned (S-01, S-02, ...) when blank.")
+    id: str = Field("", title="ID", description="Assigned (S-1, S-2, ...) when blank.")
     workstream: str = Field("", title="Workstream")
     item: str = Field("", title="Item")
     status: ScopeStatus = Field("In Scope", title="Status")
@@ -343,3 +344,31 @@ class ProposalLibraries(ApiModel):
                 for e in dp.ADDON_LIBRARY
             ],
         )
+
+
+# ---- Shared templates ---------------------------------------------------------------------------
+
+
+class ProposalTemplateSummary(ApiModel):
+    """A saved template, as listed in the builder."""
+
+    id: str
+    name: str
+    description: str = ""
+    created_by: str | None = Field(None, description="Name of who saved it.")
+    updated_at: datetime
+    requirement_count: int = 0
+    scope_count: int = 0
+    can_delete: bool = False
+
+
+class ProposalTemplateSave(ApiModel):
+    name: str = Field(min_length=1, max_length=200)
+    description: str = Field("", max_length=500)
+    proposal: ProposalDocument
+    replace: bool = Field(False, description="Overwrite a template that already has this name.")
+
+
+class ProposalTemplateUpdate(ApiModel):
+    name: str | None = Field(None, min_length=1, max_length=200)
+    description: str | None = Field(None, max_length=500)

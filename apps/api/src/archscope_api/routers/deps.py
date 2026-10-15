@@ -19,7 +19,7 @@ from archscope_domain.ports import PortalReader
 from archscope_integrations.hubspot import HubSpotClient
 
 from ..mail import Mailer, OutboxMailer, SmtpMailer
-from ..persistence.blobs import BlobStore, LocalBlobStore
+from ..persistence.blobs import BlobStore, DatabaseBlobStore, LocalBlobStore
 from ..persistence.db import session_scope
 from ..persistence.security import SecretBox
 from ..problems import ProblemError
@@ -42,7 +42,10 @@ def get_db(settings: SettingsDep) -> Iterator[Session]:
 DbDep = Annotated[Session, Depends(get_db)]
 
 
-def get_blob_store(settings: SettingsDep) -> BlobStore:
+def get_blob_store(settings: SettingsDep, db: DbDep) -> BlobStore:
+    """Where library files go: the database (ARCHSCOPE_BLOB_STORE=database) or a local folder."""
+    if settings.blob_store == "database":
+        return DatabaseBlobStore(db)
     return LocalBlobStore(settings.blob_dir)
 
 
@@ -153,9 +156,9 @@ class AiBackend:
     models: tuple[str, ...] = ()
 
 
-def get_ai_client(settings: SettingsDep, principal: PrincipalDep, db: DbDep, box: SecretBoxDep) -> AiBackend:
+def find_ai_backend(settings: SettingsDep, principal: PrincipalDep, db: DbDep, box: SecretBoxDep) -> AiBackend | None:
     """The drafting model for this workspace: Gemini if a Gemini key is
-    stored (or GEMINI_API_KEY is set), otherwise Anthropic."""
+    stored (or GEMINI_API_KEY is set), otherwise Anthropic, otherwise None."""
 
     def key_for(name: str, env: SecretStr | None) -> str | None:
         return workspace_secrets.reveal(db, box, principal.workspace_id, name) or (env.get_secret_value() if env else None)
@@ -164,6 +167,16 @@ def get_ai_client(settings: SettingsDep, principal: PrincipalDep, db: DbDep, box
         return AiBackend("gemini", genai.Client(api_key=gemini_key), discovery.gemini_models())
     if anthropic_key := key_for(workspace_secrets.ANTHROPIC_KEY, settings.anthropic_api_key):
         return AiBackend("anthropic", anthropic.Anthropic(api_key=anthropic_key))
+    return None
+
+
+AiBackendOrNoneDep = Annotated[AiBackend | None, Depends(find_ai_backend)]
+
+
+def get_ai_client(backend: AiBackendOrNoneDep) -> AiBackend:
+    """The drafting model, or 503 when no AI key is configured."""
+    if backend is not None:
+        return backend
     raise ProblemError(
         503, "ai-not-configured", "AI drafting is not configured", "Add a Gemini or Anthropic API key under Settings."
     )

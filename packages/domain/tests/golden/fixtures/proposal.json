@@ -2,27 +2,27 @@
  "coverage": [
   {
    "Coverage": "Covered",
-   "ID": "R-01",
+   "ID": "R-1",
    "Requirement": "Sync contacts nightly",
-   "Scope Items": "S-05"
+   "Scope Items": "S-5"
   },
   {
    "Coverage": "Covered",
-   "ID": "R-02",
+   "ID": "R-2",
    "Requirement": "Log SMS",
-   "Scope Items": "S-06"
+   "Scope Items": "S-6"
   },
   {
    "Coverage": "Covered",
-   "ID": "R-03",
+   "ID": "R-3",
    "Requirement": "ERP sync",
-   "Scope Items": "S-07"
+   "Scope Items": "S-7"
   },
   {
    "Coverage": "Covered",
-   "ID": "R-04",
+   "ID": "R-4",
    "Requirement": "Forecasting",
-   "Scope Items": "S-08"
+   "Scope Items": "S-8"
   }
  ],
  "json": {
@@ -201,25 +201,25 @@
   "reference_number": "",
   "requirements": [
    {
-    "ID": "R-01",
+    "ID": "R-1",
     "Priority": "Must Have",
     "Requirement": "Sync contacts nightly",
     "Source": "Requirements Document"
    },
    {
-    "ID": "R-02",
+    "ID": "R-2",
     "Priority": "Must Have",
     "Requirement": "Log SMS",
     "Source": "Requirements Document"
    },
    {
-    "ID": "R-03",
+    "ID": "R-3",
     "Priority": "Must Have",
     "Requirement": "ERP sync",
     "Source": "Joint Evaluation Plan (Technical need)"
    },
    {
-    "ID": "R-04",
+    "ID": "R-4",
     "Priority": "To Confirm",
     "Requirement": "Forecasting",
     "Source": "Joint Evaluation Plan (Business need)"
@@ -238,7 +238,7 @@
   "scope": [
    {
     "Acceptance Criteria": "Audit report delivered and reviewed with client",
-    "ID": "S-01",
+    "ID": "S-1",
     "Item": "Current-state portal audit",
     "Milestone": "",
     "Quantity / Limit": "1 portal",
@@ -249,7 +249,7 @@
    },
    {
     "Acceptance Criteria": "WRD signed off by client decision-maker",
-    "ID": "S-02",
+    "ID": "S-2",
     "Item": "Written Requirements Document",
     "Milestone": "",
     "Quantity / Limit": "Up to 3 workshops",
@@ -260,7 +260,7 @@
    },
    {
     "Acceptance Criteria": "Blueprint approved by client",
-    "ID": "S-03",
+    "ID": "S-3",
     "Item": "Data model & architecture blueprint",
     "Milestone": "",
     "Quantity / Limit": "Up to 2 custom objects",
@@ -271,7 +271,7 @@
    },
    {
     "Acceptance Criteria": "",
-    "ID": "S-04",
+    "ID": "S-4",
     "Item": "Marketing Automation Platform Setup",
     "Milestone": "",
     "Quantity / Limit": "",
@@ -282,44 +282,44 @@
    },
    {
     "Acceptance Criteria": "",
-    "ID": "S-05",
+    "ID": "S-5",
     "Item": "Sync contacts nightly",
     "Milestone": "",
     "Quantity / Limit": "",
-    "Req. ID": "R-01",
+    "Req. ID": "R-1",
     "Status": "In Scope",
     "Tools / Techniques": "",
     "Workstream": ""
    },
    {
     "Acceptance Criteria": "",
-    "ID": "S-06",
+    "ID": "S-6",
     "Item": "Log SMS",
     "Milestone": "",
     "Quantity / Limit": "",
-    "Req. ID": "R-02",
+    "Req. ID": "R-2",
     "Status": "In Scope",
     "Tools / Techniques": "",
     "Workstream": ""
    },
    {
     "Acceptance Criteria": "",
-    "ID": "S-07",
+    "ID": "S-7",
     "Item": "ERP sync",
     "Milestone": "",
     "Quantity / Limit": "",
-    "Req. ID": "R-03",
+    "Req. ID": "R-3",
     "Status": "In Scope",
     "Tools / Techniques": "",
     "Workstream": ""
    },
    {
     "Acceptance Criteria": "",
-    "ID": "S-08",
+    "ID": "S-8",
     "Item": "Forecasting",
     "Milestone": "",
     "Quantity / Limit": "",
-    "Req. ID": "R-04",
+    "Req. ID": "R-4",
     "Status": "In Scope",
     "Tools / Techniques": "",
     "Workstream": ""
@@ -344,6 +344,27 @@
   },
   "solution_overview": "",
   "team": [
+   {
+    "Email": "",
+    "Name": "",
+    "Responsibilities": "Accountable for the engagement's success; the final escalation point. Approves scope changes and signs off on acceptance with the client's sponsor.",
+    "Role": "Executive Sponsor",
+    "Side": "SonaMation"
+   },
+   {
+    "Email": "",
+    "Name": "",
+    "Responsibilities": "Owns day-to-day delivery: plans the work, leads the implementation team, runs the status meetings, manages risks and reports progress to the client.",
+    "Role": "Team Lead of Client Delivery",
+    "Side": "SonaMation"
+   },
+   {
+    "Email": "",
+    "Name": "",
+    "Responsibilities": "Runs kickoff and onboarding: collects access, schedules discovery and training sessions, and is the client's first point of contact during setup.",
+    "Role": "Onboarding Lead",
+    "Side": "SonaMation"
+   },
    {
     "Email": "j@acme.com",
     "Name": "Jane",
@@ -417,15 +438,15 @@
  ],
  "pdf": [
   "SonaMation\nPROPOSAL + STATEMENT OF WORK\nHubSpot Implementation\nPrepared for Acme\nIssued 2026-09-01\nAddresses and contacts for notices\nClient SonaMation\nCompany Acme SonaMation\nPrimary contact Aylin\nAddress\nPhone\nEmail\nConfidential Page 1 of 13",
-  "SonaMation Proposal + Statement of Work - HubSpot Implementation - Acme\nConfidential Page 2 of 13\nContents\nAbout SonaMation 3\nScope at a Glance 4\nI. Technical Approach 5\n1.1 Understanding of the Problem 5\n1.2 Objectives 5\n1.3 Requirements 5\n1.4 Proposed Solution 5\n1.5 Methodology 5\n1.6 Tools & Platforms 6\n1.7 Techniques & Procedures 6\n1.8 Detailed Scope of Work 6\n1.9 Assumptions 7\n1.10 Change Request Process 8\n1.11 Glossary of Terms 8\nII. Management Approach 9\n2.1 Project Team & Roles 9\n2.2 Governance & Communication 9\n2.3 Schedule 9\n2.4 Risk Management 9\n2.5 Targeted KPIs 9\n2.6 Acceptance Process 10\nIII. Cost & Pricing 11\n3.1 Deliverables & Milestone Schedule 11\n3.2 Optional Add-on Services Menu 11\n3.3 Rate Card 11\n3.4 Pricing Summary 11\n3.5 Payment Terms 12\n3.6 Expenses 12\nTerms & Acceptance 13\nConfidentiality 13\nAcceptance & Signatures 13",
+  "SonaMation Proposal + Statement of Work - HubSpot Implementation - Acme\nConfidential Page 2 of 13\nContents\nAbout SonaMation 3\nScope at a Glance 4\nI. Technical Approach 5\n1.1 Understanding of the Problem 5\n1.2 Objectives 5\n1.3 Requirements 5\n1.4 Proposed Solution 5\n1.5 Methodology 5\n1.6 Tools & Platforms 6\n1.7 Techniques & Procedures 6\n1.8 Detailed Scope of Work 6\n1.9 Assumptions 7\n1.10 Change Request Process 8\n1.11 Glossary of Terms 8\nII. Management Approach 9\n2.1 Project Team & Roles 9\n2.2 Governance & Communication 9\n2.3 Schedule 10\n2.4 Risk Management 10\n2.5 Targeted KPIs 10\n2.6 Acceptance Process 10\nIII. Cost & Pricing 11\n3.1 Deliverables & Milestone Schedule 11\n3.2 Optional Add-on Services Menu 11\n3.3 Rate Card 11\n3.4 Pricing Summary 11\n3.5 Payment Terms 12\n3.6 Expenses 12\nTerms & Acceptance 13\nConfidentiality 13\nAcceptance & Signatures 13",
   "SonaMation Proposal + Statement of Work - HubSpot Implementation - Acme\nAbout SonaMation\nSonaMation is a HubSpot Solutions Partner focused on revenue-operations architecture: CRM data models, sales and\nmarketing automation, integrations, and the documentation that keeps them maintainable. Every engagement follows\nthe same requirements-first method - requirements are written down and agreed before anything is built, and every\ndeliverable is traced back to a requirement and signed off against written acceptance criteria.\nConfidential Page 3 of 13",
-  "SonaMation Proposal + Statement of Work - HubSpot Implementation - Acme\nScope at a Glance\nEvery item a client might ask about sits in exactly one of the lists below. If something is not listed as Included, it is not\npart of this agreement - it can still be added through the Change Request process described in the Technical volume.\nItem IDs (S-01, S-02...) are the reference to use when asking about scope.\n6\nIncluded items\n1\nExcluded items\n1\nOptional add-ons\n$12,250.00\nTotal one-time fee\nINCLUDED  (6) Delivered under this agreement, up to the stated limit.\nS-01 Discovery: Current-state portal audit 1 portal\nS-02 Discovery: Written Requirements Document Up to 3 workshops\nS-05 Sync contacts nightly\nS-06 Log SMS\nS-07 ERP sync\nS-08 Forecasting\nNOT INCLUDED  (1) Not part of this agreement. Can be added only through a Change Request.\nS-03 Architecture: Data model & architecture blueprint Up to 2 custom objects\nAVAILABLE AS ADD-ON  (1) Pre-priced options you can add at any time - see the Cost volume.\nS-04 Add-on: Marketing Automation Platform Setup $5,000.00 One Time\nConfidential Page 4 of 13",
-  "SonaMation Proposal + Statement of Work - HubSpot Implementation - Acme\nVOLUME I\nTechnical Approach\nOur understanding of the problem, the proposed solution, and the specific tools, techniques and procedures\nSonaMation will use to implement it - including the detailed scope of work.\n1.1 Understanding of the Problem\nReplace spreadsheets\n1.2 Objectives\nObjective Success Measure\nOne source of truth\n1.3 Requirements\nRequirements the solution must satisfy. Each one is traced to the scope items that deliver it (section 1.8).\nID Requirement Priority Source\nR-01 Sync contacts nightly Must Have Requirements\nDocument\nR-02 Log SMS Must Have Requirements\nDocument\nR-03 ERP sync Must Have Joint Evaluation Plan\n(Technical need)\nR-04 Forecasting To Confirm Joint Evaluation Plan\n(Business need)\n1.4 Proposed Solution\nTo be completed.\n1.5 Methodology\nPhase Activities Outputs\n1. Discovery & Requirements Stakeholder interviews, current-state portal audit, written\nrequirements, joint evaluation plan\nWritten Requirements Document,\naudit findings, signed-off scope\nConfidential Page 5 of 13",
-  "SonaMation Proposal + Statement of Work - HubSpot Implementation - Acme\nPhase Activities Outputs\n2. Architecture & Design Object model, property data dictionary, associations,\npipelines, naming conventions Architecture blueprint and diagram\n3. Build & Configure Configuration in a sandbox or controlled portal,\nintegrations, automation Configured solution, build log\n4. Test & Accept Internal QA, then customer UAT against each\nrequirement's acceptance criteria Test Case Document, UAT sign-off\n5. Launch & Enable Go-live, user training, hand-off documentation, hypercare Documentation pack, training\nrecording\n1.6 Tools & Platforms\nTool / Platform Purpose Provided By\nHubSpot (customer portal) System being configured Client\nHubSpot sandbox Build and test without touching live data Client\nArchitectureScope Read-only portal audit, blueprint, documentation, diagrams SonaMation\nShared project workspace Status reporting, decisions log, file exchange SonaMation\n1.7 Techniques & Procedures\nTechnique / Procedure How It Is Applied\nRequirements traceability Every scope item cites the requirement it satisfies; nothing is built without one.\nRead-only audit before change The live portal is audited first so changes are made against a known baseline.\nSandbox-first configuration Changes are built and tested in a sandbox before being promoted to production.\nTwo-round testing (QA, then UAT) SonaMation tests internally first; the client then accepts against written criteria.\n1.8 Detailed Scope of Work\nThe table below is the complete list of work included in this agreement. Quantities are upper limits; each item is complete\nwhen it meets its acceptance criteria.\nID Workstream Item\nQuantity /\nLimit\nTools / Techniques Acceptance Criteria Req. ID\nS-01 Discovery Current-state portal audit 1 portal\nArchitectureScope\nPortal Auditor\n(read-only)\nAudit report delivered\nand reviewed with client\nConfidential Page 6 of 13",
-  "SonaMation Proposal + Statement of Work - HubSpot Implementation - Acme\nID Workstream Item\nQuantity /\nLimit\nTools / Techniques Acceptance Criteria Req. ID\nS-02 Discovery\nWritten Requirements\nDocument\nUp to 3\nworkshops\nStakeholder\ninterviews, WRD\ntemplate\nWRD signed off by client\ndecision-maker\nS-05 Sync contacts nightly R-01\nS-06 Log SMS R-02\nS-07 ERP sync R-03\nS-08 Forecasting R-04\nOut of scope\nExplicitly excluded. Any of these can be added through a Change Request.\nID Workstream Item Quantity / Limit\nS-03 Architecture Data model & architecture blueprint Up to 2 custom objects\nOptional add-ons\nAvailable at the prices in the Cost volume; not included unless selected.\nID Workstream Item Quantity / Limit\nS-04 Add-on Marketing Automation Platform Setup\nRequirements traceability\nID Requirement Scope Items Coverage\nR-01 Sync contacts nightly S-05 Covered\nR-02 Log SMS S-06 Covered\nR-03 ERP sync S-07 Covered\nR-04 Forecasting S-08 Covered\n1.9 Assumptions\n- The client provides portal access (Super Admin or equivalent) within 5 business days of kickoff.\n- The client names one decision-maker who can approve requirements, scope changes and acceptance.\n- Client feedback and UAT results are returned within 5 business days of each request.\n- Quantities in the scope table are upper limits; anything beyond them goes through change control.\n- To be confirmed: Which ERP?\nConfidential Page 7 of 13",
+  "SonaMation Proposal + Statement of Work - HubSpot Implementation - Acme\nScope at a Glance\nEvery item a client might ask about sits in exactly one of the lists below. If something is not listed as Included, it is not\npart of this agreement - it can still be added through the Change Request process described in the Technical volume.\nItem IDs (S-1, S-2...) are the reference to use when asking about scope.\n6\nIncluded items\n1\nExcluded items\n1\nOptional add-ons\n$12,250.00\nTotal one-time fee\nINCLUDED  (6) Delivered under this agreement, up to the stated limit.\nS-1 Discovery: Current-state portal audit 1 portal\nS-2 Discovery: Written Requirements Document Up to 3 workshops\nS-5 Sync contacts nightly\nS-6 Log SMS\nS-7 ERP sync\nS-8 Forecasting\nNOT INCLUDED  (1) Not part of this agreement. Can be added only through a Change Request.\nS-3 Architecture: Data model & architecture blueprint Up to 2 custom objects\nAVAILABLE AS ADD-ON  (1) Pre-priced options you can add at any time - see the Cost volume.\nS-4 Add-on: Marketing Automation Platform Setup $5,000.00 One Time\nConfidential Page 4 of 13",
+  "SonaMation Proposal + Statement of Work - HubSpot Implementation - Acme\nVOLUME I\nTechnical Approach\nOur understanding of the problem, the proposed solution, and the specific tools, techniques and procedures\nSonaMation will use to implement it - including the detailed scope of work.\n1.1 Understanding of the Problem\nReplace spreadsheets\n1.2 Objectives\nObjective Success Measure\nOne source of truth\n1.3 Requirements\nRequirements the solution must satisfy. Each one is traced to the scope items that deliver it (section 1.8).\nID Requirement Priority Source\nR-1 Sync contacts nightly Must Have Requirements\nDocument\nR-2 Log SMS Must Have Requirements\nDocument\nR-3 ERP sync Must Have Joint Evaluation Plan\n(Technical need)\nR-4 Forecasting To Confirm Joint Evaluation Plan\n(Business need)\n1.4 Proposed Solution\nTo be completed.\n1.5 Methodology\nPhase Activities Outputs\n1. Discovery & Requirements Stakeholder interviews, current-state portal audit, written\nrequirements, joint evaluation plan\nWritten Requirements Document,\naudit findings, signed-off scope\nConfidential Page 5 of 13",
+  "SonaMation Proposal + Statement of Work - HubSpot Implementation - Acme\nPhase Activities Outputs\n2. Architecture & Design Object model, property data dictionary, associations,\npipelines, naming conventions Architecture blueprint and diagram\n3. Build & Configure Configuration in a sandbox or controlled portal,\nintegrations, automation Configured solution, build log\n4. Test & Accept Internal QA, then customer UAT against each\nrequirement's acceptance criteria Test Case Document, UAT sign-off\n5. Launch & Enable Go-live, user training, hand-off documentation, hypercare Documentation pack, training\nrecording\n1.6 Tools & Platforms\nTool / Platform Purpose Provided By\nHubSpot (customer portal) System being configured Client\nHubSpot sandbox Build and test without touching live data Client\nArchitectureScope Read-only portal audit, blueprint, documentation, diagrams SonaMation\nShared project workspace Status reporting, decisions log, file exchange SonaMation\n1.7 Techniques & Procedures\nTechnique / Procedure How It Is Applied\nRequirements traceability Every scope item cites the requirement it satisfies; nothing is built without one.\nRead-only audit before change The live portal is audited first so changes are made against a known baseline.\nSandbox-first configuration Changes are built and tested in a sandbox before being promoted to production.\nTwo-round testing (QA, then UAT) SonaMation tests internally first; the client then accepts against written criteria.\n1.8 Detailed Scope of Work\nThe table below is the complete list of work included in this agreement. Quantities are upper limits; each item is complete\nwhen it meets its acceptance criteria.\nID Workstream Item\nQuantity /\nLimit\nTools / Techniques Acceptance Criteria Req. ID\nS-1 Discovery Current-state portal audit 1 portal\nArchitectureScope\nPortal Auditor\n(read-only)\nAudit report delivered\nand reviewed with client\nConfidential Page 6 of 13",
+  "SonaMation Proposal + Statement of Work - HubSpot Implementation - Acme\nID Workstream Item\nQuantity /\nLimit\nTools / Techniques Acceptance Criteria Req. ID\nS-2 Discovery\nWritten Requirements\nDocument\nUp to 3\nworkshops\nStakeholder\ninterviews, WRD\ntemplate\nWRD signed off by client\ndecision-maker\nS-5 Sync contacts nightly R-1\nS-6 Log SMS R-2\nS-7 ERP sync R-3\nS-8 Forecasting R-4\nOut of scope\nExplicitly excluded. Any of these can be added through a Change Request.\nID Workstream Item Quantity / Limit\nS-3 Architecture Data model & architecture blueprint Up to 2 custom objects\nOptional add-ons\nAvailable at the prices in the Cost volume; not included unless selected.\nID Workstream Item Quantity / Limit\nS-4 Add-on Marketing Automation Platform Setup\nRequirements traceability\nID Requirement Scope Items Coverage\nR-1 Sync contacts nightly S-5 Covered\nR-2 Log SMS S-6 Covered\nR-3 ERP sync S-7 Covered\nR-4 Forecasting S-8 Covered\n1.9 Assumptions\n- The client provides portal access (Super Admin or equivalent) within 5 business days of kickoff.\n- The client names one decision-maker who can approve requirements, scope changes and acceptance.\n- Client feedback and UAT results are returned within 5 business days of each request.\n- Quantities in the scope table are upper limits; anything beyond them goes through change control.\n- To be confirmed: Which ERP?\nConfidential Page 7 of 13",
   "SonaMation Proposal + Statement of Work - HubSpot Implementation - Acme\n1.10 Change Request Process\nAnything not listed as In Scope in this document is out of scope, even if it is related. To add or change scope, either\nparty submits a written Change Request describing the need. SonaMation replies within 3 business days with the\nimpact on schedule and cost (priced from the add-on menu or the rate card). Work starts only after the client approves\nthe Change Request in writing; approved changes become part of this SOW.\n1.11 Glossary of Terms\nTerm Definition\nMember Paying customer\nConfidential Page 8 of 13",
-  "SonaMation Proposal + Statement of Work - HubSpot Implementation - Acme\nVOLUME II\nManagement Approach\nHow SonaMation will manage contract performance: who is involved, how progress is reported, the schedule, how risks\nare handled, and how deliverables are accepted.\n2.1 Project Team & Roles\nSide Role Name Email Responsibilities\nClient Sponsor Jane j@acme.com\n2.2 Governance & Communication\nMeeting / Report Cadence Participants Purpose\nKickoff Once Both teams Confirm scope, roles, timeline, access\nStatus call Weekly Project leads Progress, blockers, decisions needed\nWritten status report Weekly Sponsor, project leads Progress against milestones, risks, open change\nrequests\nSteering review Per milestone Sponsors Milestone acceptance, scope and budget\ndecisions\n2.3 Schedule\nPhase / Milestone Start End Key Deliverables\nGo live 2026-12-01 1\nDemo 2026-10-01\n2.4 Risk Management\nRisk Likelihood Impact Mitigation Owner\nRisk: Dirty data Medium Medium\n2.5 Targeted KPIs\nPrimary KPIs are the value drivers tied to return on investment; secondary KPIs track operational improvement.\nNone specified.\nConfidential Page 9 of 13",
-  "SonaMation Proposal + Statement of Work - HubSpot Implementation - Acme\n2.6 Acceptance Process\nEach milestone is complete when its deliverables meet the acceptance criteria in the scope table. The client has 5\nbusiness days after delivery to accept or to list specific deficiencies against those criteria; SonaMation will correct listed\ndeficiencies and resubmit. A deliverable not rejected in writing within that window is deemed accepted.\nConfidential Page 10 of 13",
+  "SonaMation Proposal + Statement of Work - HubSpot Implementation - Acme\nVOLUME II\nManagement Approach\nHow SonaMation will manage contract performance: who is involved, how progress is reported, the schedule, how risks\nare handled, and how deliverables are accepted.\n2.1 Project Team & Roles\nSide Role Name Email Responsibilities\nSonaMation Executive Sponsor\nAccountable for the\nengagement's success; the\nfinal escalation point.\nApproves scope changes\nand signs off on\nacceptance with the client's\nsponsor.\nSonaMation Team Lead of Client\nDelivery\nOwns day-to-day delivery:\nplans the work, leads the\nimplementation team, runs\nthe status meetings,\nmanages risks and reports\nprogress to the client.\nSonaMation Onboarding Lead\nRuns kickoff and\nonboarding: collects\naccess, schedules\ndiscovery and training\nsessions, and is the client's\nfirst point of contact during\nsetup.\nClient Sponsor Jane j@acme.com\n2.2 Governance & Communication\nMeeting / Report Cadence Participants Purpose\nKickoff Once Both teams Confirm scope, roles, timeline, access\nStatus call Weekly Project leads Progress, blockers, decisions needed\nWritten status report Weekly Sponsor, project leads Progress against milestones, risks, open change\nrequests\nSteering review Per milestone Sponsors Milestone acceptance, scope and budget\ndecisions\nConfidential Page 9 of 13",
+  "SonaMation Proposal + Statement of Work - HubSpot Implementation - Acme\n2.3 Schedule\nPhase / Milestone Start End Key Deliverables\nGo live 2026-12-01 1\nDemo 2026-10-01\n2.4 Risk Management\nRisk Likelihood Impact Mitigation Owner\nRisk: Dirty data Medium Medium\n2.5 Targeted KPIs\nPrimary KPIs are the value drivers tied to return on investment; secondary KPIs track operational improvement.\nNone specified.\n2.6 Acceptance Process\nEach milestone is complete when its deliverables meet the acceptance criteria in the scope table. The client has 5\nbusiness days after delivery to accept or to list specific deficiencies against those criteria; SonaMation will correct listed\ndeficiencies and resubmit. A deliverable not rejected in writing within that window is deemed accepted.\nConfidential Page 10 of 13",
   "SonaMation Proposal + Statement of Work - HubSpot Implementation - Acme\nVOLUME III\nCost & Pricing\nWhat the proposed work costs, when it is invoiced, and the price of anything beyond the agreed scope.\n3.1 Deliverables & Milestone Schedule\nMilestone Deliverables Start On or\nBefore\nDue On or\nBefore Fee\nM1 $11,500.00\nM2 $2,500.00\nTotal $14,000.00\n3.2 Optional Add-on Services Menu\nPre-priced services the client can add to this agreement at any time. Items marked Selected are included in the total below.\nService Includes Cost Billing Selected\nMarketing Automation Platform\nSetup Portal setup, domains, tracking code, email settings $5,000.00 One Time\nSupport $500.00 Monthly Selected\nSEO $2,500.50 One Time\n3.3 Rate Card\nUsed to price approved Change Requests that are not on the add-on menu.\nRole Hourly Rate\nSolutions Architect $175.00\nHubSpot Consultant $150.00\nDeveloper / Integrations $165.00\n3.4 Pricing Summary\nItem Amount\nMilestone fees $14,000.00\nDiscount (12.5%) -$1,750.00\nConfidential Page 11 of 13",
   "SonaMation Proposal + Statement of Work - HubSpot Implementation - Acme\nItem Amount\nTotal one-time fee $12,250.00\nSelected recurring add-ons (Monthly) $500.00\n3.5 Payment Terms\nAs complete and final payment for Services completed, delivered and accepted, the client shall pay SonaMation the\nfees in the milestone schedule. Invoices are issued on milestone acceptance and are due net 30 days. All amounts are\nin U.S. Dollars.\n3.6 Expenses\nSonaMation bears sole responsibility for all expenses incurred in performing the Services, unless otherwise agreed in\nwriting by the client. Third-party software licenses and subscriptions are the client's responsibility unless listed as an\nincluded add-on.\nConfidential Page 12 of 13",
   "SonaMation Proposal + Statement of Work - HubSpot Implementation - Acme\nConfidentiality\nThis document and all Services are confidential information of the parties and may not be shared outside the client's\norganization without SonaMation's written consent.\nAcceptance & Signatures\nBy signing below, the parties agree to this Proposal + Statement of Work, including the scope, exclusions, assumptions and\nfees described above, effective as of the effective date.\nAcme\nSignature\nName\nTitle\nDate\nSonaMation\nSignature\nName\nTitle\nDate\nConfidential Page 13 of 13"
@@ -617,25 +638,25 @@
   "reference_number": "",
   "requirements": [
    {
-    "ID": "R-01",
+    "ID": "R-1",
     "Priority": "Must Have",
     "Requirement": "Sync contacts nightly",
     "Source": "Requirements Document"
    },
    {
-    "ID": "R-02",
+    "ID": "R-2",
     "Priority": "Must Have",
     "Requirement": "Log SMS",
     "Source": "Requirements Document"
    },
    {
-    "ID": "R-03",
+    "ID": "R-3",
     "Priority": "Must Have",
     "Requirement": "ERP sync",
     "Source": "Joint Evaluation Plan (Technical need)"
    },
    {
-    "ID": "R-04",
+    "ID": "R-4",
     "Priority": "To Confirm",
     "Requirement": "Forecasting",
     "Source": "Joint Evaluation Plan (Business need)"
@@ -654,7 +675,7 @@
   "scope": [
    {
     "Acceptance Criteria": "Audit report delivered and reviewed with client",
-    "ID": "S-01",
+    "ID": "S-1",
     "Item": "Current-state portal audit",
     "Milestone": "",
     "Quantity / Limit": "1 portal",
@@ -665,7 +686,7 @@
    },
    {
     "Acceptance Criteria": "WRD signed off by client decision-maker",
-    "ID": "S-02",
+    "ID": "S-2",
     "Item": "Written Requirements Document",
     "Milestone": "",
     "Quantity / Limit": "Up to 3 workshops",
@@ -676,7 +697,7 @@
    },
    {
     "Acceptance Criteria": "Blueprint approved by client",
-    "ID": "S-03",
+    "ID": "S-3",
     "Item": "Data model & architecture blueprint",
     "Milestone": "",
     "Quantity / Limit": "Up to 2 custom objects",
@@ -687,7 +708,7 @@
    },
    {
     "Acceptance Criteria": "",
-    "ID": "S-04",
+    "ID": "S-4",
     "Item": "Marketing Automation Platform Setup",
     "Milestone": "",
     "Quantity / Limit": "",
@@ -698,44 +719,44 @@
    },
    {
     "Acceptance Criteria": "",
-    "ID": "S-05",
+    "ID": "S-5",
     "Item": "Sync contacts nightly",
     "Milestone": "",
     "Quantity / Limit": "",
-    "Req. ID": "R-01",
+    "Req. ID": "R-1",
     "Status": "In Scope",
     "Tools / Techniques": "",
     "Workstream": ""
    },
    {
     "Acceptance Criteria": "",
-    "ID": "S-06",
+    "ID": "S-6",
     "Item": "Log SMS",
     "Milestone": "",
     "Quantity / Limit": "",
-    "Req. ID": "R-02",
+    "Req. ID": "R-2",
     "Status": "In Scope",
     "Tools / Techniques": "",
     "Workstream": ""
    },
    {
     "Acceptance Criteria": "",
-    "ID": "S-07",
+    "ID": "S-7",
     "Item": "ERP sync",
     "Milestone": "",
     "Quantity / Limit": "",
-    "Req. ID": "R-03",
+    "Req. ID": "R-3",
     "Status": "In Scope",
     "Tools / Techniques": "",
     "Workstream": ""
    },
    {
     "Acceptance Criteria": "",
-    "ID": "S-08",
+    "ID": "S-8",
     "Item": "Forecasting",
     "Milestone": "",
     "Quantity / Limit": "",
-    "Req. ID": "R-04",
+    "Req. ID": "R-4",
     "Status": "In Scope",
     "Tools / Techniques": "",
     "Workstream": ""
@@ -760,6 +781,27 @@
   },
   "solution_overview": "",
   "team": [
+   {
+    "Email": "",
+    "Name": "",
+    "Responsibilities": "Accountable for the engagement's success; the final escalation point. Approves scope changes and signs off on acceptance with the client's sponsor.",
+    "Role": "Executive Sponsor",
+    "Side": "SonaMation"
+   },
+   {
+    "Email": "",
+    "Name": "",
+    "Responsibilities": "Owns day-to-day delivery: plans the work, leads the implementation team, runs the status meetings, manages risks and reports progress to the client.",
+    "Role": "Team Lead of Client Delivery",
+    "Side": "SonaMation"
+   },
+   {
+    "Email": "",
+    "Name": "",
+    "Responsibilities": "Runs kickoff and onboarding: collects access, schedules discovery and training sessions, and is the client's first point of contact during setup.",
+    "Role": "Onboarding Lead",
+    "Side": "SonaMation"
+   },
    {
     "Email": "j@acme.com",
     "Name": "Jane",
@@ -830,7 +872,7 @@
   "In Scope": [
    {
     "Acceptance Criteria": "Audit report delivered and reviewed with client",
-    "ID": "S-01",
+    "ID": "S-1",
     "Item": "Current-state portal audit",
     "Milestone": "",
     "Quantity / Limit": "1 portal",
@@ -841,7 +883,7 @@
    },
    {
     "Acceptance Criteria": "WRD signed off by client decision-maker",
-    "ID": "S-02",
+    "ID": "S-2",
     "Item": "Written Requirements Document",
     "Milestone": "",
     "Quantity / Limit": "Up to 3 workshops",
@@ -852,44 +894,44 @@
    },
    {
     "Acceptance Criteria": "",
-    "ID": "S-05",
+    "ID": "S-5",
     "Item": "Sync contacts nightly",
     "Milestone": "",
     "Quantity / Limit": "",
-    "Req. ID": "R-01",
+    "Req. ID": "R-1",
     "Status": "In Scope",
     "Tools / Techniques": "",
     "Workstream": ""
    },
    {
     "Acceptance Criteria": "",
-    "ID": "S-06",
+    "ID": "S-6",
     "Item": "Log SMS",
     "Milestone": "",
     "Quantity / Limit": "",
-    "Req. ID": "R-02",
+    "Req. ID": "R-2",
     "Status": "In Scope",
     "Tools / Techniques": "",
     "Workstream": ""
    },
    {
     "Acceptance Criteria": "",
-    "ID": "S-07",
+    "ID": "S-7",
     "Item": "ERP sync",
     "Milestone": "",
     "Quantity / Limit": "",
-    "Req. ID": "R-03",
+    "Req. ID": "R-3",
     "Status": "In Scope",
     "Tools / Techniques": "",
     "Workstream": ""
    },
    {
     "Acceptance Criteria": "",
-    "ID": "S-08",
+    "ID": "S-8",
     "Item": "Forecasting",
     "Milestone": "",
     "Quantity / Limit": "",
-    "Req. ID": "R-04",
+    "Req. ID": "R-4",
     "Status": "In Scope",
     "Tools / Techniques": "",
     "Workstream": ""
@@ -898,7 +940,7 @@
   "Optional Add-on": [
    {
     "Acceptance Criteria": "",
-    "ID": "S-04",
+    "ID": "S-4",
     "Item": "Marketing Automation Platform Setup",
     "Milestone": "",
     "Quantity / Limit": "",
@@ -911,7 +953,7 @@
   "Out of Scope": [
    {
     "Acceptance Criteria": "Blueprint approved by client",
-    "ID": "S-03",
+    "ID": "S-3",
     "Item": "Data model & architecture blueprint",
     "Milestone": "",
     "Quantity / Limit": "Up to 2 custom objects",
@@ -1187,8 +1229,22 @@
    {
     "Email": "",
     "Name": "",
-    "Responsibilities": "",
-    "Role": "",
+    "Responsibilities": "Accountable for the engagement's success; the final escalation point. Approves scope changes and signs off on acceptance with the client's sponsor.",
+    "Role": "Executive Sponsor",
+    "Side": "SonaMation"
+   },
+   {
+    "Email": "",
+    "Name": "",
+    "Responsibilities": "Owns day-to-day delivery: plans the work, leads the implementation team, runs the status meetings, manages risks and reports progress to the client.",
+    "Role": "Team Lead of Client Delivery",
+    "Side": "SonaMation"
+   },
+   {
+    "Email": "",
+    "Name": "",
+    "Responsibilities": "Runs kickoff and onboarding: collects access, schedules discovery and training sessions, and is the client's first point of contact during setup.",
+    "Role": "Onboarding Lead",
     "Side": "SonaMation"
    },
    {
@@ -1196,7 +1252,7 @@
     "Name": "",
     "Responsibilities": "",
     "Role": "",
-    "Side": "SonaMation"
+    "Side": "Client"
    }
   ],
   "techniques": [
@@ -1273,7 +1329,7 @@
  ],
  "validate": [
   "Technical volume: 'Proposed solution' is blank.",
-  "Scope: In Scope items without acceptance criteria: S-05, S-06, S-07, S-08."
+  "Scope: In Scope items without acceptance criteria: S-5, S-6, S-7, S-8."
  ],
  "validate_default": [
   "Client company name is blank.",

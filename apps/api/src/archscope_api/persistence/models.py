@@ -111,7 +111,29 @@ class Project(Base):
     workspace_id: Mapped[str] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"), index=True)
     name: Mapped[str] = mapped_column(String(200))
     client_name: Mapped[str] = mapped_column(String(200), default="")
+    # A free-text folder for grouping projects (e.g. one per client); "" = none.
+    folder: Mapped[str] = mapped_column(String(120), default="", server_default="")
     archived: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_by: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    # Who is in charge of the engagement (any workspace member), and who last changed anything in it.
+    lead_user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    updated_by: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=utcnow, onupdate=utcnow)
+
+
+class ProposalTemplate(Base):
+    """A proposal / SOW saved by a team member for reuse with a similar
+    client — shared with the whole workspace."""
+
+    __tablename__ = "proposal_templates"
+    __table_args__ = (UniqueConstraint("workspace_id", "name", name="uq_proposal_template_workspace_name"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    workspace_id: Mapped[str] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"), index=True)
+    name: Mapped[str] = mapped_column(String(200))
+    description: Mapped[str] = mapped_column(String(500), default="")
+    data: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
     created_by: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=utcnow, onupdate=utcnow)
@@ -147,6 +169,19 @@ class Document(Base):
     storage_key: Mapped[str] = mapped_column(String(300), unique=True)
     created_by: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=utcnow, index=True)
+
+
+class StoredFile(Base):
+    """A library file's bytes, when files are kept in the database
+    (ARCHSCOPE_BLOB_STORE=database) — for hosts whose disk doesn't
+    survive restarts, like Cloud Run."""
+
+    __tablename__ = "stored_files"
+
+    key: Mapped[str] = mapped_column(String(300), primary_key=True)
+    data: Mapped[bytes] = mapped_column(LargeBinary)
+    size_bytes: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=utcnow)
 
 
 class WorkspaceSecret(Base):

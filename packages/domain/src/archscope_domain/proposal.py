@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import copy
 import json
+import re
 from typing import Any
 
 SCHEMA_VERSION = 1
@@ -95,6 +96,36 @@ def blank_rows(table: str, count: int = 1) -> list[dict[str, Any]]:
 
 
 # ---- SonaMation defaults (the parts that rarely change) --------------------
+
+# SonaMation's side of the project team, pre-filled on every new proposal
+# (rows can be edited or deleted; the client's people are added per deal).
+DEFAULT_TEAM = [
+    {
+        "Side": "SonaMation",
+        "Role": "Executive Sponsor",
+        "Name": "",
+        "Email": "",
+        "Responsibilities": "Accountable for the engagement's success; the final escalation point. Approves scope "
+        "changes and signs off on acceptance with the client's sponsor.",
+    },
+    {
+        "Side": "SonaMation",
+        "Role": "Team Lead of Client Delivery",
+        "Name": "",
+        "Email": "",
+        "Responsibilities": "Owns day-to-day delivery: plans the work, leads the implementation team, runs the "
+        "status meetings, manages risks and reports progress to the client.",
+    },
+    {
+        "Side": "SonaMation",
+        "Role": "Onboarding Lead",
+        "Name": "",
+        "Email": "",
+        "Responsibilities": "Runs kickoff and onboarding: collects access, schedules discovery and training "
+        "sessions, and is the client's first point of contact during setup.",
+    },
+    {"Side": "Client", "Role": "", "Name": "", "Email": "", "Responsibilities": ""},
+]
 
 DEFAULT_COMPANY_OVERVIEW = (
     "SonaMation is a HubSpot Solutions Partner focused on revenue-operations architecture: CRM data "
@@ -471,7 +502,7 @@ def default_proposal() -> dict[str, Any]:
         "assumptions": copy.deepcopy(DEFAULT_ASSUMPTIONS),
         "change_process": DEFAULT_CHANGE_PROCESS,
         # ---- Volume II: Management ----
-        "team": blank_rows("team", 2),
+        "team": copy.deepcopy(DEFAULT_TEAM),
         "governance": copy.deepcopy(DEFAULT_GOVERNANCE),
         "timeline": blank_rows("timeline", 3),
         "risks": blank_rows("risks", 1),
@@ -540,36 +571,43 @@ def nonblank(rows: list[dict[str, Any]], *columns: str) -> list[dict[str, Any]]:
     return kept
 
 
-def number_scope_items(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Give every scope item without an ID a stable ``S-NN`` one so the
-    client can cite it in a change request ("is S-07 included?")."""
-    used = {_text(r.get("ID")) for r in rows if _text(r.get("ID"))}
-    n = 1
+_ID_RE = re.compile(r"^\s*([A-Za-z]+)\s*-\s*0*(\d+)\s*$")
+
+
+def id_key(value: Any) -> str:
+    """Comparable form of an item ID, so "R-01", "r-1" and "R-1" are the same."""
+    text = _text(value)
+    m = _ID_RE.match(text)
+    return f"{m.group(1).upper()}-{int(m.group(2))}" if m else text.lower()
+
+
+def _number_rows(rows: list[dict[str, Any]], prefix: str) -> list[dict[str, Any]]:
+    """Give every row without an ID the next free ``<prefix>-N`` (R-1, R-2…),
+    after the numbers already used, so existing references never change."""
+    used = {int(m.group(2)) for r in rows if (m := _ID_RE.match(_text(r.get("ID")))) and m.group(1).upper() == prefix}
+    n = 0
     out = []
     for row in rows:
         row = dict(row)
         if not _text(row.get("ID")):
-            while f"S-{n:02d}" in used:
+            n += 1
+            while n in used:
                 n += 1
-            row["ID"] = f"S-{n:02d}"
-            used.add(row["ID"])
+            row["ID"] = f"{prefix}-{n}"
+            used.add(n)
         out.append(row)
     return out
+
+
+def number_scope_items(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Give every scope item without an ID a stable ``S-N`` one so the
+    client can cite it in a change request ("is S-7 included?")."""
+    return _number_rows(rows, "S")
 
 
 def number_requirements(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    used = {_text(r.get("ID")) for r in rows if _text(r.get("ID"))}
-    n = 1
-    out = []
-    for row in rows:
-        row = dict(row)
-        if not _text(row.get("ID")):
-            while f"R-{n:02d}" in used:
-                n += 1
-            row["ID"] = f"R-{n:02d}"
-            used.add(row["ID"])
-        out.append(row)
-    return out
+    """Give every requirement without an ID a stable ``R-N`` one."""
+    return _number_rows(rows, "R")
 
 
 def scope_by_status(proposal: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
@@ -601,15 +639,13 @@ def requirement_coverage(proposal: dict[str, Any]) -> list[dict[str, str]]:
     it: it has been silently dropped. One cited only by an Out of Scope,
     Optional Add-on, or Client Responsibility item has been dealt with
     explicitly, so it gets that label instead of a warning. IDs match
-    case-insensitively ("r-01" cites "R-01")."""
+    case-insensitively and ignoring leading zeros ("r-01" cites "R-1")."""
     requirements = number_requirements(nonblank(proposal.get("requirements", []), "Requirement"))
     scope = number_scope_items(nonblank(proposal.get("scope", []), "Item"))
     rows = []
     for req in requirements:
         rid = _text(req.get("ID"))
-        linked = [
-            s for s in scope if rid and rid.lower() in [part.strip().lower() for part in _text(s.get("Req. ID")).split(",")]
-        ]
+        linked = [s for s in scope if rid and id_key(rid) in [id_key(part) for part in _text(s.get("Req. ID")).split(",")]]
         statuses = {_text(s.get("Status")) or SCOPE_IN for s in linked}
         coverage = COVERAGE_NONE
         for status in (SCOPE_IN, SCOPE_OPTIONAL, SCOPE_CLIENT, SCOPE_OUT):
@@ -819,9 +855,9 @@ def scope_from_requirements(proposal: dict[str, Any]) -> dict[str, Any]:
     p = copy.deepcopy(proposal)
     p["requirements"] = number_requirements(nonblank(p.get("requirements", []), "Requirement"))
     scope = number_scope_items(nonblank(p.get("scope", []), "Item"))
-    cited = {part.strip() for s in scope for part in _text(s.get("Req. ID")).split(",") if part.strip()}
+    cited = {id_key(part) for s in scope for part in _text(s.get("Req. ID")).split(",") if part.strip()}
     for req in p["requirements"]:
-        if req["ID"] in cited:
+        if id_key(req["ID"]) in cited:
             continue
         scope.append({**BLANK_ROWS["scope"], "Item": _text(req.get("Requirement")), "Req. ID": req["ID"]})
     p["scope"] = number_scope_items(scope)
@@ -848,6 +884,40 @@ def from_json(text: str | bytes) -> dict[str, Any]:
             merged[key].update(value)
         elif key in merged:
             merged[key] = value
+    return merged
+
+
+# What identifies one deal's client; cleared when a proposal is saved as a
+# shared template so the next client starts with everything else.
+CLIENT_SPECIFIC_FIELDS = ("reference_number", "issue_date", "effective_date", "expiration_date", "valid_until")
+
+
+def as_saved_template(proposal: dict[str, Any]) -> dict[str, Any]:
+    """A filled-in proposal as a reusable template for a similar client:
+    keeps nearly everything (requirements, scope, team, pricing, schedule,
+    risks, KPIs, all text) and clears only what identifies this client —
+    their contact details, the dates and reference number, and the names
+    and emails of the client's people (their roles stay)."""
+    template = from_json(to_json(proposal))
+    template["client"] = {key: "" for key in template.get("client", {})} or copy.deepcopy(default_proposal()["client"])
+    for field in CLIENT_SPECIFIC_FIELDS:
+        template[field] = ""
+    for row in template.get("team", []):
+        if _text(row.get("Side")).lower() == "client":
+            row["Name"] = ""
+            row["Email"] = ""
+    return template
+
+
+def apply_saved_template(template: dict[str, Any], current: dict[str, Any]) -> dict[str, Any]:
+    """Start ``current`` from ``template``: the template's content, with
+    this deal's client details, dates and reference number kept."""
+    merged = from_json(to_json(template))
+    if any(_text(v) for v in current.get("client", {}).values()):
+        merged["client"] = copy.deepcopy(current["client"])
+    for field in CLIENT_SPECIFIC_FIELDS:
+        if _text(current.get(field)):
+            merged[field] = current[field]
     return merged
 
 

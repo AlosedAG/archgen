@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 import shutil
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncIterator, Callable, Iterator
 from pathlib import Path
 from typing import Any
 
@@ -177,3 +177,13 @@ def golden() -> Callable[[str], Any]:
 def test_password() -> str:
     """The seeded user's password (their email is ``principal.email``)."""
     return TEST_PASSWORD
+
+
+@pytest.fixture(autouse=True)
+def _reset_sign_in_throttle() -> Iterator[None]:
+    """The wrong-password counter is per process; start each test clean."""
+    from archscope_api.services import auth as auth_service
+
+    auth_service._failures.clear()
+    yield
+    auth_service._failures.clear()

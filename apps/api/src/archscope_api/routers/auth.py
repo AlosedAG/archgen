@@ -25,7 +25,7 @@ from ..schemas.workspace import (
 )
 from ..services import auth, signup
 from ..services.auth import Principal
-from ..services.errors import Unavailable
+from ..services.errors import Forbidden, Unavailable
 from ..settings import Settings
 from .deps import CodePepperDep, DbDep, MailerDep, PrincipalDep, SettingsDep
 
@@ -106,6 +106,9 @@ def me(principal: PrincipalDep) -> Me:
 def sign_up(body: SignUpRequest, db: DbDep, mailer: MailerDep, pepper: CodePepperDep, settings: SettingsDep) -> Accepted:
     if not settings.signup_enabled:
         raise Unavailable("Self sign-up is turned off. Ask an admin for an account.")
+    allowed = settings.signup_domains_allowed
+    if allowed and body.email.rsplit("@", 1)[-1].strip().lower() not in allowed:
+        raise Forbidden(f"Accounts can only be created with a {' or '.join('@' + d for d in allowed)} email.")
     signup.request_signup(db, _require_mail(mailer), pepper, email=body.email, name=body.name, password=body.password)
     return Accepted(message=CHECK_EMAIL)
 

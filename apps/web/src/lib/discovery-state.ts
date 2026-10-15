@@ -17,6 +17,8 @@ export type DiscoveryState = {
   version: 1;
   clientName: string;
   businessType: string;
+  /** The client's website; its homepage is read for the business analysis. */
+  clientWebsite: string;
   sections: Record<string, SectionNotes>;
   /** Required-task ids ticked on the Business analysis tab. */
   tasksDone: string[];
@@ -42,6 +44,7 @@ export function emptyState(clientName = ""): DiscoveryState {
     version: 1,
     clientName,
     businessType: "",
+    clientWebsite: "",
     sections: {},
     tasksDone: [],
     buildDone: [],
@@ -87,7 +90,7 @@ export function hasAnyNotes(state: DiscoveryState): boolean {
 
 /** The notes in the API's DiscoveryNotes shape. */
 export function toDiscoveryNotes(state: DiscoveryState): DiscoveryNotes {
-  return { client_name: state.clientName, business_type: state.businessType, sections: state.sections };
+  return { client_name: state.clientName, business_type: state.businessType, client_website: state.clientWebsite, sections: state.sections };
 }
 
 function readLegacyNotes(): DiscoveryState | null {

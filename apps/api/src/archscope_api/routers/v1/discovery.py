@@ -3,6 +3,8 @@
 AI drafts stream as Server-Sent Events so the browser renders text as the
 model writes it. Event types:
 
+- ``status`` — ``{"message": "...", "model": "..."}``, a progress note
+  (which model is drafting; a busy model being retried or replaced)
 - ``delta`` — ``{"text": "..."}``, a chunk of the document
 - ``done``  — ``{}``, the document finished normally
 - ``error`` — an RFC 9457 problem object; sent mid-stream because a
@@ -16,15 +18,17 @@ from collections.abc import Iterator
 from typing import Any
 
 import anthropic
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Query, Request
 from fastapi.responses import StreamingResponse
 from google.genai import errors as genai_errors
 
 from archscope_domain.discovery import DiscoveryError
 from archscope_domain.stage_planner import StagePlanner
 
-from ...problems import TYPE_BASE
+from ...problems import TYPE_BASE, ProblemError
 from ...schemas.discovery import (
+    AiModel,
+    AiModels,
     AnalysisPayload,
     BuildOrder,
     BuildOrderSettings,
@@ -42,13 +46,20 @@ from ...schemas.discovery import (
     SuggestModulesResponse,
 )
 from ...schemas.exports import ExportSection
-from ...services import discovery, stage_planner
-from ..deps import AiBackend, AiClientDep, SettingsDep, offload
+from ...services import discovery, stage_planner, website
+from ..deps import AiBackend, AiBackendOrNoneDep, AiClientDep, SettingsDep, offload
 
 router = APIRouter(prefix="/discovery", tags=["discovery"])
 
+_MODEL_QUERY = Query(
+    None, description="Gemini model to try first (one of GET /discovery/ai-models); the others stay as fallbacks."
+)
+
 _SSE_RESPONSES: dict[int | str, dict[str, Any]] = {
-    200: {"description": "Server-Sent Events: `delta`, then `done` or `error`.", "content": {"text/event-stream": {}}}
+    200: {
+        "description": "Server-Sent Events: `status` notes and `delta` chunks, then `done` or `error`.",
+        "content": {"text/event-stream": {}},
+    }
 }
 
 
@@ -130,22 +141,40 @@ async def business_analysis_payload(body: DiscoveryNotes) -> AnalysisPayload:
     "/business-analysis", response_class=StreamingResponse, responses=_SSE_RESPONSES, summary="Draft the business analysis (SSE)"
 )
 async def business_analysis(
-    body: DiscoveryNotes, request: Request, client: AiClientDep, settings: SettingsDep
+    body: DiscoveryNotes, request: Request, client: AiClientDep, settings: SettingsDep, model: str | None = _MODEL_QUERY
 ) -> StreamingResponse:
     payload = await offload(
-        discovery.business_analysis_payload, body.to_domain(), client_name=body.client_name, business_type=body.business_type
+        discovery.business_analysis_payload,
+        body.to_domain(),
+        client_name=body.client_name,
+        business_type=body.business_type,
+        client_website=body.client_website,
     )
-    return _sse(_draft(client, payload, settings.anthropic_model), request)
+    draft = _draft(client, payload, settings.anthropic_model, model)  # validates the model before streaming
+    return _sse(_chain(discovery.with_website(payload, _read_website), draft), request)
 
 
 @router.post(
     "/client-explainer", response_class=StreamingResponse, responses=_SSE_RESPONSES, summary="Draft the client explainer (SSE)"
 )
 async def client_explainer(
-    body: ClientExplainerRequest, request: Request, client: AiClientDep, settings: SettingsDep
+    body: ClientExplainerRequest, request: Request, client: AiClientDep, settings: SettingsDep, model: str | None = _MODEL_QUERY
 ) -> StreamingResponse:
     payload = discovery.client_explainer_payload(list(body.modules), business_type=body.business_type)
-    return _sse(_draft(client, payload, settings.anthropic_model), request)
+    return _sse(_draft(client, payload, settings.anthropic_model, model), request)
+
+
+@router.get("/ai-models", response_model=AiModels, summary="The AI models drafting can use, in the order they're tried")
+async def ai_models(backend: AiBackendOrNoneDep, settings: SettingsDep) -> AiModels:
+    if backend is None:
+        return AiModels(provider="none")
+    if backend.provider == "anthropic":
+        model = settings.anthropic_model or "Claude"
+        return AiModels(provider="anthropic", models=[AiModel(id=model, label=model, note="")])
+    return AiModels(
+        provider="gemini",
+        models=[AiModel(id=m, label=discovery.model_label(m), note=discovery.model_note(m)) for m in backend.models],
+    )
 
 
 @router.post("/suggest-modules", response_model=SuggestModulesResponse, summary="Hubs recommended by a business analysis")
@@ -156,16 +185,46 @@ async def suggest_modules(body: SuggestModulesRequest) -> SuggestModulesResponse
 # ---- Model call ------------------------------------------------------------
 
 
-def _gemini_falls_back(exc: Exception) -> bool:
-    """Per-model Gemini errors worth trying the next model for: free quota
-    used up (429) or the model not available to this key (404)."""
-    return isinstance(exc, genai_errors.ClientError) and exc.code in (404, 429)
+def _classify_gemini(exc: Exception) -> str | None:
+    """How to handle a Gemini error before any text has streamed: retry a
+    temporary overload (500/503/504), skip a model whose free quota is used
+    up (429) or that isn't available to the key (404), otherwise fail."""
+    if isinstance(exc, genai_errors.ServerError) and exc.code in (500, 503, 504):
+        return discovery.RETRY
+    if isinstance(exc, genai_errors.ClientError) and exc.code in (404, 429):
+        return discovery.NEXT
+    return None
 
 
-def _draft(ai: AiBackend, payload: dict[str, Any], anthropic_model: str | None) -> Iterator[str]:
+def _draft(
+    ai: AiBackend, payload: dict[str, Any], anthropic_model: str | None, preferred: str | None = None
+) -> Iterator[str | discovery.DraftStatus]:
     if ai.provider == "gemini":
-        return discovery.stream_document_gemini(ai.client, payload, models=ai.models, should_fall_back=_gemini_falls_back)
-    return discovery.stream_document(ai.client, payload, model=anthropic_model)
+        if preferred and preferred not in ai.models:
+            raise ProblemError(422, "unknown-model", "Unknown AI model", f"Choose one of: {', '.join(ai.models)}.")
+        models = discovery.ordered_models(ai.models, preferred)
+        return discovery.stream_document_gemini(ai.client, payload, models=models, classify=_classify_gemini)
+    return _with_status(
+        discovery.DraftStatus("Drafting with Claude"), discovery.stream_document(ai.client, payload, model=anthropic_model)
+    )
+
+
+def _read_website(url: str) -> str:
+    return website.read_homepage(url).excerpt()
+
+
+def _chain(
+    first: Iterator[discovery.DraftStatus], then: Iterator[str | discovery.DraftStatus]
+) -> Iterator[str | discovery.DraftStatus]:
+    """Run ``first`` to completion, then stream ``then`` (generators are lazy,
+    so the model isn't called until the website has been read)."""
+    yield from first
+    yield from then
+
+
+def _with_status(status: discovery.DraftStatus, chunks: Iterator[str]) -> Iterator[str | discovery.DraftStatus]:
+    yield status
+    yield from chunks
 
 
 # ---- SSE framing -----------------------------------------------------------
@@ -191,6 +250,15 @@ def _gemini_problem(request: Request, exc: genai_errors.APIError) -> dict[str, A
         return _problem(
             request, 503, "ai-not-configured", "AI credentials were rejected", "Check the Gemini API key under Settings."
         )
+    if exc.code in (500, 503, 504):
+        return _problem(
+            request,
+            503,
+            "ai-busy",
+            "The AI service is busy",
+            "Gemini is under heavy demand right now and every free model we tried was busy. "
+            "This is usually temporary — wait a minute and generate again.",
+        )
     if exc.code == 429:
         return _problem(
             request,
@@ -203,14 +271,17 @@ def _gemini_problem(request: Request, exc: genai_errors.APIError) -> dict[str, A
     return _problem(request, 502, "ai-unavailable", "AI request failed", str(exc))
 
 
-def _sse(chunks: Iterator[str], request: Request) -> StreamingResponse:
+def _sse(chunks: Iterator[str | discovery.DraftStatus], request: Request) -> StreamingResponse:
     """Frame a (blocking) text iterator as SSE. Starlette iterates sync
     generators in the threadpool, so the model stream never blocks the loop."""
 
     def events() -> Iterator[str]:
         try:
-            for text in chunks:
-                yield _event("delta", {"text": text})
+            for item in chunks:
+                if isinstance(item, discovery.DraftStatus):
+                    yield _event("status", {"message": item.message, "model": item.model})
+                else:
+                    yield _event("delta", {"text": item})
         except DiscoveryError as exc:
             yield _event("error", _problem(request, 502, "ai-incomplete", "The document was not completed", str(exc)))
             return
@@ -233,5 +304,5 @@ def _sse(chunks: Iterator[str], request: Request) -> StreamingResponse:
     return StreamingResponse(
         events(),
         media_type="text/event-stream",
-        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        headers={"Cache-Control": "no-cache, no-transform", "X-Accel-Buffering": "no"},
     )

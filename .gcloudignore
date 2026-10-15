@@ -1,0 +1,34 @@
+# What `gcloud run deploy archscope-api --source .` does NOT upload.
+# (The API image only needs pyproject.toml, uv.lock, packages/ and apps/api/.)
+# Secrets and local data must never leave your computer.
+.env
+.env.*
+.streamlit/secrets.toml
+var/
+.git/
+.venv/
+**/__pycache__/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.import_linter_cache/
+.claude/
+apps/web/
+app_pages/
+core/
+tests/
+docs/
+examples/
+sample_inputs/
+Home.py
+requirements.txt
+test_results.txt
+*.pdf
+*.pptx
+project_library/
+**/var/
+*.db
+*.sqlite
+*.xlsx
+*.docx
+deploy/
