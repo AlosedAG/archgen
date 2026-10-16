@@ -338,8 +338,21 @@ export function TokenSelect({
   const typed = query.trim();
   const matches = choices.filter((c) => !selected.includes(c) && c.toLowerCase().includes(typed.toLowerCase()));
   const isNew = allowCustom && typed !== "" && ![...choices, ...selected].some((c) => c.toLowerCase() === typed.toLowerCase());
-  // The "Add …" entry is the last option, so Enter still picks the first match.
-  const remaining = isNew ? [...matches, typed] : matches;
+  // List entries: the matching options, plus (with allowCustom) a way to add your own —
+  // "Add “typed”" (first when nothing matches, else after the matches so Enter still picks
+  // the first match), or an "Add your own…" prompt when nothing is typed yet.
+  type Entry = { kind: "option" | "new" | "prompt"; value: string };
+  const options: Entry[] = matches.map((value) => ({ kind: "option", value }));
+  const entries: Entry[] = !allowCustom
+    ? options
+    : isNew
+      ? matches.length
+        ? [...options, { kind: "new", value: typed }]
+        : [{ kind: "new", value: typed }]
+      : typed
+        ? options
+        : [...options, { kind: "prompt", value: "" }];
+  const [prompting, setPrompting] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -356,7 +369,17 @@ export function TokenSelect({
 
   /** Keyboard picks keep the list open for the next one; a mouse pick closes it, so a
    *  following click can't land on whichever option slid under the pointer. */
+  const pick = (entry: Entry, keepOpen: boolean) => {
+    if (entry.kind === "prompt") {
+      setPrompting(true);
+      input.current?.focus();
+      return;
+    }
+    add(entry.value, keepOpen);
+  };
+
   const add = (option: string, keepOpen: boolean) => {
+    setPrompting(false);
     onChange([...selected, option]);
     setQuery("");
     setActive(0);
@@ -373,6 +396,7 @@ export function TokenSelect({
           setOpen(true);
           input.current?.focus();
         }}
+        data-prompting={prompting}
       >
         <AnimatePresence initial={false}>
           {selected.map((option) => (
@@ -408,7 +432,15 @@ export function TokenSelect({
           aria-expanded={open}
           aria-controls={listId}
           aria-autocomplete="list"
-          placeholder={selected.length ? "" : (placeholder ?? (allowCustom ? "Select or type to add your own" : "Select all that apply"))}
+          placeholder={
+            prompting
+              ? "Type a new option, then press Enter"
+              : selected.length
+                ? allowCustom
+                  ? "Add…"
+                  : ""
+                : (placeholder ?? (allowCustom ? "Select, or type to add your own" : "Select all that apply"))
+          }
           value={query}
           onFocus={() => setOpen(true)}
           onBlur={(e) => {
@@ -423,20 +455,21 @@ export function TokenSelect({
             if (e.key === "ArrowDown") {
               e.preventDefault();
               setOpen(true);
-              setActive((i) => Math.min(i + 1, remaining.length - 1));
+              setActive((i) => Math.min(i + 1, entries.length - 1));
             } else if (e.key === "ArrowUp") {
               e.preventDefault();
               setActive((i) => Math.max(i - 1, 0));
             } else if (e.key === "Enter") {
-              const option = remaining[active];
-              if (open && option) {
+              const entry = entries[active];
+              if (open && entry) {
                 e.preventDefault();
-                add(option, true);
+                pick(entry, true);
               }
             } else if (e.key === "Backspace" && !query && selected.length) {
               onChange(selected.slice(0, -1));
             } else if (e.key === "Escape") {
               setOpen(false);
+              setPrompting(false);
             }
           }}
         />
@@ -452,30 +485,32 @@ export function TokenSelect({
             animate="visible"
             exit="exit"
           >
-            {remaining.length === 0 ? (
-              <li className="option-empty">
-                {selected.length >= choices.length && !typed ? "Everything is selected." : allowCustom ? "Type to add your own." : "No matches."}
-              </li>
+            {entries.length === 0 ? (
+              <li className="option-empty">{selected.length >= choices.length && !typed ? "Everything is selected." : "No matches."}</li>
             ) : (
-              remaining.map((option, i) => (
+              entries.map((entry, i) => (
                 <li
-                  key={option}
+                  key={`${entry.kind}:${entry.value}`}
                   role="option"
                   aria-selected={i === active}
-                  className="option"
+                  className={entry.kind === "option" ? "option" : "option option-add"}
                   data-active={i === active}
                   onMouseEnter={() => setActive(i)}
                   onMouseDown={(e) => {
                     e.preventDefault();
-                    if (openRef.current) add(option, false);
+                    if (openRef.current) pick(entry, entry.kind === "prompt");
                   }}
                 >
-                  {isNew && i === remaining.length - 1 ? (
+                  {entry.kind === "option" && entry.value}
+                  {entry.kind === "new" && (
                     <>
-                      <Glyph name="plus" size={14} /> Add &ldquo;{option}&rdquo;
+                      <Glyph name="plus" size={14} /> Add &ldquo;{entry.value}&rdquo;
                     </>
-                  ) : (
-                    option
+                  )}
+                  {entry.kind === "prompt" && (
+                    <>
+                      <Glyph name="plus" size={14} /> {prompting ? "Type the new option above and press Enter" : "Add your own…"}
+                    </>
                   )}
                 </li>
               ))

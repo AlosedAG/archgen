@@ -680,6 +680,12 @@ textarea {
   background: transparent;
 }
 
+/* The surrounding box shows focus; the bare text field inside it shouldn't draw a second ring. */
+.token-search:focus-visible,
+.jump-search-input:focus-visible {
+  box-shadow: none;
+}
+
 .token {
   display: inline-flex;
   align-items: center;
@@ -728,6 +734,21 @@ textarea {
   border-radius: var(--radius-chip);
   font-size: 13px;
   cursor: pointer;
+}
+
+/* "Add your own…" / "Add “X”": set apart from the options above it. */
+.option-add {
+  margin-top: 2px;
+  border-top: 1px solid var(--border);
+  border-radius: 0 0 var(--radius-chip) var(--radius-chip);
+  color: var(--purple-light);
+  font-weight: 600;
+}
+
+.option-add:first-child {
+  margin-top: 0;
+  border-top: 0;
+  border-radius: var(--radius-chip);
 }
 
 .option[data-active="true"] {
