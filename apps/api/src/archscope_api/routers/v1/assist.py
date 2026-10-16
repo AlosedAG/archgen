@@ -18,13 +18,20 @@ from ...schemas.assist import (
     ArchitectureAssistResponse,
     ArchitectureInputs,
     AssistContext,
+    CompanyOverview,
+    CompanyOverviewRequest,
+    CompanyOverviewResponse,
+    ProjectTasksAssistRequest,
+    ProjectTasksAssistResponse,
     ProposalAssistRequest,
     ProposalAssistResponse,
     StagePlannerAssistRequest,
     StagePlannerAssistResponse,
+    SuggestedTask,
 )
 from ...schemas.proposal import ProposalDocument
 from ...schemas.stage_planner import PlannedStage
+from ...services import website
 from ..deps import AiBackend, AiClientDep, SettingsDep, offload
 from .discovery import _classify_gemini
 
@@ -122,3 +129,31 @@ async def proposal(body: ProposalAssistRequest, ai: AiClientDep, settings: Setti
     )
     merged, changed = assist.merge_proposal(current, suggestion)
     return ProposalAssistResponse(proposal=ProposalDocument.from_domain(merged), changed=changed, model=model)
+
+
+@router.post(
+    "/project-tasks", response_model=ProjectTasksAssistResponse, summary="Suggest follow-up tasks for each engagement stage"
+)
+async def project_tasks(body: ProjectTasksAssistRequest, ai: AiClientDep, settings: SettingsDep) -> ProjectTasksAssistResponse:
+    context = _context(body.context)
+    current = [t.model_dump() for t in body.tasks]
+    suggestion, model = await offload(_ask, ai, settings.anthropic_model, assist.PROJECT_TASKS, context, current)
+    return ProjectTasksAssistResponse(
+        tasks=[SuggestedTask.model_validate(t) for t in assist.merge_tasks(current, suggestion)], model=model
+    )
+
+
+@router.post("/company-overview", response_model=CompanyOverviewResponse, summary="A company overview from the client's website")
+async def company_overview(body: CompanyOverviewRequest, ai: AiClientDep, settings: SettingsDep) -> CompanyOverviewResponse:
+    try:
+        snapshot = await offload(website.read_homepage, body.website)
+    except website.WebsiteError as exc:
+        raise ProblemError(422, "website-unreadable", "The website couldn't be read", str(exc)) from exc
+    context: dict[str, Any] = {"website": snapshot.excerpt()}
+    client = {k: v for k, v in (("name", body.client_name.strip()), ("business_type", body.business_type.strip())) if v}
+    if client:
+        context["client_as_typed"] = client
+    suggestion, model = await offload(_ask, ai, settings.anthropic_model, assist.COMPANY_OVERVIEW, context, None)
+    return CompanyOverviewResponse(
+        overview=CompanyOverview.model_validate(assist.clean_overview(suggestion)), website=snapshot.url, model=model
+    )

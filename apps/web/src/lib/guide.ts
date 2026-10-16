@@ -58,6 +58,18 @@ export const GUIDE_PAGES: GuidePage[] = [
     ],
   },
   {
+    key: "tasks",
+    title: "Tasks & progress",
+    step: "Project",
+    summary: "The team's internal checklist for this project, grouped by stage, with owners, dates and progress.",
+    steps: [
+      "Fill the list with “Suggest tasks with AI” (reads everything the project holds so far) or “Pull from discovery” (the discovery call's required tasks and build order, under Build). Add your own under any stage.",
+      "Ticking a task records when and by whom. Open “Source details” to see why it's needed, “Add notes” to keep decisions and context, and “Attach file” to keep documents with it (they're also saved to the Project Library).",
+      "Each stage starts the day its first task is checked and finishes when its last one is; set who is in charge and adjust the dates whenever you need.",
+      "Download the progress report for the client — stages, owners, dates and what's done. Task notes stay out unless you tick “Include task notes”.",
+    ],
+  },
+  {
     key: "discovery",
     title: "Discovery Call Assistant",
     step: "Step 1 · Discover",
@@ -72,6 +84,8 @@ export const GUIDE_PAGES: GuidePage[] = [
       "The checklist is a client-ready record of what must be configured; Status / Notes is left blank for the delivery team. Required tasks come from answers — confirm scope, owners and commercial terms before treating it as a statement of work.",
       "Build order: create consent assets and core fields first, then lists, pipelines and record pages. Review each template against the client's legal and operational needs before reuse. The .json export keeps task names, sources, template tags and completion for a task tool.",
       "“Start a new call” clears this project's answers and notes only — download a backup first.",
+      "Sales pipeline stages: add each stage with its win probability; drag the handle (or use the arrow keys on it) to reorder. “Start from HubSpot's default stages” fills a starting pipeline.",
+      "Optional: “5 · Company overview” reads the client's website and summarises the company — type, offerings, highlights, things to know and questions to ask. It also feeds the other AI suggestions.",
     ],
   },
   {

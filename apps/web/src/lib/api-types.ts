@@ -21,6 +21,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/assist/company-overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** A company overview from the client's website */
+        post: operations["assist_company_overview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/assist/project-tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Suggest follow-up tasks for each engagement stage */
+        post: operations["assist_project_tasks"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/assist/proposal": {
         parameters: {
             query?: never;
@@ -1708,6 +1742,68 @@ export interface components {
             /** Email */
             email: string;
         };
+        /** CompanyOverview */
+        CompanyOverview: {
+            /**
+             * Audience
+             * @default
+             */
+            audience: string;
+            /** Highlights */
+            highlights?: string[];
+            /**
+             * Locations
+             * @default
+             */
+            locations: string;
+            /**
+             * Name
+             * @default
+             */
+            name: string;
+            /** Offerings */
+            offerings?: string[];
+            /** Questions To Ask */
+            questions_to_ask?: string[];
+            /**
+             * Summary
+             * @default
+             */
+            summary: string;
+            /** Things To Know */
+            things_to_know?: string[];
+            /**
+             * Type
+             * @default
+             */
+            type: string;
+        };
+        /** CompanyOverviewRequest */
+        CompanyOverviewRequest: {
+            /**
+             * Business Type
+             * @default
+             */
+            business_type: string;
+            /**
+             * Client Name
+             * @default
+             */
+            client_name: string;
+            /** Website */
+            website: string;
+        };
+        /** CompanyOverviewResponse */
+        CompanyOverviewResponse: {
+            /** Model */
+            model: string;
+            overview: components["schemas"]["CompanyOverview"];
+            /**
+             * Website
+             * @description The address that was read.
+             */
+            website: string;
+        };
         /** CoverageRow */
         CoverageRow: {
             /**
@@ -2777,6 +2873,22 @@ export interface components {
             /** Name */
             name: string;
         };
+        /** ProjectTasksAssistRequest */
+        ProjectTasksAssistRequest: {
+            context: components["schemas"]["AssistContext"];
+            /**
+             * Tasks
+             * @description Tasks already on the list (not suggested again).
+             */
+            tasks?: components["schemas"]["TaskStub"][];
+        };
+        /** ProjectTasksAssistResponse */
+        ProjectTasksAssistResponse: {
+            /** Model */
+            model: string;
+            /** Tasks */
+            tasks: components["schemas"]["SuggestedTask"][];
+        };
         /** ProjectUpdate */
         ProjectUpdate: {
             /** Archived */
@@ -3598,6 +3710,29 @@ export interface components {
             /** Modules */
             modules: ("Marketing Hub" | "Sales Hub" | "Service Hub" | "Operations Hub" | "Content Hub (CMS)" | "Commerce Hub")[];
         };
+        /** SuggestedTask */
+        SuggestedTask: {
+            /**
+             * Source
+             * @description Why the task is needed, and where in the project that comes from.
+             * @default
+             */
+            source: string;
+            /**
+             * Stage
+             * @description discover, assess, design, propose, build or launch.
+             */
+            stage: string;
+            /** Title */
+            title: string;
+        };
+        /** TaskStub */
+        TaskStub: {
+            /** Stage */
+            stage: string;
+            /** Title */
+            title: string;
+        };
         /** Team */
         Team: {
             /**
@@ -3780,6 +3915,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ArchitectureAssistResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    assist_company_overview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompanyOverviewRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyOverviewResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    assist_project_tasks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectTasksAssistRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectTasksAssistResponse"];
                 };
             };
             /** @description Validation Error */

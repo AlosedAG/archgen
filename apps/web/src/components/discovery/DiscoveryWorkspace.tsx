@@ -21,10 +21,11 @@ import { Callout, TabPanel, Tabs } from "../ui";
 import { BuildOrderTab } from "./BuildOrderTab";
 import { BusinessAnalysisTab } from "./BusinessAnalysisTab";
 import { ChecklistTab } from "./ChecklistTab";
+import { CompanyOverviewTab } from "./CompanyOverviewTab";
 import { ExplainerTab } from "./ExplainerTab";
 import { Glyph } from "@/components/icons";
 
-type TabId = "analysis" | "explainer" | "checklist" | "build";
+type TabId = "analysis" | "explainer" | "checklist" | "build" | "overview";
 
 /** A safe link for the typed website ("acme.com" → "https://acme.com"), or "" if it isn't a web address. */
 function websiteHref(raw: string): string {
@@ -91,7 +92,7 @@ export function DiscoveryWorkspace({ project }: { project: Project }) {
     };
   }, [loaded, config, sections, clientName, businessType, projectType, buildDone, stagePlanner]);
 
-  const TAB_IDS: TabId[] = ["analysis", "explainer", "checklist", "build"];
+  const TAB_IDS: TabId[] = ["analysis", "explainer", "checklist", "build", "overview"];
   const bank = config?.question_bank.sections ?? [];
   const totalQuestions = bank.reduce((n, s) => n + s.questions.length, 0);
   const answeredQuestions = bank.reduce(
@@ -233,6 +234,7 @@ export function DiscoveryWorkspace({ project }: { project: Project }) {
             { id: "explainer", label: "2 · Client explainer" },
             { id: "checklist", label: "3 · Required-tasks checklist" },
             { id: "build", label: "4 · Build order" },
+            { id: "overview", label: "5 · Company overview" },
           ]}
           active={tab}
           onChange={setTab}
@@ -249,6 +251,7 @@ export function DiscoveryWorkspace({ project }: { project: Project }) {
           {tab === "explainer" && <ExplainerTab store={store} />}
           {tab === "checklist" && <ChecklistTab evaluation={evaluation} store={store} onBack={() => setTab("analysis")} />}
           {tab === "build" && <BuildOrderTab config={config} evaluation={evaluation} store={store} />}
+          {tab === "overview" && <CompanyOverviewTab store={store} />}
         </TabPanel>
       </div>
     </>

@@ -23,7 +23,20 @@ from archscope_domain import proposal as pp
 STAGE_PLANNER = "stage_planner"
 PROPOSAL = "proposal"
 ARCHITECTURE = "architecture"
-TASKS = (STAGE_PLANNER, PROPOSAL, ARCHITECTURE)
+PROJECT_TASKS = "project_tasks"
+COMPANY_OVERVIEW = "company_overview"
+TASKS = (STAGE_PLANNER, PROPOSAL, ARCHITECTURE, PROJECT_TASKS, COMPANY_OVERVIEW)
+
+#: The engagement stages the project task tracker groups its tasks under (id, name).
+PROJECT_STAGES = (
+    ("discover", "Discover"),
+    ("assess", "Assess current portal"),
+    ("design", "Design"),
+    ("propose", "Propose"),
+    ("build", "Build"),
+    ("launch", "Test & launch"),
+)
+MAX_SUGGESTED_TASKS_PER_STAGE = 8
 
 MAX_TOKENS = 8000
 GEMINI_MAX_OUTPUT_TOKENS = 32768
@@ -236,6 +249,43 @@ def instructions(task: str, current: Any) -> str:
             "list common requests that are not included as Out of Scope.\n"
             f"CURRENT_PROPOSAL: {json.dumps(current, ensure_ascii=False)}\n"
             f"Return JSON shaped like: {json.dumps(_PROPOSAL_SHAPE, ensure_ascii=False)}"
+        )
+    if task == PROJECT_TASKS:
+        return (
+            "Task: plan the follow-up work for this HubSpot engagement as a checklist, grouped by stage.\n"
+            f"Stages (id: name): {json.dumps(dict(PROJECT_STAGES), ensure_ascii=False)}.\n"
+            "For each stage propose the concrete tasks this particular client needs (at most "
+            f"{MAX_SUGGESTED_TASKS_PER_STAGE} per stage, fewer when the context is thin), such as confirming "
+            "an open question, collecting access, configuring a named object, migrating a named system, or "
+            "testing a named workflow. Each task is a short imperative title, plus a one-sentence source: "
+            "why it is needed, citing where in the context it comes from.\n"
+            "Do not repeat a task already in CURRENT_TASKS (same meaning counts as a repeat).\n"
+            f"CURRENT_TASKS: {json.dumps(current, ensure_ascii=False)}\n"
+            'Return JSON shaped like: {"tasks": [{"stage": "discover", "title": "", "source": ""}]}'
+        )
+    if task == COMPANY_OVERVIEW:
+        return (
+            "Task: write a short company overview of the client for the consultant preparing the discovery "
+            "call, from the website excerpt (and any other context). Facts only from the context; leave a field "
+            "empty rather than guess. Lists hold short phrases.\n"
+            "Return JSON shaped like: "
+            + json.dumps(
+                {
+                    "name": "Company name",
+                    "type": "Industry / type of business, e.g. 'Multi-location dental group'",
+                    "summary": "2-3 sentences: what they do, for whom, where",
+                    "offerings": ["Main products or services"],
+                    "audience": "Who their customers are",
+                    "locations": "Where they operate, if stated",
+                    "highlights": ["Notable facts: size, awards, growth, differentiators"],
+                    "things_to_know": [
+                        "What matters for a HubSpot engagement: channels they use, booking or "
+                        "checkout flows, tools seen on the site, compliance hints"
+                    ],
+                    "questions_to_ask": ["Good discovery questions this overview raises"],
+                },
+                ensure_ascii=False,
+            )
         )
     raise ValueError(f"Unknown assist task: {task}")
 
@@ -529,3 +579,45 @@ def merge_proposal(proposal: dict[str, Any], suggested: dict[str, Any]) -> tuple
             p[key] = merged
             changed.append(key)
     return p, changed
+
+
+# ---- Project tasks / company overview ----------------------------------------------
+
+
+def merge_tasks(current: list[dict[str, Any]], suggested: dict[str, Any]) -> list[dict[str, str]]:
+    """The suggested tasks that are new: on a known stage, with a title, not
+    already a task (by meaning-insensitive text) and capped per stage."""
+    stage_ids = {sid for sid, _ in PROJECT_STAGES}
+    seen = {task_key(t.get("title")) for t in current}
+    per_stage: dict[str, int] = {}
+    new = []
+    for item in suggested.get("tasks") or []:
+        if not isinstance(item, dict):
+            continue
+        stage, title = _clean(item.get("stage")), _clean(item.get("title"))
+        if stage not in stage_ids or not title or task_key(title) in seen:
+            continue
+        if per_stage.get(stage, 0) >= MAX_SUGGESTED_TASKS_PER_STAGE:
+            continue
+        per_stage[stage] = per_stage.get(stage, 0) + 1
+        seen.add(task_key(title))
+        new.append({"stage": stage, "title": title, "source": _clean(item.get("source"))})
+    return new
+
+
+def task_key(value: Any) -> str:
+    """Comparable form of a task title (case, spacing and punctuation ignored)."""
+    return " ".join(re.sub(r"[^\w\s]", " ", _clean(value).lower()).split())
+
+
+_OVERVIEW_TEXT = ("name", "type", "summary", "audience", "locations")
+_OVERVIEW_LISTS = ("offerings", "highlights", "things_to_know", "questions_to_ask")
+
+
+def clean_overview(suggested: dict[str, Any]) -> dict[str, Any]:
+    """The model's overview with every expected field present and tidy."""
+    out: dict[str, Any] = {key: _clean(suggested.get(key)) for key in _OVERVIEW_TEXT}
+    for key in _OVERVIEW_LISTS:
+        items = suggested.get(key)
+        out[key] = [s for s in (_clean(v) for v in (items if isinstance(items, list) else [])) if s][:8]
+    return out

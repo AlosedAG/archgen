@@ -20,6 +20,11 @@ export const NAV: NavGroup[] = [
     ],
   },
   {
+    group: "Project",
+    crumb: "Project",
+    items: [{ label: "Tasks & progress", icon: "list", page: "tasks" }],
+  },
+  {
     group: "Step 1 · Discover",
     crumb: "Discovery",
     items: [

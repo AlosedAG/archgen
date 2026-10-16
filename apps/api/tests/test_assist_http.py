@@ -136,3 +136,58 @@ async def test_industry_templates_list_and_apply(client: AsyncClient) -> None:
     unknown = await client.post("/api/v1/industry-templates/proposal", json={"industry": "nope", "proposal": proposal})
     assert unknown.status_code == 422
     assert unknown.json()["type"].endswith("/unknown-template")
+
+
+async def test_project_tasks_skip_existing_and_unknown_stages(app: FastAPI) -> None:
+    ai, _ = _fake_claude(
+        {
+            "tasks": [
+                {"stage": "discover", "title": "Confirm data owner per clinic", "source": "Open question"},
+                {"stage": "discover", "title": "confirm data owner per clinic!", "source": "duplicate"},
+                {"stage": "build", "title": "Set up consent subscription types", "source": "GDPR answer"},
+                {"stage": "nowhere", "title": "Ignored", "source": ""},
+            ]
+        }
+    )
+    app.dependency_overrides[get_ai_client] = lambda: ai
+    body = {"context": {"discovery": DISCOVERY}, "tasks": [{"stage": "build", "title": "Set up consent subscription types"}]}
+    response = await _post(app, "project-tasks", body)
+    assert response.status_code == 200, response.text
+    assert [(t["stage"], t["title"]) for t in response.json()["tasks"]] == [("discover", "Confirm data owner per clinic")]
+
+
+async def test_company_overview_reads_the_website(app: FastAPI, monkeypatch: Any) -> None:
+    from archscope_api.services import website
+
+    seen: list[str] = []
+
+    def fake_read(url: str) -> Any:
+        seen.append(url)
+        return website.WebsiteSnapshot(url="https://brightsmiles.example/", title="Bright Smiles Dental", text="12 clinics")
+
+    monkeypatch.setattr(website, "read_homepage", fake_read)
+    ai, calls = _fake_claude({"name": "Bright Smiles", "summary": "Dental group.", "highlights": ["12 clinics", ""]})
+    app.dependency_overrides[get_ai_client] = lambda: ai
+    response = await _post(app, "company-overview", {"website": "brightsmiles.example"})
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["overview"]["name"] == "Bright Smiles"
+    assert body["overview"]["highlights"] == ["12 clinics"]
+    assert body["overview"]["offerings"] == []
+    assert "Bright Smiles Dental" in calls[0]["messages"][0]["content"]
+    assert seen == ["brightsmiles.example"]
+
+
+async def test_company_overview_unreadable_site_is_a_clear_422(app: FastAPI, monkeypatch: Any) -> None:
+    from archscope_api.services import website
+
+    def fail(url: str) -> Any:
+        raise website.WebsiteError("That address didn't respond.")
+
+    monkeypatch.setattr(website, "read_homepage", fail)
+    ai, calls = _fake_claude({})
+    app.dependency_overrides[get_ai_client] = lambda: ai
+    response = await _post(app, "company-overview", {"website": "nope.example"})
+    assert response.status_code == 422
+    assert response.json()["type"].endswith("/website-unreadable")
+    assert calls == []

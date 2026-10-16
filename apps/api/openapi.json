@@ -1079,6 +1079,118 @@
         "title": "CodeConfirm",
         "type": "object"
       },
+      "CompanyOverview": {
+        "additionalProperties": false,
+        "properties": {
+          "audience": {
+            "default": "",
+            "title": "Audience",
+            "type": "string"
+          },
+          "highlights": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Highlights",
+            "type": "array"
+          },
+          "locations": {
+            "default": "",
+            "title": "Locations",
+            "type": "string"
+          },
+          "name": {
+            "default": "",
+            "title": "Name",
+            "type": "string"
+          },
+          "offerings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Offerings",
+            "type": "array"
+          },
+          "questions_to_ask": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Questions To Ask",
+            "type": "array"
+          },
+          "summary": {
+            "default": "",
+            "title": "Summary",
+            "type": "string"
+          },
+          "things_to_know": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Things To Know",
+            "type": "array"
+          },
+          "type": {
+            "default": "",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "title": "CompanyOverview",
+        "type": "object"
+      },
+      "CompanyOverviewRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "business_type": {
+            "default": "",
+            "maxLength": 200,
+            "title": "Business Type",
+            "type": "string"
+          },
+          "client_name": {
+            "default": "",
+            "maxLength": 200,
+            "title": "Client Name",
+            "type": "string"
+          },
+          "website": {
+            "maxLength": 300,
+            "minLength": 3,
+            "title": "Website",
+            "type": "string"
+          }
+        },
+        "required": [
+          "website"
+        ],
+        "title": "CompanyOverviewRequest",
+        "type": "object"
+      },
+      "CompanyOverviewResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "overview": {
+            "$ref": "#/components/schemas/CompanyOverview"
+          },
+          "website": {
+            "description": "The address that was read.",
+            "title": "Website",
+            "type": "string"
+          }
+        },
+        "required": [
+          "overview",
+          "website",
+          "model"
+        ],
+        "title": "CompanyOverviewResponse",
+        "type": "object"
+      },
       "CoverageRow": {
         "additionalProperties": false,
         "properties": {
@@ -3220,6 +3332,49 @@
         "title": "ProjectCreate",
         "type": "object"
       },
+      "ProjectTasksAssistRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "context": {
+            "$ref": "#/components/schemas/AssistContext"
+          },
+          "tasks": {
+            "description": "Tasks already on the list (not suggested again).",
+            "items": {
+              "$ref": "#/components/schemas/TaskStub"
+            },
+            "title": "Tasks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "context"
+        ],
+        "title": "ProjectTasksAssistRequest",
+        "type": "object"
+      },
+      "ProjectTasksAssistResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/SuggestedTask"
+            },
+            "title": "Tasks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "tasks",
+          "model"
+        ],
+        "title": "ProjectTasksAssistResponse",
+        "type": "object"
+      },
       "ProjectUpdate": {
         "additionalProperties": false,
         "properties": {
@@ -4891,6 +5046,51 @@
         "title": "SuggestModulesResponse",
         "type": "object"
       },
+      "SuggestedTask": {
+        "additionalProperties": false,
+        "properties": {
+          "source": {
+            "default": "",
+            "description": "Why the task is needed, and where in the project that comes from.",
+            "title": "Source",
+            "type": "string"
+          },
+          "stage": {
+            "description": "discover, assess, design, propose, build or launch.",
+            "title": "Stage",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "stage",
+          "title"
+        ],
+        "title": "SuggestedTask",
+        "type": "object"
+      },
+      "TaskStub": {
+        "additionalProperties": false,
+        "properties": {
+          "stage": {
+            "title": "Stage",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "stage",
+          "title"
+        ],
+        "title": "TaskStub",
+        "type": "object"
+      },
       "Team": {
         "additionalProperties": false,
         "properties": {
@@ -5207,6 +5407,98 @@
           }
         ],
         "summary": "Fill the Architecture Generator's inputs from earlier steps",
+        "tags": [
+          "assist"
+        ]
+      }
+    },
+    "/api/v1/assist/company-overview": {
+      "post": {
+        "operationId": "assist_company_overview",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompanyOverviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyOverviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "A company overview from the client's website",
+        "tags": [
+          "assist"
+        ]
+      }
+    },
+    "/api/v1/assist/project-tasks": {
+      "post": {
+        "operationId": "assist_project_tasks",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectTasksAssistRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectTasksAssistResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Suggest follow-up tasks for each engagement stage",
         "tags": [
           "assist"
         ]

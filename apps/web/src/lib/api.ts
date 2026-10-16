@@ -178,6 +178,13 @@ export const assistArchitecture = (context: AssistContext, inputs: ArchitectureA
 export const assistProposal = (context: AssistContext, proposal: ProposalDocument) =>
   post<Schemas["ProposalAssistResponse"]>("/assist/proposal", { context, proposal });
 
+export type SuggestedTask = Schemas["SuggestedTask"];
+export const assistProjectTasks = (context: AssistContext, tasks: { stage: string; title: string }[]) =>
+  post<Schemas["ProjectTasksAssistResponse"]>("/assist/project-tasks", { context, tasks });
+export type CompanyOverview = Schemas["CompanyOverview"];
+export const companyOverview = (website: string, client_name: string, business_type: string) =>
+  post<Schemas["CompanyOverviewResponse"]>("/assist/company-overview", { website, client_name, business_type });
+
 // ---- Industry templates -------------------------------------------------------------------
 
 export type IndustryTemplates = Schemas["IndustryTemplates"];

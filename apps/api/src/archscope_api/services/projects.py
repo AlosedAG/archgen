@@ -27,6 +27,7 @@ MODULES = (
     "portal",  # the HubSpot snapshot + audit and property-audit results, shared by the Step 2 pages
     "proposal",
     "test_cases",
+    "tasks",  # the internal task tracker (Tasks & progress)
 )
 # Portal snapshots of large HubSpot accounts run to several MB.
 MAX_STATE_BYTES = 10 * 1024 * 1024

@@ -161,3 +161,21 @@ def test_ask_gemini_moves_past_a_busy_model():
         classify=lambda e: "retry" if isinstance(e, Busy) else None,
     )
     assert (result, model, calls) == ({"x": 1}, "b", ["a", "b"])
+
+
+def test_clean_overview_fills_every_field():
+    out = assist.clean_overview({"name": " Acme ", "highlights": ["a", " ", "b"], "offerings": "not a list"})
+    assert out["name"] == "Acme"
+    assert out["highlights"] == ["a", "b"]
+    assert out["offerings"] == []
+    assert set(out) == {
+        "name",
+        "type",
+        "summary",
+        "audience",
+        "locations",
+        "offerings",
+        "highlights",
+        "things_to_know",
+        "questions_to_ask",
+    }

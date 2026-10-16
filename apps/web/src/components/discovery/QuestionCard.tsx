@@ -15,6 +15,10 @@ import type { FollowUpQuestion, Question } from "@/lib/api";
 import { getAnswer, type Answer, type DiscoveryStore } from "@/lib/discovery-state";
 
 import { Reveal } from "../ui";
+import { PipelineStagesInput } from "./PipelineStagesInput";
+
+/** Answered with the reorderable stage editor instead of a text box. */
+const PIPELINE_QUESTION = "sales_pipeline_stages";
 import { collapse, dropdown, fadeInUp, highlight, insertRow, pop, press, staggerTiming, tween } from "@/lib/motion";
 import { Glyph } from "@/components/icons";
 
@@ -183,6 +187,9 @@ function AnswerInput({
   labelId: string;
 }) {
   const choices = [...(question.options ?? []), otherOption];
+  if (question.id === PIPELINE_QUESTION) {
+    return <PipelineStagesInput value={answer.notes} onChange={(notes) => set({ notes })} labelId={labelId} />;
+  }
   // The design labels the "Other (specify)" chip just "Other".
   const chipLabel = (option: string) => (option === otherOption ? "Other" : option);
   if (question.input === "multiselect" || question.input === "radio") {

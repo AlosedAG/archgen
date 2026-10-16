@@ -106,3 +106,54 @@ class IndustryProposalRequest(ApiModel):
 class IndustryProposalResponse(ApiModel):
     proposal: ProposalDocument
     changed: list[str]
+
+
+# ---- Project task tracker ------------------------------------------------------------
+
+
+class TaskStub(ApiModel):
+    stage: str
+    title: str
+
+
+class SuggestedTask(ApiModel):
+    stage: str = Field(description="discover, assess, design, propose, build or launch.")
+    title: str
+    source: str = Field("", description="Why the task is needed, and where in the project that comes from.")
+
+
+class ProjectTasksAssistRequest(ApiModel):
+    context: AssistContext
+    tasks: list[TaskStub] = Field(default_factory=list, description="Tasks already on the list (not suggested again).")
+
+
+class ProjectTasksAssistResponse(ApiModel):
+    tasks: list[SuggestedTask]
+    model: str
+
+
+# ---- Company overview ------------------------------------------------------------------
+
+
+class CompanyOverviewRequest(ApiModel):
+    website: str = Field(min_length=3, max_length=300)
+    client_name: str = Field("", max_length=200)
+    business_type: str = Field("", max_length=200)
+
+
+class CompanyOverview(ApiModel):
+    name: str = ""
+    type: str = ""
+    summary: str = ""
+    audience: str = ""
+    locations: str = ""
+    offerings: list[str] = Field(default_factory=list)
+    highlights: list[str] = Field(default_factory=list)
+    things_to_know: list[str] = Field(default_factory=list)
+    questions_to_ask: list[str] = Field(default_factory=list)
+
+
+class CompanyOverviewResponse(ApiModel):
+    overview: CompanyOverview
+    website: str = Field(description="The address that was read.")
+    model: str

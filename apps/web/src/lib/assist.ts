@@ -28,6 +28,13 @@ export async function projectContext(projectId: string, clientName: string): Pro
     const sections = def.exportSections(normalizeDocument(def, docs[i]), clientName).filter((s) => (s.rows ?? []).length);
     if (sections.length) documents[def.title] = Object.fromEntries(sections.map((s) => [s.title, s.rows ?? []]));
   });
+  const overview = discovery.companyOverview?.data;
+  if (overview) {
+    const rows = Object.entries(overview)
+      .map(([field, value]) => ({ Field: field.replace(/_/g, " "), Value: Array.isArray(value) ? value.join("; ") : String(value ?? "") }))
+      .filter((r) => r.Value.trim());
+    if (rows.length) documents["Company overview (from the website)"] = { Overview: rows };
+  }
   return {
     discovery: hasAnyNotes(discovery) ? toDiscoveryNotes(discovery) : null,
     business_analysis: discovery.baOutput ?? "",

@@ -7,7 +7,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import type { DiscoveryNotes, HubSpotModule, PlannedStage } from "./api";
+import type { CompanyOverview, DiscoveryNotes, HubSpotModule, PlannedStage } from "./api";
 import { useModuleState } from "./module-state";
 
 export type Answer = { selected: string[]; other: string; notes: string; flagged: boolean };
@@ -30,6 +30,8 @@ export type DiscoveryState = {
   ceModules: HubSpotModule[];
   /** Stages of a Deal Stage Planner applied to the build order (null = none). */
   stagePlanner: PlannedStage[] | null;
+  /** The AI company overview read from the client's website (null = not generated). */
+  companyOverview: { website: string; generatedAt: string; data: CompanyOverview } | null;
 };
 
 const MODULE = "discovery";
@@ -53,6 +55,7 @@ export function emptyState(clientName = ""): DiscoveryState {
     ceOutput: "",
     ceModules: [],
     stagePlanner: null,
+    companyOverview: null,
   };
 }
 
