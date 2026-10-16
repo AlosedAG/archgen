@@ -9,7 +9,11 @@
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
-import { ApiError, getMe, setUnauthorizedHandler, signOut as apiSignOut, type Me, type Project } from "@/lib/api";
+import { ApiError, getMe, setUnauthorizedHandler, signOut as apiSignOut, WAKING, type Me, type Project } from "@/lib/api";
+
+import { Callout } from "./ui";
+
+const SLOW_AFTER_MS = 3_000;
 
 type AppSession = {
   me: Me;
@@ -45,14 +49,27 @@ export function AppSessionProvider({ children, fallback }: { children: React.Rea
     router.replace(`/login?next=${encodeURIComponent(pathname)}`);
   }, [router, pathname]);
 
-  useEffect(() => {
-    setUnauthorizedHandler(toLogin);
+  // After a few seconds without an answer the server is probably waking up (free hosting sleeps when idle).
+  const [slow, setSlow] = useState(false);
+
+  const load = useCallback(() => {
+    setError(null);
+    setSlow(false);
+    const timer = window.setTimeout(() => setSlow(true), SLOW_AFTER_MS);
     getMe()
       .then(setMe)
       .catch((e: unknown) => {
         if (e instanceof ApiError && e.status === 401) toLogin();
+        else if (e instanceof ApiError && (e.status === undefined || WAKING.has(e.status)))
+          setError("The server didn't wake up in time. It usually takes about a minute after a quiet spell — try again.");
         else setError(e instanceof ApiError ? e.message : "Couldn't load your account.");
-      });
+      })
+      .finally(() => window.clearTimeout(timer));
+  }, [toLogin]);
+
+  useEffect(() => {
+    setUnauthorizedHandler(toLogin);
+    load();
     return () => setUnauthorizedHandler(null);
     // Only on first load; later 401s are handled by the unauthorized handler.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -70,13 +87,29 @@ export function AppSessionProvider({ children, fallback }: { children: React.Rea
   if (error) {
     return (
       <div className="centered-page">
-        <div className="callout callout-error">
-          <p className="callout-title">!&nbsp;&nbsp;Something went wrong</p>
-          <div className="callout-body">{error}</div>
+        <div className="stack" style={{ gap: 12, maxWidth: 440 }}>
+          <Callout tone="error" title="Couldn't reach ArchitectureScope">
+            {error}
+          </Callout>
+          <button type="button" className="btn btn-primary" style={{ width: "fit-content" }} onClick={load}>
+            Try again
+          </button>
         </div>
       </div>
     );
   }
-  if (!value) return <>{fallback}</>;
+  if (!value) {
+    return (
+      <>
+        {slow && (
+          <div className="waking-banner" role="status">
+            <span className="waking-dot" aria-hidden />
+            Starting the server — this takes about a minute after a quiet spell.
+          </div>
+        )}
+        {fallback}
+      </>
+    );
+  }
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }

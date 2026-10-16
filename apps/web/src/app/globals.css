@@ -2874,3 +2874,43 @@ textarea {
   gap: 14px;
   padding: 16px;
 }
+
+/* ---- Waking the server (free hosting sleeps when idle) ----------------------- */
+
+.waking-banner {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  box-shadow: 0 6px 16px rgb(42 32 88 / 8%);
+  font-size: 13px;
+  color: var(--text-body);
+  transform: translateX(-50%);
+}
+
+.waking-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--orange);
+  animation: waking-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes waking-pulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .waking-dot {
+    animation: none;
+  }
+}

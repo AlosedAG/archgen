@@ -59,10 +59,10 @@ async function toApiError(response: Response): Promise<ApiError> {
 }
 
 // A host that sleeps idle services (Render's free plan) answers 502/503/504
-// for up to a minute while the API wakes. Reads are safe to repeat, so they
-// retry through that window instead of failing the page.
-const WAKING = new Set([502, 503, 504]);
-const WAKE_RETRY_MS = 90_000;
+// while the API wakes — measured at over a minute for a cold start. Reads are
+// safe to repeat, so they retry through that window instead of failing the page.
+export const WAKING = new Set([502, 503, 504]);
+const WAKE_RETRY_MS = 180_000;
 
 function pause(ms: number, signal?: AbortSignal | null): Promise<void> {
   return new Promise((resolve, reject) => {
