@@ -88,7 +88,7 @@ export function AppSessionProvider({ children, fallback }: { children: React.Rea
     return (
       <div className="centered-page">
         <div className="stack" style={{ gap: 12, maxWidth: 440 }}>
-          <Callout tone="error" title="Couldn't reach ArchitectureScope">
+          <Callout tone="error" title="Couldn't reach The Hub Zone">
             {error}
           </Callout>
           <button type="button" className="btn btn-primary" style={{ width: "fit-content" }} onClick={load}>

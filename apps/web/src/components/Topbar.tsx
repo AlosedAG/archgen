@@ -1,53 +1,97 @@
 "use client";
 
 /**
- * The white top bar over every signed-in page: breadcrumb (Workspace /
- * section / page) and the search. It lives in the app layout, outside the
- * page transition, so it stays still while pages change beneath it.
+ * The full-width top bar over every signed-in page: the brand, the search,
+ * the read-only connection pill, the theme toggle and the signed-in user.
+ * It sits outside the page transition, so it stays still while pages change.
  */
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
-import { NAV, crumbFor } from "@/lib/nav";
-
+import { useAppSession } from "./AppSession";
+import { HubZoneBrand } from "./HubZoneLogo";
 import { JumpSearch } from "./JumpSearch";
+import { NavIcon } from "./NavIcons";
+import { ThemeToggle } from "./ThemeToggle";
 
-const EXTRA_TITLES: Record<string, string> = { account: "Profile & account" };
+function initials(name: string): string {
+  const parts = name.trim().split(/[\s@._-]+/).filter(Boolean);
+  return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "?";
+}
 
-function pageTitle(pathname: string): string {
-  const last = pathname.split("/").filter(Boolean).at(-1) ?? "";
-  for (const group of NAV) {
-    for (const item of group.items) {
-      if (item.page === last || item.href === pathname) return item.label;
-    }
-  }
-  return EXTRA_TITLES[last] ?? "";
+/** Avatar + name + org; opens Profile and Sign out. */
+function UserMenu() {
+  const { me, signOut } = useAppSession();
+  const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  const name = me.name || me.email;
+
+  useEffect(() => setOpen(false), [pathname]);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => {
+      if (!root.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+        root.current?.querySelector<HTMLButtonElement>(".me")?.focus();
+      }
+    };
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div className="me-wrap" ref={root}>
+      <button type="button" className="me" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+        <span className="me-avatar" aria-hidden>
+          {initials(name)}
+        </span>
+        <span className="me-who">
+          <b>{name}</b>
+          <span>{me.workspace_name}</span>
+        </span>
+      </button>
+      <div className="menu-pop" role="menu" data-open={open}>
+        <div className="menu-pop-head">
+          <b>{name}</b>
+          <span>{me.email}</span>
+        </div>
+        <Link href="/account" role="menuitem" className="litem" tabIndex={open ? 0 : -1}>
+          <NavIcon name="user" />
+          <span>Profile &amp; account</span>
+        </Link>
+        <button type="button" role="menuitem" className="litem" tabIndex={open ? 0 : -1} onClick={() => void signOut()}>
+          <NavIcon name="logout" />
+          <span>Sign out</span>
+        </button>
+      </div>
+    </div>
+  );
 }
 
 export function Topbar() {
-  const pathname = usePathname();
-  const crumb = crumbFor(pathname);
-  const title = pageTitle(pathname);
   return (
-    <div className="topbar">
-      <nav className="topbar-crumbs" aria-label="Breadcrumb">
-        <span>Workspace</span>
-        {crumb && (
-          <>
-            <span aria-hidden>/</span>
-            <span>{crumb}</span>
-          </>
-        )}
-        {title && (
-          <>
-            <span aria-hidden>/</span>
-            <span className="topbar-crumb-current" aria-current="page">
-              {title}
-            </span>
-          </>
-        )}
-      </nav>
+    <header className="topbar">
+      <Link href="/projects" className="brand-link" aria-label="The Hub Zone — projects">
+        <HubZoneBrand />
+      </Link>
+      <div className="topbar-spacer" />
       <JumpSearch />
-    </div>
+      <span className="conn" title="The Hub Zone only reads from HubSpot — it never creates, edits, or deletes anything.">
+        <span className="conn-dot" aria-hidden />
+        <span className="conn-label">Read-only HubSpot connection</span>
+      </span>
+      <ThemeToggle />
+      <UserMenu />
+    </header>
   );
 }

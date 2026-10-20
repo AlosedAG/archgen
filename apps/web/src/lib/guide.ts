@@ -9,7 +9,7 @@ export type GuidePage = { key: string; title: string; step: string; summary: str
 export const QUICK_START: string[] = [
   "Create an account (or sign in), then create a project for each client engagement under Projects.",
   "An admin adds the workspace's HubSpot private app token (read-only scopes) and an AI key (Gemini or Anthropic) under Setup & API keys — once, for everyone.",
-  "Open the project and work left to right through the five steps in the sidebar. Every page saves to the project as you go; there is no Save button.",
+  "Open the project and work left to right through the five RevOps steps in the left rail. Every page saves to the project as you go; there is no Save button.",
   "Anything you export can also be filed in the project's library with “Save to Project Library”.",
   "Found a bug or have an idea? Use the Feedback button (bottom right of every page) — attach screenshots with + or paste them.",
 ];
@@ -42,7 +42,7 @@ export const GUIDE_PAGES: GuidePage[] = [
     summary: "Workspace-wide connections, stored encrypted.",
     steps: [
       "The HubSpot token and AI keys are stored encrypted for the whole workspace; only admins can change them.",
-      "Use a HubSpot private app with read-only scopes — ArchitectureScope never creates, changes or deletes anything in HubSpot.",
+      "Use a HubSpot private app with read-only scopes — The Hub Zone never creates, changes or deletes anything in HubSpot.",
       "Gemini keys are free from aistudio.google.com/apikey; when one is set, drafting uses Gemini instead of Claude. Anthropic keys start with sk-ant-.",
     ],
   },
@@ -221,5 +221,5 @@ export const TROUBLESHOOTING: { problem: string; fix: string }[] = [
   { problem: "No verification email", fix: "Check spam, wait a minute and use “Send a new code”. Codes expire after 15 minutes." },
 ];
 
-/** Sidebar guide lines by the page's last path segment. */
+/** The rail's "Guide for this page" lines by the page's last path segment. */
 export const GUIDE: Record<string, string[]> = Object.fromEntries(GUIDE_PAGES.map((p) => [p.key, p.steps]));

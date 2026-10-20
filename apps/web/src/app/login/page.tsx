@@ -10,6 +10,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
+import { HubZoneBrand } from "@/components/HubZoneLogo";
 import { Callout } from "@/components/ui";
 import {
   ApiError,
@@ -101,8 +102,7 @@ function AuthForms() {
     <div className="login-page">
       <motion.div className="login-card" layout variants={pageEnter} initial="hidden" animate="visible">
         <div className="login-brand">
-          <span className="wordmark-name">ArchitectureScope</span>
-          <span className="wordmark-tagline">SOLUTIONS ARCHITECT WORKSPACE</span>
+          <HubZoneBrand size={40} />
         </div>
         <AnimatePresence mode="wait" initial={false}>
           <motion.div

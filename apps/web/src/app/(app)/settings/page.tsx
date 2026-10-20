@@ -15,7 +15,7 @@ import { ApiError, deleteSecret, listSecrets, setSecret, type SecretStatus } fro
 
 const HELP: Record<string, string> = {
   hubspot_token:
-    "A HubSpot private app token with read-only scopes. ArchitectureScope only reads from HubSpot — it never creates, edits or deletes anything.",
+    "A HubSpot private app token with read-only scopes. The Hub Zone only reads from HubSpot — it never creates, edits or deletes anything.",
   gemini_api_key:
     "Google Gemini key for AI drafting (business analysis, client explainer) — free from aistudio.google.com/apikey. When set, drafting uses Gemini instead of Claude.",
   anthropic_api_key: "Claude key for AI drafting, used when no Gemini key is set. Starts with sk-ant-.",

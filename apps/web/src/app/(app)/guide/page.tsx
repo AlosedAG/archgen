@@ -22,7 +22,7 @@ export default function GuidePage() {
         eyebrow="START HERE"
         breadcrumb={me.workspace_name}
         title="User guide"
-        description="How to use ArchitectureScope, step by step. Every page also has its own short guide at the bottom of the sidebar."
+        description="How to use The Hub Zone, step by step. Every page also has its own short guide under Help at the bottom of the left rail."
       />
       <div className="page-content">
         <Tabs<TabId>

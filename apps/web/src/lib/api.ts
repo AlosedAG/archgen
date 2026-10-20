@@ -96,7 +96,7 @@ async function request(path: string, init: RequestInit = {}, { auth = true } = {
     delay = Math.min(delay * 2, 10_000);
   }
   if (response === undefined) {
-    throw new ApiError("Can't reach the ArchitectureScope service. Check your connection and try again.");
+    throw new ApiError("Can't reach The Hub Zone service. Check your connection and try again.");
   }
   if (!response.ok) {
     if (response.status === 401 && auth) onUnauthorized?.();

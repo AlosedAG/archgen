@@ -39,6 +39,8 @@ const SECURITY_HEADERS = [
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // `next dev`'s badge defaults to bottom-left, on top of the rail's Help icon.
+  devIndicators: { position: "bottom-right" },
   // A self-contained server bundle (.next/standalone) for the container image.
   output: "standalone",
   poweredByHeader: false,

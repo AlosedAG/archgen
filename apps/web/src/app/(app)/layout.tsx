@@ -1,32 +1,38 @@
 import { AppSessionProvider } from "@/components/AppSession";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { PageTransition } from "@/components/PageTransition";
-import { Sidebar } from "@/components/Sidebar";
+import { Rail } from "@/components/Rail";
+import { ShellCrumbs } from "@/components/ShellCrumbs";
 import { Topbar } from "@/components/Topbar";
 
-/** Every signed-in page: the session guard, the sidebar, the workspace, the Feedback panel. */
+/** Every signed-in page: the session guard, the top bar, the icon rail, the workspace, the Feedback panel. */
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <AppSessionProvider
       fallback={
         <div className="shell" aria-busy="true">
-          <div className="sidebar" />
-          <main className="workspace">
-            <div className="page-header" style={{ minHeight: 130 }} />
-            <div className="page-content">
-              <div className="skeleton" style={{ height: 72 }} />
-              <div className="skeleton" style={{ height: 160 }} />
-            </div>
-          </main>
+          <div className="topbar" />
+          <div className="shell-body">
+            <div className="rail" />
+            <main className="workspace">
+              <div className="page-content">
+                <div className="skeleton" style={{ height: 72 }} />
+                <div className="skeleton" style={{ height: 160 }} />
+              </div>
+            </main>
+          </div>
         </div>
       }
     >
       <div className="shell">
-        <Sidebar />
-        <main className="workspace">
-          <Topbar />
-          <PageTransition>{children}</PageTransition>
-        </main>
+        <Topbar />
+        <div className="shell-body">
+          <Rail />
+          <main className="workspace">
+            <ShellCrumbs />
+            <PageTransition>{children}</PageTransition>
+          </main>
+        </div>
         <FeedbackWidget />
       </div>
     </AppSessionProvider>

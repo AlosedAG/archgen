@@ -11,9 +11,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { listProjects, type Project } from "@/lib/api";
-import { NAV, hrefFor } from "@/lib/nav";
+import { hrefFor, searchablePages } from "@/lib/nav";
 
-import { Icon } from "./ui";
+import { NavIcon } from "./NavIcons";
 import { dropdown } from "@/lib/motion";
 
 type Result = { key: string; label: string; detail: string; href: string };
@@ -59,9 +59,12 @@ export function JumpSearch() {
   const results = useMemo<Result[]>(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
-    const pages = NAV.flatMap((g) =>
-      g.items.map((item) => ({ key: `page:${item.label}`, label: item.label, detail: g.group, href: hrefFor(item, projectId) })),
-    );
+    const pages = searchablePages().map(({ section, item }) => ({
+      key: `page:${section.id}:${item.label}`,
+      label: item.label,
+      detail: item.soon ? `${section.label} · Soon` : section.label,
+      href: hrefFor(item, projectId),
+    }));
     const found = (projects ?? []).map((p) => ({
       key: `project:${p.id}`,
       label: p.client_name || p.name,
@@ -81,7 +84,7 @@ export function JumpSearch() {
 
   return (
     <div className="jump-search" ref={root}>
-      <Icon name="search" />
+      <NavIcon name="search" size={16} />
       <input
         ref={input}
         className="jump-search-input"
@@ -121,6 +124,9 @@ export function JumpSearch() {
           }
         }}
       />
+      <kbd className="jump-search-kbd" aria-hidden>
+        /
+      </kbd>
       <AnimatePresence>
         {open && query.trim() !== "" && (
           <motion.ul
