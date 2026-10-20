@@ -28,6 +28,7 @@ MODULES = (
     "proposal",
     "test_cases",
     "tasks",  # the internal task tracker (Tasks & progress)
+    "schedule",  # the Schedule Planner: meeting plan settings and meetings
 )
 # Portal snapshots of large HubSpot accounts run to several MB.
 MAX_STATE_BYTES = 10 * 1024 * 1024

@@ -2289,6 +2289,202 @@
         "title": "Me",
         "type": "object"
       },
+      "MeetingContent": {
+        "additionalProperties": false,
+        "properties": {
+          "agenda": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Agenda",
+            "type": "array"
+          },
+          "attendees": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Attendees",
+            "type": "array"
+          },
+          "explain": {
+            "default": "",
+            "maxLength": 8000,
+            "title": "Explain",
+            "type": "string"
+          },
+          "follow_ups": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Follow Ups",
+            "type": "array"
+          },
+          "notes": {
+            "default": "",
+            "maxLength": 8000,
+            "title": "Notes",
+            "type": "string"
+          },
+          "prepare": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Prepare",
+            "type": "array"
+          },
+          "purpose": {
+            "default": "",
+            "maxLength": 4000,
+            "title": "Purpose",
+            "type": "string"
+          },
+          "review": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Review",
+            "type": "array"
+          }
+        },
+        "title": "MeetingContent",
+        "type": "object"
+      },
+      "MeetingStub": {
+        "additionalProperties": false,
+        "properties": {
+          "date": {
+            "default": "",
+            "maxLength": 10,
+            "title": "Date",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 300,
+            "title": "Title",
+            "type": "string"
+          },
+          "type": {
+            "default": "",
+            "maxLength": 40,
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "title": "MeetingStub",
+        "type": "object"
+      },
+      "MeetingToPrepare": {
+        "additionalProperties": false,
+        "properties": {
+          "agenda": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Agenda",
+            "type": "array"
+          },
+          "attendees": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Attendees",
+            "type": "array"
+          },
+          "date": {
+            "default": "",
+            "maxLength": 10,
+            "title": "Date",
+            "type": "string"
+          },
+          "duration_minutes": {
+            "anyOf": [
+              {
+                "maximum": 480.0,
+                "minimum": 15.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Minutes"
+          },
+          "explain": {
+            "default": "",
+            "maxLength": 8000,
+            "title": "Explain",
+            "type": "string"
+          },
+          "follow_ups": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Follow Ups",
+            "type": "array"
+          },
+          "notes": {
+            "default": "",
+            "maxLength": 8000,
+            "title": "Notes",
+            "type": "string"
+          },
+          "prepare": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Prepare",
+            "type": "array"
+          },
+          "purpose": {
+            "default": "",
+            "maxLength": 4000,
+            "title": "Purpose",
+            "type": "string"
+          },
+          "review": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Review",
+            "type": "array"
+          },
+          "time": {
+            "default": "",
+            "maxLength": 5,
+            "title": "Time",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 300,
+            "title": "Title",
+            "type": "string"
+          },
+          "type": {
+            "default": "",
+            "maxLength": 40,
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "title": "MeetingToPrepare",
+        "type": "object"
+      },
       "Member": {
         "additionalProperties": false,
         "properties": {
@@ -4528,6 +4724,207 @@
         "title": "RiskRow",
         "type": "object"
       },
+      "ScheduleAssistRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "context": {
+            "$ref": "#/components/schemas/AssistContext"
+          },
+          "meetings": {
+            "description": "Meetings already planned.",
+            "items": {
+              "$ref": "#/components/schemas/MeetingStub"
+            },
+            "maxItems": 100,
+            "title": "Meetings",
+            "type": "array"
+          },
+          "settings": {
+            "$ref": "#/components/schemas/ScheduleSettings"
+          }
+        },
+        "required": [
+          "context"
+        ],
+        "title": "ScheduleAssistRequest",
+        "type": "object"
+      },
+      "ScheduleAssistResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "meetings": {
+            "items": {
+              "$ref": "#/components/schemas/SuggestedMeeting"
+            },
+            "title": "Meetings",
+            "type": "array"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          }
+        },
+        "required": [
+          "meetings",
+          "model"
+        ],
+        "title": "ScheduleAssistResponse",
+        "type": "object"
+      },
+      "ScheduleMeetingAssistRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "context": {
+            "$ref": "#/components/schemas/AssistContext"
+          },
+          "meeting": {
+            "$ref": "#/components/schemas/MeetingToPrepare"
+          },
+          "other_meetings": {
+            "items": {
+              "$ref": "#/components/schemas/MeetingStub"
+            },
+            "maxItems": 100,
+            "title": "Other Meetings",
+            "type": "array"
+          },
+          "settings": {
+            "$ref": "#/components/schemas/ScheduleSettings"
+          }
+        },
+        "required": [
+          "context",
+          "meeting"
+        ],
+        "title": "ScheduleMeetingAssistRequest",
+        "type": "object"
+      },
+      "ScheduleMeetingAssistResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "changed": {
+            "description": "The fields that got new content.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Changed",
+            "type": "array"
+          },
+          "meeting": {
+            "$ref": "#/components/schemas/MeetingContent"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          }
+        },
+        "required": [
+          "meeting",
+          "changed",
+          "model"
+        ],
+        "title": "ScheduleMeetingAssistResponse",
+        "type": "object"
+      },
+      "ScheduleSettings": {
+        "additionalProperties": false,
+        "description": "How the meetings should be scheduled (every field optional).",
+        "properties": {
+          "attendees": {
+            "default": "",
+            "description": "Who usually attends, by role.",
+            "maxLength": 2000,
+            "title": "Attendees",
+            "type": "string"
+          },
+          "cadence": {
+            "default": "",
+            "description": "e.g. 'Weekly', 'Twice a week', 'Every two weeks'.",
+            "maxLength": 60,
+            "title": "Cadence",
+            "type": "string"
+          },
+          "default_time": {
+            "default": "",
+            "description": "HH:MM, 24-hour.",
+            "maxLength": 5,
+            "title": "Default Time",
+            "type": "string"
+          },
+          "duration_minutes": {
+            "anyOf": [
+              {
+                "maximum": 480.0,
+                "minimum": 15.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Minutes"
+          },
+          "go_live_date": {
+            "default": "",
+            "description": "Target go-live date, yyyy-mm-dd.",
+            "maxLength": 10,
+            "title": "Go Live Date",
+            "type": "string"
+          },
+          "meeting_count": {
+            "anyOf": [
+              {
+                "maximum": 40.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Roughly how many meetings to plan.",
+            "title": "Meeting Count"
+          },
+          "notes": {
+            "default": "",
+            "description": "Scheduling constraints and preferences.",
+            "maxLength": 4000,
+            "title": "Notes",
+            "type": "string"
+          },
+          "platform": {
+            "default": "",
+            "description": "Zoom, Google Meet, Microsoft Teams, phone, in person…",
+            "maxLength": 60,
+            "title": "Platform",
+            "type": "string"
+          },
+          "preferred_days": {
+            "description": "Weekday names.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 7,
+            "title": "Preferred Days",
+            "type": "array"
+          },
+          "start_date": {
+            "default": "",
+            "description": "First possible meeting date, yyyy-mm-dd.",
+            "maxLength": 10,
+            "title": "Start Date",
+            "type": "string"
+          },
+          "timezone": {
+            "default": "",
+            "maxLength": 60,
+            "title": "Timezone",
+            "type": "string"
+          }
+        },
+        "title": "ScheduleSettings",
+        "type": "object"
+      },
       "ScopeLibraryItem": {
         "additionalProperties": false,
         "properties": {
@@ -5046,6 +5443,93 @@
         "title": "SuggestModulesResponse",
         "type": "object"
       },
+      "SuggestedMeeting": {
+        "additionalProperties": false,
+        "properties": {
+          "agenda": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Agenda",
+            "type": "array"
+          },
+          "attendees": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Attendees",
+            "type": "array"
+          },
+          "duration_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Minutes"
+          },
+          "explain": {
+            "default": "",
+            "title": "Explain",
+            "type": "string"
+          },
+          "prepare": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Prepare",
+            "type": "array"
+          },
+          "purpose": {
+            "default": "",
+            "title": "Purpose",
+            "type": "string"
+          },
+          "review": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Review",
+            "type": "array"
+          },
+          "stage": {
+            "default": "",
+            "description": "discover, assess, design, propose, build or launch (or empty).",
+            "title": "Stage",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "type": {
+            "description": "kickoff, discovery, requirements, design, build, data, training, uat, go_live, review or other.",
+            "title": "Type",
+            "type": "string"
+          },
+          "week": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "1-based week from the start date.",
+            "title": "Week"
+          }
+        },
+        "required": [
+          "title",
+          "type"
+        ],
+        "title": "SuggestedMeeting",
+        "type": "object"
+      },
       "SuggestedTask": {
         "additionalProperties": false,
         "properties": {
@@ -5545,6 +6029,98 @@
           }
         ],
         "summary": "Suggest proposal content from earlier steps",
+        "tags": [
+          "assist"
+        ]
+      }
+    },
+    "/api/v1/assist/schedule": {
+      "post": {
+        "operationId": "assist_schedule",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleAssistRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleAssistResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Suggest the client meeting plan",
+        "tags": [
+          "assist"
+        ]
+      }
+    },
+    "/api/v1/assist/schedule-meeting": {
+      "post": {
+        "operationId": "assist_schedule_meeting",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleMeetingAssistRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleMeetingAssistResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Suggest the content of one planned meeting",
         "tags": [
           "assist"
         ]

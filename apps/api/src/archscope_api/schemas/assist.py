@@ -157,3 +157,87 @@ class CompanyOverviewResponse(ApiModel):
     overview: CompanyOverview
     website: str = Field(description="The address that was read.")
     model: str
+
+
+# ---- Schedule Planner ------------------------------------------------------------------
+
+
+class ScheduleSettings(ApiModel):
+    """How the meetings should be scheduled (every field optional)."""
+
+    start_date: str = Field("", max_length=10, description="First possible meeting date, yyyy-mm-dd.")
+    go_live_date: str = Field("", max_length=10, description="Target go-live date, yyyy-mm-dd.")
+    cadence: str = Field("", max_length=60, description="e.g. 'Weekly', 'Twice a week', 'Every two weeks'.")
+    preferred_days: list[str] = Field(default_factory=list, max_length=7, description="Weekday names.")
+    default_time: str = Field("", max_length=5, description="HH:MM, 24-hour.")
+    duration_minutes: int | None = Field(None, ge=15, le=480)
+    timezone: str = Field("", max_length=60)
+    platform: str = Field("", max_length=60, description="Zoom, Google Meet, Microsoft Teams, phone, in person…")
+    meeting_count: int | None = Field(None, ge=1, le=40, description="Roughly how many meetings to plan.")
+    attendees: str = Field("", max_length=2000, description="Who usually attends, by role.")
+    notes: str = Field("", max_length=4000, description="Scheduling constraints and preferences.")
+
+
+class MeetingStub(ApiModel):
+    title: str = Field(max_length=300)
+    type: str = Field("", max_length=40)
+    date: str = Field("", max_length=10)
+
+
+class SuggestedMeeting(ApiModel):
+    title: str
+    type: str = Field(
+        description="kickoff, discovery, requirements, design, build, data, training, uat, go_live, review or other."
+    )
+    stage: str = Field("", description="discover, assess, design, propose, build or launch (or empty).")
+    week: int | None = Field(None, description="1-based week from the start date.")
+    duration_minutes: int | None = None
+    purpose: str = ""
+    agenda: list[str] = Field(default_factory=list)
+    prepare: list[str] = Field(default_factory=list)
+    review: list[str] = Field(default_factory=list)
+    explain: str = ""
+    attendees: list[str] = Field(default_factory=list)
+
+
+class ScheduleAssistRequest(ApiModel):
+    context: AssistContext
+    settings: ScheduleSettings = Field(default_factory=ScheduleSettings)
+    meetings: list[MeetingStub] = Field(default_factory=list, max_length=100, description="Meetings already planned.")
+
+
+class ScheduleAssistResponse(ApiModel):
+    meetings: list[SuggestedMeeting]
+    model: str
+
+
+class MeetingContent(ApiModel):
+    purpose: str = Field("", max_length=4000)
+    agenda: list[str] = Field(default_factory=list, max_length=50)
+    prepare: list[str] = Field(default_factory=list, max_length=50)
+    review: list[str] = Field(default_factory=list, max_length=50)
+    explain: str = Field("", max_length=8000)
+    attendees: list[str] = Field(default_factory=list, max_length=50)
+    follow_ups: list[str] = Field(default_factory=list, max_length=50)
+    notes: str = Field("", max_length=8000)
+
+
+class MeetingToPrepare(MeetingContent):
+    title: str = Field(max_length=300)
+    type: str = Field("", max_length=40)
+    date: str = Field("", max_length=10)
+    time: str = Field("", max_length=5)
+    duration_minutes: int | None = Field(None, ge=15, le=480)
+
+
+class ScheduleMeetingAssistRequest(ApiModel):
+    context: AssistContext
+    settings: ScheduleSettings = Field(default_factory=ScheduleSettings)
+    meeting: MeetingToPrepare
+    other_meetings: list[MeetingStub] = Field(default_factory=list, max_length=100)
+
+
+class ScheduleMeetingAssistResponse(ApiModel):
+    meeting: MeetingContent
+    changed: list[str] = Field(description="The fields that got new content.")
+    model: str

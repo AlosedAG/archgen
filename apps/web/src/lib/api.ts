@@ -181,6 +181,18 @@ export const assistProposal = (context: AssistContext, proposal: ProposalDocumen
 export type SuggestedTask = Schemas["SuggestedTask"];
 export const assistProjectTasks = (context: AssistContext, tasks: { stage: string; title: string }[]) =>
   post<Schemas["ProjectTasksAssistResponse"]>("/assist/project-tasks", { context, tasks });
+export type ScheduleSettingsPayload = Schemas["ScheduleSettings"];
+export type MeetingStub = Schemas["MeetingStub"];
+export type SuggestedMeeting = Schemas["SuggestedMeeting"];
+export type MeetingContent = Schemas["MeetingContent"];
+export const assistSchedule = (context: AssistContext, settings: ScheduleSettingsPayload, meetings: MeetingStub[]) =>
+  post<Schemas["ScheduleAssistResponse"]>("/assist/schedule", { context, settings, meetings });
+export const assistScheduleMeeting = (
+  context: AssistContext,
+  settings: ScheduleSettingsPayload,
+  meeting: Schemas["MeetingToPrepare"],
+  other_meetings: MeetingStub[],
+) => post<Schemas["ScheduleMeetingAssistResponse"]>("/assist/schedule-meeting", { context, settings, meeting, other_meetings });
 export type CompanyOverview = Schemas["CompanyOverview"];
 export const companyOverview = (website: string, client_name: string, business_type: string) =>
   post<Schemas["CompanyOverviewResponse"]>("/assist/company-overview", { website, client_name, business_type });

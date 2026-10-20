@@ -72,6 +72,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/assist/schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Suggest the client meeting plan */
+        post: operations["assist_schedule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/assist/schedule-meeting": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Suggest the content of one planned meeting */
+        post: operations["assist_schedule_meeting"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/assist/stage-planner": {
         parameters: {
             query?: never;
@@ -2358,6 +2392,96 @@ export interface components {
             /** Workspace Name */
             workspace_name: string;
         };
+        /** MeetingContent */
+        MeetingContent: {
+            /** Agenda */
+            agenda?: string[];
+            /** Attendees */
+            attendees?: string[];
+            /**
+             * Explain
+             * @default
+             */
+            explain: string;
+            /** Follow Ups */
+            follow_ups?: string[];
+            /**
+             * Notes
+             * @default
+             */
+            notes: string;
+            /** Prepare */
+            prepare?: string[];
+            /**
+             * Purpose
+             * @default
+             */
+            purpose: string;
+            /** Review */
+            review?: string[];
+        };
+        /** MeetingStub */
+        MeetingStub: {
+            /**
+             * Date
+             * @default
+             */
+            date: string;
+            /** Title */
+            title: string;
+            /**
+             * Type
+             * @default
+             */
+            type: string;
+        };
+        /** MeetingToPrepare */
+        MeetingToPrepare: {
+            /** Agenda */
+            agenda?: string[];
+            /** Attendees */
+            attendees?: string[];
+            /**
+             * Date
+             * @default
+             */
+            date: string;
+            /** Duration Minutes */
+            duration_minutes?: number | null;
+            /**
+             * Explain
+             * @default
+             */
+            explain: string;
+            /** Follow Ups */
+            follow_ups?: string[];
+            /**
+             * Notes
+             * @default
+             */
+            notes: string;
+            /** Prepare */
+            prepare?: string[];
+            /**
+             * Purpose
+             * @default
+             */
+            purpose: string;
+            /** Review */
+            review?: string[];
+            /**
+             * Time
+             * @default
+             */
+            time: string;
+            /** Title */
+            title: string;
+            /**
+             * Type
+             * @default
+             */
+            type: string;
+        };
         /** Member */
         Member: {
             /** Email */
@@ -3459,6 +3583,107 @@ export interface components {
              */
             risk: string;
         };
+        /** ScheduleAssistRequest */
+        ScheduleAssistRequest: {
+            context: components["schemas"]["AssistContext"];
+            /**
+             * Meetings
+             * @description Meetings already planned.
+             */
+            meetings?: components["schemas"]["MeetingStub"][];
+            settings?: components["schemas"]["ScheduleSettings"];
+        };
+        /** ScheduleAssistResponse */
+        ScheduleAssistResponse: {
+            /** Meetings */
+            meetings: components["schemas"]["SuggestedMeeting"][];
+            /** Model */
+            model: string;
+        };
+        /** ScheduleMeetingAssistRequest */
+        ScheduleMeetingAssistRequest: {
+            context: components["schemas"]["AssistContext"];
+            meeting: components["schemas"]["MeetingToPrepare"];
+            /** Other Meetings */
+            other_meetings?: components["schemas"]["MeetingStub"][];
+            settings?: components["schemas"]["ScheduleSettings"];
+        };
+        /** ScheduleMeetingAssistResponse */
+        ScheduleMeetingAssistResponse: {
+            /**
+             * Changed
+             * @description The fields that got new content.
+             */
+            changed: string[];
+            meeting: components["schemas"]["MeetingContent"];
+            /** Model */
+            model: string;
+        };
+        /**
+         * ScheduleSettings
+         * @description How the meetings should be scheduled (every field optional).
+         */
+        ScheduleSettings: {
+            /**
+             * Attendees
+             * @description Who usually attends, by role.
+             * @default
+             */
+            attendees: string;
+            /**
+             * Cadence
+             * @description e.g. 'Weekly', 'Twice a week', 'Every two weeks'.
+             * @default
+             */
+            cadence: string;
+            /**
+             * Default Time
+             * @description HH:MM, 24-hour.
+             * @default
+             */
+            default_time: string;
+            /** Duration Minutes */
+            duration_minutes?: number | null;
+            /**
+             * Go Live Date
+             * @description Target go-live date, yyyy-mm-dd.
+             * @default
+             */
+            go_live_date: string;
+            /**
+             * Meeting Count
+             * @description Roughly how many meetings to plan.
+             */
+            meeting_count?: number | null;
+            /**
+             * Notes
+             * @description Scheduling constraints and preferences.
+             * @default
+             */
+            notes: string;
+            /**
+             * Platform
+             * @description Zoom, Google Meet, Microsoft Teams, phone, in person…
+             * @default
+             */
+            platform: string;
+            /**
+             * Preferred Days
+             * @description Weekday names.
+             */
+            preferred_days?: string[];
+            /**
+             * Start Date
+             * @description First possible meeting date, yyyy-mm-dd.
+             * @default
+             */
+            start_date: string;
+            /**
+             * Timezone
+             * @default
+             */
+            timezone: string;
+        };
         /** ScopeLibraryItem */
         ScopeLibraryItem: {
             /** Acceptance Criteria */
@@ -3709,6 +3934,47 @@ export interface components {
         SuggestModulesResponse: {
             /** Modules */
             modules: ("Marketing Hub" | "Sales Hub" | "Service Hub" | "Operations Hub" | "Content Hub (CMS)" | "Commerce Hub")[];
+        };
+        /** SuggestedMeeting */
+        SuggestedMeeting: {
+            /** Agenda */
+            agenda?: string[];
+            /** Attendees */
+            attendees?: string[];
+            /** Duration Minutes */
+            duration_minutes?: number | null;
+            /**
+             * Explain
+             * @default
+             */
+            explain: string;
+            /** Prepare */
+            prepare?: string[];
+            /**
+             * Purpose
+             * @default
+             */
+            purpose: string;
+            /** Review */
+            review?: string[];
+            /**
+             * Stage
+             * @description discover, assess, design, propose, build or launch (or empty).
+             * @default
+             */
+            stage: string;
+            /** Title */
+            title: string;
+            /**
+             * Type
+             * @description kickoff, discovery, requirements, design, build, data, training, uat, go_live, review or other.
+             */
+            type: string;
+            /**
+             * Week
+             * @description 1-based week from the start date.
+             */
+            week?: number | null;
         };
         /** SuggestedTask */
         SuggestedTask: {
@@ -4014,6 +4280,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProposalAssistResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    assist_schedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScheduleAssistRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleAssistResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    assist_schedule_meeting: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScheduleMeetingAssistRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleMeetingAssistResponse"];
                 };
             };
             /** @description Validation Error */

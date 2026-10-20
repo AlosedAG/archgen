@@ -191,3 +191,74 @@ async def test_company_overview_unreadable_site_is_a_clear_422(app: FastAPI, mon
     assert response.status_code == 422
     assert response.json()["type"].endswith("/website-unreadable")
     assert calls == []
+
+
+async def test_schedule_suggests_new_meetings_only_and_tidies_them(app: FastAPI) -> None:
+    ai, calls = _fake_claude(
+        {
+            "meetings": [
+                {"title": "Kickoff & goals", "type": "kickoff", "stage": "discover", "week": 1},
+                {
+                    "title": "Pipeline design review",
+                    "type": "Design",
+                    "stage": "design",
+                    "week": "3",
+                    "duration_minutes": 90,
+                    "agenda": ["Stages", "stages", ""],
+                    "attendees": ["Client sales lead"],
+                },
+                {"title": "Mystery", "type": "party", "stage": "moon", "week": 900},
+            ]
+        }
+    )
+    app.dependency_overrides[get_ai_client] = lambda: ai
+    body = {
+        "context": {"discovery": DISCOVERY},
+        "settings": {"start_date": "2026-11-02", "cadence": "Weekly", "meeting_count": 6},
+        "meetings": [{"title": "Kickoff & goals", "type": "kickoff", "date": "2026-11-03"}],
+    }
+    response = await _post(app, "schedule", body)
+    assert response.status_code == 200, response.text
+    meetings = response.json()["meetings"]
+    assert [m["title"] for m in meetings] == ["Pipeline design review", "Mystery"]
+    assert meetings[0]["type"] == "design"
+    assert meetings[0]["week"] == 3
+    assert meetings[0]["agenda"] == ["Stages"]
+    assert meetings[1]["type"] == "other"
+    assert meetings[1]["stage"] == ""
+    assert meetings[1]["week"] is None
+    sent = calls[0]["messages"][0]["content"]
+    assert "Consult, Treatment plan, Booked" in sent
+    assert "2026-11-02" in sent
+
+
+async def test_schedule_works_from_settings_alone(app: FastAPI) -> None:
+    ai, _ = _fake_claude({"meetings": [{"title": "Kickoff", "type": "kickoff", "week": 1}]})
+    app.dependency_overrides[get_ai_client] = lambda: ai
+    response = await _post(app, "schedule", {"context": {}, "settings": {"cadence": "Weekly"}})
+    assert response.status_code == 200, response.text
+    assert response.json()["meetings"][0]["title"] == "Kickoff"
+
+
+async def test_schedule_meeting_fills_blanks_and_appends_new_items(app: FastAPI) -> None:
+    ai, _ = _fake_claude(
+        {
+            "purpose": "Model purpose",
+            "explain": "Why the pipeline matters",
+            "agenda": ["Review stages", "Agree exit criteria"],
+            "follow_ups": ["Send recap"],
+        }
+    )
+    app.dependency_overrides[get_ai_client] = lambda: ai
+    body = {
+        "context": {"discovery": DISCOVERY},
+        "meeting": {"title": "Pipeline review", "purpose": "Typed purpose", "agenda": ["review stages"]},
+        "other_meetings": [{"title": "Kickoff", "date": "2026-11-03"}],
+    }
+    response = await _post(app, "schedule-meeting", body)
+    assert response.status_code == 200, response.text
+    out = response.json()
+    assert out["meeting"]["purpose"] == "Typed purpose"
+    assert out["meeting"]["agenda"] == ["review stages", "Agree exit criteria"]
+    assert out["meeting"]["explain"] == "Why the pipeline matters"
+    assert set(out["changed"]) == {"agenda", "explain", "follow_ups"}

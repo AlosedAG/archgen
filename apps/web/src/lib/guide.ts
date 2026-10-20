@@ -205,6 +205,20 @@ export const GUIDE_PAGES: GuidePage[] = [
     steps: ["Load the Requirements Document's requirements as a starting point, then record QA and UAT results."],
   },
   {
+    key: "schedule-planner",
+    title: "Schedule Planner",
+    step: "Step 5 · Deliver & test",
+    summary: "Plan the client meetings — what each covers and when — and run them from a calendar.",
+    steps: [
+      "Set how you'll meet: first date, target go-live, how often, the days and time that work, length, time zone, platform and a default link.",
+      "Suggest meetings drafts the series from the discovery call, documents and Tasks timeline — each with its agenda, what to prepare, review and explain. Or add your own.",
+      "Pick a date and time per meeting, or use Auto-schedule to place them at your cadence (tentative until you confirm).",
+      "On the Calendar, hover a day to see and adjust its meetings; drag a meeting to move it; drop undated ones from the tray.",
+      "Open a meeting to preview it as an invite, edit it, suggest its content, add the link and notes, copy the invite or download it (.ics).",
+      "Warnings flag clashes, weekends, meetings after go-live, and past meetings not yet marked done.",
+    ],
+  },
+  {
     key: "library",
     title: "Project Library",
     step: "Library",

@@ -21,12 +21,18 @@ from ...schemas.assist import (
     CompanyOverview,
     CompanyOverviewRequest,
     CompanyOverviewResponse,
+    MeetingContent,
     ProjectTasksAssistRequest,
     ProjectTasksAssistResponse,
     ProposalAssistRequest,
     ProposalAssistResponse,
+    ScheduleAssistRequest,
+    ScheduleAssistResponse,
+    ScheduleMeetingAssistRequest,
+    ScheduleMeetingAssistResponse,
     StagePlannerAssistRequest,
     StagePlannerAssistResponse,
+    SuggestedMeeting,
     SuggestedTask,
 )
 from ...schemas.proposal import ProposalDocument
@@ -40,7 +46,7 @@ router = APIRouter(prefix="/assist", tags=["assist"])
 _NO_CONTEXT = "There's nothing to work from yet. Fill in the discovery call (or the Requirements Document) first, then try again."
 
 
-def _context(body: AssistContext) -> dict[str, Any]:
+def _context(body: AssistContext, *, required: bool = True) -> dict[str, Any]:
     discovery = (
         assist.discovery_context(
             body.discovery.to_domain(), client_name=body.discovery.client_name, business_type=body.discovery.business_type
@@ -54,7 +60,7 @@ def _context(body: AssistContext) -> dict[str, Any]:
         documents=body.documents,
         stage_planner=[s.model_dump() for s in body.stage_planner],
     )
-    if not assist.has_context(context):
+    if required and not assist.has_context(context):
         raise ProblemError(422, "no-context", "Nothing to suggest from", _NO_CONTEXT)
     return context
 
@@ -157,3 +163,31 @@ async def company_overview(body: CompanyOverviewRequest, ai: AiClientDep, settin
     return CompanyOverviewResponse(
         overview=CompanyOverview.model_validate(assist.clean_overview(suggestion)), website=snapshot.url, model=model
     )
+
+
+@router.post("/schedule", response_model=ScheduleAssistResponse, summary="Suggest the client meeting plan")
+async def schedule(body: ScheduleAssistRequest, ai: AiClientDep, settings: SettingsDep) -> ScheduleAssistResponse:
+    # A plan can be drafted from the settings alone; project context makes it specific.
+    context = _context(body.context, required=False)
+    planned = [m.model_dump() for m in body.meetings]
+    current = {"settings": body.settings.model_dump(), "meetings": planned}
+    suggestion, model = await offload(_ask, ai, settings.anthropic_model, assist.SCHEDULE, context, current)
+    meetings = assist.merge_meetings(planned, suggestion)
+    return ScheduleAssistResponse(meetings=[SuggestedMeeting.model_validate(m) for m in meetings], model=model)
+
+
+@router.post(
+    "/schedule-meeting", response_model=ScheduleMeetingAssistResponse, summary="Suggest the content of one planned meeting"
+)
+async def schedule_meeting(
+    body: ScheduleMeetingAssistRequest, ai: AiClientDep, settings: SettingsDep
+) -> ScheduleMeetingAssistResponse:
+    context = _context(body.context, required=False)
+    current = {
+        **body.meeting.model_dump(),
+        "settings": body.settings.model_dump(),
+        "other_meetings": [m.model_dump() for m in body.other_meetings],
+    }
+    suggestion, model = await offload(_ask, ai, settings.anthropic_model, assist.SCHEDULE_MEETING, context, current)
+    content, changed = assist.merge_meeting_content(body.meeting.model_dump(), suggestion)
+    return ScheduleMeetingAssistResponse(meeting=MeetingContent.model_validate(content), changed=changed, model=model)

@@ -30,7 +30,6 @@ export default function ComingSoonPage() {
           </span>
           <h2 className="t-card-title">{title} is coming soon</h2>
           <p className="t-description">{SOON_COPY[slug] ?? "This part of The Hub Zone is still being built."}</p>
-          <p className="t-caption">It&apos;s on the roadmap. Want it sooner, or have ideas for it? Tell us with Send Feedback under Help.</p>
           <Link href="/projects" className="btn btn-secondary" style={{ width: "fit-content" }}>
             Back to projects
           </Link>

@@ -179,3 +179,20 @@ def test_clean_overview_fills_every_field():
         "things_to_know",
         "questions_to_ask",
     }
+
+
+def test_merge_meetings_skips_existing_titles_and_caps_the_list():
+    suggested = {"meetings": [{"title": f"Meeting {i}", "type": "build"} for i in range(30)]}
+    out = assist.merge_meetings([{"title": "meeting 0"}], suggested)
+    assert out[0]["title"] == "Meeting 1"
+    assert len(out) == assist.MAX_SUGGESTED_MEETINGS
+
+
+def test_merge_meeting_content_never_replaces_typed_text():
+    content, changed = assist.merge_meeting_content(
+        {"purpose": "Mine", "agenda": ["A"]}, {"purpose": "Theirs", "notes": "N", "agenda": ["a", "B"]}
+    )
+    assert content["purpose"] == "Mine"
+    assert content["notes"] == "N"
+    assert content["agenda"] == ["A", "B"]
+    assert changed == ["notes", "agenda"]

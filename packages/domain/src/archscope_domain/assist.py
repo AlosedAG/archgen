@@ -25,7 +25,9 @@ PROPOSAL = "proposal"
 ARCHITECTURE = "architecture"
 PROJECT_TASKS = "project_tasks"
 COMPANY_OVERVIEW = "company_overview"
-TASKS = (STAGE_PLANNER, PROPOSAL, ARCHITECTURE, PROJECT_TASKS, COMPANY_OVERVIEW)
+SCHEDULE = "schedule"
+SCHEDULE_MEETING = "schedule_meeting"
+TASKS = (STAGE_PLANNER, PROPOSAL, ARCHITECTURE, PROJECT_TASKS, COMPANY_OVERVIEW, SCHEDULE, SCHEDULE_MEETING)
 
 #: The engagement stages the project task tracker groups its tasks under (id, name).
 PROJECT_STAGES = (
@@ -37,6 +39,25 @@ PROJECT_STAGES = (
     ("launch", "Test & launch"),
 )
 MAX_SUGGESTED_TASKS_PER_STAGE = 8
+
+#: Kinds of client meeting the Schedule Planner plans (id, name).
+MEETING_TYPES = (
+    ("kickoff", "Kickoff"),
+    ("discovery", "Discovery deep-dive"),
+    ("requirements", "Requirements review"),
+    ("design", "Design review"),
+    ("build", "Build check-in"),
+    ("data", "Data & migration"),
+    ("training", "Training"),
+    ("uat", "UAT / testing"),
+    ("go_live", "Go-live"),
+    ("review", "Retrospective / handover"),
+    ("other", "Other"),
+)
+MAX_SUGGESTED_MEETINGS = 20
+_MEETING_LISTS = ("agenda", "prepare", "review", "attendees", "follow_ups")
+_MEETING_TEXTS = ("purpose", "explain", "notes")
+_MAX_LIST_ITEMS = 10
 
 MAX_TOKENS = 8000
 GEMINI_MAX_OUTPUT_TOKENS = 32768
@@ -262,6 +283,67 @@ def instructions(task: str, current: Any) -> str:
             "Do not repeat a task already in CURRENT_TASKS (same meaning counts as a repeat).\n"
             f"CURRENT_TASKS: {json.dumps(current, ensure_ascii=False)}\n"
             'Return JSON shaped like: {"tasks": [{"stage": "discover", "title": "", "source": ""}]}'
+        )
+    if task == SCHEDULE:
+        return (
+            "Task: plan the series of client meetings for this HubSpot engagement for the Schedule Planner.\n"
+            "Follow SETTINGS: the start date, cadence, target go-live date, meeting length and any scheduling "
+            "notes; if SETTINGS.meeting_count is set, propose about that many meetings. Order them as they "
+            "should happen, from kickoff to go-live and handover, and tie each one to this client: name the "
+            "processes, objects, systems and open questions from the context that it covers.\n"
+            f"type is one of {json.dumps([t for t, _ in MEETING_TYPES])}; "
+            f"stage is one of {json.dumps([s for s, _ in PROJECT_STAGES])}.\n"
+            "week is the 1-based week from the start date the meeting belongs in (spread them to reach go-live "
+            "on time). agenda holds 3-6 short items; prepare lists what the team and the client must have ready "
+            "before it; review lists what is reviewed or decided in it; explain says what to walk the client "
+            "through and why it matters; attendees are roles (e.g. 'Client sales lead'), never invented names.\n"
+            "Do not repeat a meeting already in CURRENT_PLAN.meetings (same purpose counts as a repeat).\n"
+            f"CURRENT_PLAN: {json.dumps(current, ensure_ascii=False)}\n"
+            "Return JSON shaped like: "
+            + json.dumps(
+                {
+                    "meetings": [
+                        {
+                            "title": "Kickoff & goals",
+                            "type": "kickoff",
+                            "stage": "discover",
+                            "week": 1,
+                            "duration_minutes": 60,
+                            "purpose": "One or two sentences",
+                            "agenda": [""],
+                            "prepare": [""],
+                            "review": [""],
+                            "explain": "",
+                            "attendees": [""],
+                        }
+                    ]
+                },
+                ensure_ascii=False,
+            )
+        )
+    if task == SCHEDULE_MEETING:
+        return (
+            "Task: prepare one client meeting from the Schedule Planner (CURRENT_MEETING), in the context of the "
+            "whole plan (CURRENT_MEETING.other_meetings) and the project.\n"
+            "Propose its purpose, a timed agenda (3-6 items), what to prepare beforehand, what to review or "
+            "decide, what to explain to the client, attendee roles, follow-ups to send afterwards, and short "
+            "facilitator notes (risks, open questions from discovery to raise). Be specific to this client; "
+            "don't repeat what CURRENT_MEETING already lists.\n"
+            f"CURRENT_MEETING: {json.dumps(current, ensure_ascii=False)}\n"
+            "Return JSON shaped like: "
+            + json.dumps(
+                {
+                    "purpose": "",
+                    "agenda": ["10 min - ..."],
+                    "prepare": [""],
+                    "review": [""],
+                    "explain": "",
+                    "attendees": [""],
+                    "follow_ups": [""],
+                    "notes": "",
+                },
+                ensure_ascii=False,
+            )
         )
     if task == COMPANY_OVERVIEW:
         return (
@@ -621,3 +703,83 @@ def clean_overview(suggested: dict[str, Any]) -> dict[str, Any]:
         items = suggested.get(key)
         out[key] = [s for s in (_clean(v) for v in (items if isinstance(items, list) else [])) if s][:8]
     return out
+
+
+# ---- Schedule Planner --------------------------------------------------------------
+
+
+def _text_list(value: Any, limit: int = _MAX_LIST_ITEMS) -> list[str]:
+    """Non-empty strings from a list, de-duplicated by meaning, at most ``limit``."""
+    out: list[str] = []
+    seen: set[str] = set()
+    for item in value if isinstance(value, list) else []:
+        text = _clean(item)
+        if text and task_key(text) not in seen:
+            seen.add(task_key(text))
+            out.append(text)
+    return out[:limit]
+
+
+def _bounded_int(value: Any, low: int, high: int) -> int | None:
+    try:
+        n = int(float(str(value).strip()))
+    except (TypeError, ValueError):
+        return None
+    return n if low <= n <= high else None
+
+
+def merge_meetings(current: list[dict[str, Any]], suggested: dict[str, Any]) -> list[dict[str, Any]]:
+    """The suggested meetings that are new (by title), tidied: a known type
+    and stage (else "other" / ""), a week and length in range (else None),
+    and short de-duplicated lists. At most :data:`MAX_SUGGESTED_MEETINGS`."""
+    types = {t for t, _ in MEETING_TYPES}
+    stages = {s for s, _ in PROJECT_STAGES}
+    seen = {task_key(m.get("title")) for m in current}
+    new: list[dict[str, Any]] = []
+    for item in suggested.get("meetings") or []:
+        if not isinstance(item, dict):
+            continue
+        title = _clean(item.get("title"))
+        if not title or task_key(title) in seen:
+            continue
+        seen.add(task_key(title))
+        kind, stage = _clean(item.get("type")).lower(), _clean(item.get("stage")).lower()
+        new.append(
+            {
+                "title": title,
+                "type": kind if kind in types else "other",
+                "stage": stage if stage in stages else "",
+                "week": _bounded_int(item.get("week"), 1, 104),
+                "duration_minutes": _bounded_int(item.get("duration_minutes"), 15, 480),
+                "purpose": _clean(item.get("purpose")),
+                "agenda": _text_list(item.get("agenda")),
+                "prepare": _text_list(item.get("prepare")),
+                "review": _text_list(item.get("review")),
+                "explain": _clean(item.get("explain")),
+                "attendees": _text_list(item.get("attendees")),
+            }
+        )
+        if len(new) >= MAX_SUGGESTED_MEETINGS:
+            break
+    return new
+
+
+def merge_meeting_content(current: dict[str, Any], suggested: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
+    """One meeting's content with blanks filled from ``suggested``: empty
+    texts are filled and lists get the new items appended, so typed text is
+    never replaced. Returns the content and the fields that changed."""
+    out: dict[str, Any] = {}
+    changed: list[str] = []
+    for key in _MEETING_TEXTS:
+        mine, theirs = _clean(current.get(key)), _clean(suggested.get(key))
+        out[key] = mine or theirs
+        if not mine and theirs:
+            changed.append(key)
+    for key in _MEETING_LISTS:
+        mine_list = _text_list(current.get(key), limit=50)
+        seen = {task_key(v) for v in mine_list}
+        extra = [v for v in _text_list(suggested.get(key)) if task_key(v) not in seen]
+        out[key] = mine_list + extra
+        if extra:
+            changed.append(key)
+    return out, changed

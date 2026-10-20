@@ -62,7 +62,7 @@ export const NAV: NavSection[] = [
         label: "5 · Deliver",
         items: [
           { label: "QA Reports", icon: "shield", page: "test-cases" },
-          { label: "Schedule Planner", icon: "cal", soon: "schedule-planner" },
+          { label: "Schedule Planner", icon: "cal", page: "schedule-planner" },
         ],
       },
     ],
@@ -169,7 +169,6 @@ export const HELP: NavSection = {
 
 /** Copy for each "Coming soon" page, keyed by the item's `soon` slug. */
 export const SOON_COPY: Record<string, string> = {
-  "schedule-planner": "Plan the delivery timeline — phases, milestones and owners — from the approved scope.",
   "implementation-dashboard": "One view of every implementation: progress, blockers and what's due next.",
   schedule: "A calendar of every project's milestones and sessions.",
   "review-feedback": "Collect client reviews and sign-offs on deliverables in one place.",
