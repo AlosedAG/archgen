@@ -10,6 +10,7 @@ from . import (
     discovery,
     exports,
     feedback,
+    hubzy,
     industry_templates,
     portal,
     projects,
@@ -31,6 +32,7 @@ _MODULES = (
     feedback,
     assist,
     industry_templates,
+    hubzy,
 )
 for _module in _MODULES:
     api_router.include_router(_module.router)

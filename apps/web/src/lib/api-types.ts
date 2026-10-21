@@ -626,6 +626,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/hubzy/topics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The questions Hubzy answers, in order */
+        get: operations["hubzy_list_topics"];
+        /** Replace the whole list of questions and answers (admins) */
+        put: operations["hubzy_save_topics"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/industry-templates": {
         parameters: {
             query?: never;
@@ -2278,6 +2296,49 @@ export interface components {
             status: "ok";
             /** Version */
             version: string;
+        };
+        /**
+         * HubzyTopic
+         * @description A question Hubzy can answer, and his answer.
+         */
+        HubzyTopic: {
+            /** Answer */
+            answer: string;
+            /** Id */
+            id: string;
+            /**
+             * Page
+             * @description The page it shows on (the last part of its URL, e.g. "discovery"); "" = every page.
+             * @default
+             */
+            page: string;
+            /** Question */
+            question: string;
+        };
+        /** HubzyTopicIn */
+        HubzyTopicIn: {
+            /** Answer */
+            answer: string;
+            /**
+             * Id
+             * @description The row's id; omit for a new row.
+             */
+            id?: string | null;
+            /**
+             * Page
+             * @default
+             */
+            page: string;
+            /** Question */
+            question: string;
+        };
+        /**
+         * HubzyTopicsSave
+         * @description The whole edited table, in order. Rows left out are deleted.
+         */
+        HubzyTopicsSave: {
+            /** Topics */
+            topics: components["schemas"]["HubzyTopicIn"][];
         };
         /** IndustryDiscoveryRequest */
         IndustryDiscoveryRequest: {
@@ -5282,6 +5343,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Accepted"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    hubzy_list_topics: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HubzyTopic"][];
+                };
+            };
+        };
+    };
+    hubzy_save_topics: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HubzyTopicsSave"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HubzyTopic"][];
                 };
             };
             /** @description Validation Error */

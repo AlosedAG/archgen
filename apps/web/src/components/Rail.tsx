@@ -24,7 +24,7 @@ const CLOSE_DELAY_MS = 120;
 
 export function Rail() {
   const pathname = usePathname();
-  const { project } = useAppSession();
+  const { me, project } = useAppSession();
   const projectId = /^\/projects\/([^/]+)/.exec(pathname)?.[1] ?? null;
   const activeId = locate(pathname, projectId)?.section.id ?? null;
   const guide = GUIDE[pathname.split("/").filter(Boolean).at(-1) ?? ""];
@@ -132,7 +132,7 @@ export function Rail() {
           {section.groups.map((group) => (
             <div key={group.label || "items"} className="fly-section">
               {group.label && <div className="fly-group">{group.label}</div>}
-              {group.items.map((item) => {
+              {group.items.filter((item) => me.is_admin || !item.adminOnly).map((item) => {
                 const content = (
                   <>
                     <NavIcon name={item.icon} size={17} />

@@ -12,7 +12,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, LargeBinary, String, Text, UniqueConstraint
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, LargeBinary, String, Text, UniqueConstraint, false
 from sqlalchemy.engine import Dialect
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.types import TypeDecorator
@@ -58,6 +58,8 @@ class Workspace(Base):
     created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=utcnow)
     # Email domains whose self-signed-up users join this workspace (e.g. ["sonamation.com"]).
     signup_domains: Mapped[list[str]] = mapped_column(JSON, default=list, server_default="[]")
+    # Set once Hubzy's default questions have been copied in, so deleting them all doesn't bring them back.
+    hubzy_seeded: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
 
 
 class User(Base):
@@ -217,3 +219,20 @@ class EmailCode(Base):
     attempts: Mapped[int] = mapped_column(Integer, default=0)
     expires_at: Mapped[datetime] = mapped_column(UtcDateTime())
     last_sent_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=utcnow)
+
+
+class HubzyTopic(Base):
+    """A question Hubzy, the in-app assistant, can answer, with his answer.
+    Each workspace has its own list, edited by its admins. ``page`` limits a
+    topic to one page (the last part of its URL); "" shows it everywhere."""
+
+    __tablename__ = "hubzy_topics"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    workspace_id: Mapped[str] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"), index=True)
+    page: Mapped[str] = mapped_column(String(80), default="")
+    question: Mapped[str] = mapped_column(String(300))
+    answer: Mapped[str] = mapped_column(Text)
+    position: Mapped[int] = mapped_column(Integer, default=0)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=utcnow, onupdate=utcnow)
+    updated_by: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)

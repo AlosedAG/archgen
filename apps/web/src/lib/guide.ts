@@ -47,6 +47,18 @@ export const GUIDE_PAGES: GuidePage[] = [
     ],
   },
   {
+    key: "hubzy",
+    title: "Hubzy Answers",
+    step: "Start here",
+    summary: "The questions Hubzy, the assistant in the corner, offers when someone clicks him, and his answers. Admins only.",
+    steps: [
+      "Each row is one question and its answer. Edit any cell, add a question at the bottom, or remove a row with its x.",
+      "\"Shows on\" picks where a question appears: on every page, or only on one page, where it's listed first.",
+      "Nothing changes until you press Save changes; Discard changes puts the table back as it was.",
+      "Every workspace starts with answers about the platform and HubSpot, plus a \"What does this page do?\" for each page.",
+    ],
+  },
+  {
     key: "account",
     title: "Profile & account",
     step: "Account",

@@ -1,11 +1,12 @@
 import { AppSessionProvider } from "@/components/AppSession";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
+import { Hubzy } from "@/components/hubzy/Hubzy";
 import { PageTransition } from "@/components/PageTransition";
 import { Rail } from "@/components/Rail";
 import { ShellCrumbs } from "@/components/ShellCrumbs";
 import { Topbar } from "@/components/Topbar";
 
-/** Every signed-in page: the session guard, the top bar, the icon rail, the workspace, the Feedback panel. */
+/** Every signed-in page: the session guard, the top bar, the icon rail, the workspace, the Feedback panel and Hubzy. */
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <AppSessionProvider
@@ -34,6 +35,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </main>
         </div>
         <FeedbackWidget />
+        <Hubzy />
       </div>
     </AppSessionProvider>
   );

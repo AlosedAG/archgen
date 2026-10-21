@@ -4496,3 +4496,627 @@ textarea {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* ---- Hubzy, the assistant ------------------------------------------------------
+   Art and base motion ported from The Hub Zone mockup (bob, shadow, arm sway,
+   bulb glow). Idle life adds random blinks (data-blink), glances (--hz-look-x/y)
+   and expressions (data-expression) set by components/hubzy/useHubzyLife.ts. */
+
+.hubzy-dock {
+  position: fixed;
+  z-index: 200;
+  right: max(18px, env(safe-area-inset-right, 0px));
+  bottom: max(18px, env(safe-area-inset-bottom, 0px));
+  width: 78px;
+  height: 90px;
+}
+
+.hubzy-figure {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 28px;
+  background: transparent;
+  color: inherit;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  filter: drop-shadow(0 12px 20px rgb(69 60 209 / 30%));
+  transition: transform 180ms var(--motion-ease);
+}
+
+.hubzy-figure:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+/* Picked up: a little lift and lean while he's being dragged. */
+.hubzy-dock[data-dragging] .hubzy-figure {
+  cursor: grabbing;
+  transform: scale(1.06) rotate(-5deg);
+}
+
+.hubzy-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.hubzy-svg .hubzy-arm-l,
+.hubzy-svg .hubzy-arm-r,
+.hubzy-svg .hubzy-eye,
+.hubzy-svg .hubzy-mouth,
+.hubzy-svg .hubzy-sh {
+  transform-box: fill-box;
+}
+
+/* Base idle loop (from the mockup) */
+.hubzy-float {
+  animation: hz-bob 4s ease-in-out infinite;
+}
+
+@keyframes hz-bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1.2deg);
+  }
+  50% {
+    transform: translateY(-7px) rotate(1.2deg);
+  }
+}
+
+.hubzy-sh {
+  transform-origin: center;
+  animation: hz-sh 4s ease-in-out infinite;
+}
+
+@keyframes hz-bob-calm {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+@keyframes hz-sh {
+  0%,
+  100% {
+    transform: scaleX(1);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scaleX(0.78);
+    opacity: 0.28;
+  }
+}
+
+.hubzy-arm-l {
+  transform-origin: top center;
+  animation: hz-arm 4s ease-in-out infinite;
+}
+
+.hubzy-arm-r {
+  transform-origin: top center;
+  animation: hz-arm 4.6s ease-in-out infinite reverse;
+}
+
+@keyframes hz-arm {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
+}
+
+.hubzy-bulb {
+  animation: hz-glow 2.4s ease-in-out infinite;
+}
+
+@keyframes hz-glow {
+  0%,
+  100% {
+    filter: none;
+  }
+  50% {
+    filter: drop-shadow(0 0 7px rgb(229 72 77 / 85%));
+  }
+}
+
+/* Eyes: glance by moving both together, blink / squint each from its centre. */
+.hubzy-eyes {
+  transform: translate(var(--hz-look-x, 0px), var(--hz-look-y, 0px));
+  transition: transform 260ms var(--motion-ease);
+}
+
+.hubzy-eye {
+  transform-origin: center;
+  transition: transform 70ms ease-in-out;
+}
+
+.hubzy-svg[data-expression="smile"] .hubzy-eye {
+  transform: scaleY(0.55);
+  transition-duration: 180ms;
+}
+
+.hubzy-eyes[data-blink] .hubzy-eye {
+  transform: scaleY(0.1);
+  transition-duration: 70ms;
+}
+
+.hubzy-mouth {
+  transform-origin: top center;
+  transition: transform 220ms var(--motion-ease);
+}
+
+.hubzy-blush {
+  transition: opacity 220ms ease;
+}
+
+/* Expressions — small, quick, then back to neutral. */
+.hubzy-svg[data-expression="smile"] .hubzy-mouth {
+  transform: scale(1.2, 1.5);
+}
+
+.hubzy-svg[data-expression="smile"] .hubzy-blush {
+  opacity: 1;
+}
+
+.hubzy-antenna {
+  transform-box: view-box;
+  transform-origin: 80px 41px;
+}
+
+.hubzy-svg[data-expression="wiggle"] .hubzy-antenna {
+  animation: hz-wiggle 0.9s ease-in-out;
+}
+
+@keyframes hz-wiggle {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  20% {
+    transform: rotate(-9deg);
+  }
+  45% {
+    transform: rotate(7deg);
+  }
+  70% {
+    transform: rotate(-4deg);
+  }
+}
+
+.hubzy-hop {
+  transform-box: view-box;
+  transform-origin: 80px 150px;
+}
+
+.hubzy-svg[data-expression="hop"] .hubzy-hop {
+  animation: hz-hop 0.6s cubic-bezier(0.3, 0.7, 0.3, 1);
+}
+
+@keyframes hz-hop {
+  0%,
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+  20% {
+    transform: translateY(1px) scale(1.03, 0.97);
+  }
+  50% {
+    transform: translateY(-7px) scale(0.98, 1.02);
+  }
+}
+
+.hubzy-svg[data-expression="tilt"] .hubzy-hop {
+  animation: hz-tilt 1.4s ease-in-out;
+}
+
+@keyframes hz-tilt {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  30%,
+  70% {
+    transform: rotate(6deg);
+  }
+}
+
+/* Talking (used by the chat later): the mockup's mouth flap. */
+.hubzy-svg[data-talking] .hubzy-mouth {
+  animation: hz-talk 0.26s ease-in-out infinite;
+}
+
+@keyframes hz-talk {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.38);
+  }
+}
+
+/* Speech bubble: the mockup's chat bubble look, with a tail pointing at Hubzy.
+   HubzyBubble.tsx places it (data-side = where it sits relative to him). */
+.hubzy-say {
+  position: fixed;
+  z-index: 201;
+  width: max-content;
+  max-width: min(272px, calc(100vw - 20px));
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 14px 36px rgb(25 27 46 / 16%), 0 2px 6px rgb(25 27 46 / 6%);
+}
+
+.hubzy-say[data-passive] {
+  pointer-events: none;
+}
+
+.hubzy-say-eyebrow {
+  margin: 0 0 4px;
+  color: var(--indigo-text);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.hubzy-say-tail {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  transform: rotate(45deg);
+}
+
+.hubzy-say[data-side="top"] .hubzy-say-tail {
+  bottom: -7px;
+  left: calc(var(--hz-tail) - 6px);
+  border-top: 0;
+  border-left: 0;
+}
+
+.hubzy-say[data-side="bottom"] .hubzy-say-tail {
+  top: -7px;
+  left: calc(var(--hz-tail) - 6px);
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.hubzy-say[data-side="left"] .hubzy-say-tail {
+  right: -7px;
+  top: calc(var(--hz-tail) - 6px);
+  border-bottom: 0;
+  border-left: 0;
+}
+
+.hubzy-say[data-side="right"] .hubzy-say-tail {
+  left: -7px;
+  top: calc(var(--hz-tail) - 6px);
+  border-top: 0;
+  border-right: 0;
+}
+
+.hubzy-say-text {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.hubzy-replies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.hubzy-chip {
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  padding: 6px 11px;
+  background: var(--indigo-tint);
+  color: var(--indigo-text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--motion-fast) ease;
+}
+
+.hubzy-chip:hover {
+  background: color-mix(in srgb, var(--indigo) 16%, var(--indigo-tint));
+}
+
+.hubzy-chip:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+/* Help panel: the mockup's chat panel, opened next to Hubzy (HubzyPanel.tsx places it). */
+.hubzy-chat {
+  position: fixed;
+  z-index: 202;
+  display: flex;
+  flex-direction: column;
+  width: min(348px, calc(100vw - 32px));
+  height: min(466px, 72vh);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 26px 64px rgb(25 27 46 / 30%);
+}
+
+.hubzy-chat:focus {
+  outline: none;
+}
+
+.hubzy-chat:focus-visible {
+  box-shadow: var(--focus), 0 26px 64px rgb(25 27 46 / 30%);
+}
+
+.hubzy-head {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 13px 14px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--indigo), var(--indigo-deep));
+}
+
+.hubzy-head .mini {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.hubzy-head .mini svg {
+  width: 32px;
+  height: 35px;
+}
+
+.hubzy-head h2 {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.hubzy-x {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+}
+
+.hubzy-x:hover {
+  background: rgb(255 255 255 / 20%);
+}
+
+.hubzy-x:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 1px;
+}
+
+.hubzy-log {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 12px;
+  overflow: auto;
+  padding: 16px 14px;
+  background: var(--bg);
+}
+
+.hubzy-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 9px;
+  max-width: 86%;
+}
+
+.hubzy-row.me {
+  flex-direction: row-reverse;
+  align-self: flex-end;
+}
+
+.hubzy-row .pfp {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 28px;
+}
+
+.hubzy-row .pfp svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.hubzy-bubble {
+  padding: 10px 13px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  border-bottom-left-radius: 5px;
+  background: var(--surface);
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.hubzy-row.me .hubzy-bubble {
+  border-color: transparent;
+  border-radius: 14px;
+  border-bottom-right-radius: 5px;
+  background: var(--indigo);
+  color: #fff;
+}
+
+.hubzy-in {
+  animation: hz-in 0.26s ease both;
+}
+
+@keyframes hz-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.hubzy-dots {
+  display: inline-flex;
+  gap: 4px;
+  padding: 2px 1px;
+}
+
+.hubzy-dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--muted);
+  animation: hz-dot 1.1s infinite;
+}
+
+.hubzy-dots i:nth-child(2) {
+  animation-delay: 0.16s;
+}
+
+.hubzy-dots i:nth-child(3) {
+  animation-delay: 0.32s;
+}
+
+@keyframes hz-dot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+/* Question buttons: a scrollable tray under the conversation. */
+.hubzy-chips {
+  flex: 0 0 auto;
+  max-height: 42%;
+  overflow: auto;
+  padding: 10px 14px 12px;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.hubzy-chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.hubzy-chip-group + .hubzy-chip-group {
+  margin-top: 10px;
+}
+
+.hubzy-chip-label {
+  width: 100%;
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.hubzy-chip {
+  text-align: left;
+}
+
+.hubzy-chip:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+@media (max-width: 620px) {
+  .hubzy-dock {
+    width: 66px;
+    height: 78px;
+  }
+}
+
+/* Hubzy, his bubble and his panel move by changing their position every frame
+   while dragged; the app-wide reduced-motion rule (a 0.01ms transition on every
+   property) would restart on each change and freeze them until the drag ends. */
+.hubzy-dock,
+.hubzy-say,
+.hubzy-chat {
+  transition-property: none !important;
+}
+
+/* Reduced motion: calmer, not frozen — his bob (without the rock) and blinks
+   stay; the sway, glow, glances and expressions go. */
+@media (prefers-reduced-motion: reduce) {
+  .hubzy-float {
+    animation: hz-bob-calm 4s ease-in-out infinite !important;
+  }
+  .hubzy-arm-l,
+  .hubzy-arm-r,
+  .hubzy-bulb,
+  .hubzy-antenna,
+  .hubzy-hop,
+  .hubzy-mouth {
+    animation: none !important;
+  }
+  .hubzy-eyes,
+  .hubzy-mouth,
+  .hubzy-figure {
+    transition: none !important;
+  }
+  .hubzy-dock[data-dragging] .hubzy-figure {
+    transform: none;
+  }
+  .hubzy-in,
+  .hubzy-dots i {
+    animation: none !important;
+  }
+}
+
+/* Hubzy Answers (settings/hubzy): roomier answer cells. */
+.hubzy-answers .etable-textarea {
+  min-height: 76px;
+}

@@ -13,6 +13,7 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { listProjects, type Project } from "@/lib/api";
 import { hrefFor, searchablePages } from "@/lib/nav";
 
+import { useAppSession } from "./AppSession";
 import { NavIcon } from "./NavIcons";
 import { dropdown } from "@/lib/motion";
 
@@ -26,6 +27,7 @@ function isTyping(target: EventTarget | null): boolean {
 
 export function JumpSearch() {
   const router = useRouter();
+  const { me } = useAppSession();
   const pathname = usePathname();
   const projectId = /^\/projects\/([^/]+)/.exec(pathname)?.[1] ?? null;
   const [query, setQuery] = useState("");
@@ -59,7 +61,7 @@ export function JumpSearch() {
   const results = useMemo<Result[]>(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
-    const pages = searchablePages().map(({ section, item }) => ({
+    const pages = searchablePages(me.is_admin).map(({ section, item }) => ({
       key: `page:${section.id}:${item.label}`,
       label: item.label,
       detail: item.soon ? `${section.label} · Soon` : section.label,
@@ -72,7 +74,7 @@ export function JumpSearch() {
       href: `/projects/${p.id}/discovery`,
     }));
     return [...pages, ...found].filter((r) => `${r.label} ${r.detail}`.toLowerCase().includes(q)).slice(0, MAX_RESULTS);
-  }, [query, projects, projectId]);
+  }, [query, projects, projectId, me.is_admin]);
 
   const go = (result: Result | undefined) => {
     if (!result) return;

@@ -29,6 +29,8 @@ export type LibraryDocument = Schemas["Document"];
 export type SecretStatus = Schemas["SecretStatus"];
 export type PlannedStage = Schemas["PlannedStage"];
 export type StagePlannerImport = Schemas["StagePlannerImport"];
+export type HubzyTopic = Schemas["HubzyTopic"];
+export type HubzyTopicIn = Schemas["HubzyTopicIn"];
 
 const V1 = "/api/v1";
 
@@ -241,6 +243,14 @@ export const setSecret = (name: string, value: string) =>
 export async function deleteSecret(name: string): Promise<void> {
   await request(`/workspace/secrets/${name}`, { method: "DELETE" });
 }
+
+// ---- Hubzy, the assistant -------------------------------------------------------
+
+/** The questions Hubzy answers (the workspace's own copy, in table order). */
+export const listHubzyTopics = (signal?: AbortSignal) => json<HubzyTopic[]>("/hubzy/topics", { signal });
+/** Replace the whole table (admins only); rows left out are deleted. */
+export const saveHubzyTopics = (topics: HubzyTopicIn[]) =>
+  json<HubzyTopic[]>("/hubzy/topics", { method: "PUT", body: JSON.stringify({ topics }) });
 
 // ---- Architecture ---------------------------------------------------------------
 

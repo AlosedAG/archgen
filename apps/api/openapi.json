@@ -2035,6 +2035,98 @@
         "title": "Health",
         "type": "object"
       },
+      "HubzyTopic": {
+        "additionalProperties": false,
+        "description": "A question Hubzy can answer, and his answer.",
+        "properties": {
+          "answer": {
+            "title": "Answer",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "page": {
+            "default": "",
+            "description": "The page it shows on (the last part of its URL, e.g. \"discovery\"); \"\" = every page.",
+            "title": "Page",
+            "type": "string"
+          },
+          "question": {
+            "title": "Question",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "question",
+          "answer"
+        ],
+        "title": "HubzyTopic",
+        "type": "object"
+      },
+      "HubzyTopicIn": {
+        "additionalProperties": false,
+        "properties": {
+          "answer": {
+            "maxLength": 5000,
+            "minLength": 1,
+            "title": "Answer",
+            "type": "string"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The row's id; omit for a new row.",
+            "title": "Id"
+          },
+          "page": {
+            "default": "",
+            "maxLength": 80,
+            "pattern": "^[a-z0-9-]*$",
+            "title": "Page",
+            "type": "string"
+          },
+          "question": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Question",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question",
+          "answer"
+        ],
+        "title": "HubzyTopicIn",
+        "type": "object"
+      },
+      "HubzyTopicsSave": {
+        "additionalProperties": false,
+        "description": "The whole edited table, in order. Rows left out are deleted.",
+        "properties": {
+          "topics": {
+            "items": {
+              "$ref": "#/components/schemas/HubzyTopicIn"
+            },
+            "maxItems": 300,
+            "title": "Topics",
+            "type": "array"
+          }
+        },
+        "required": [
+          "topics"
+        ],
+        "title": "HubzyTopicsSave",
+        "type": "object"
+      },
       "IndustryDiscoveryRequest": {
         "additionalProperties": false,
         "properties": {
@@ -7468,6 +7560,84 @@
         "summary": "Send a bug report, idea or question to the app owner",
         "tags": [
           "feedback"
+        ]
+      }
+    },
+    "/api/v1/hubzy/topics": {
+      "get": {
+        "operationId": "hubzy_list_topics",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/HubzyTopic"
+                  },
+                  "title": "Response Hubzy List Topics",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "The questions Hubzy answers, in order",
+        "tags": [
+          "hubzy"
+        ]
+      },
+      "put": {
+        "operationId": "hubzy_save_topics",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HubzyTopicsSave"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/HubzyTopic"
+                  },
+                  "title": "Response Hubzy Save Topics",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Replace the whole list of questions and answers (admins)",
+        "tags": [
+          "hubzy"
         ]
       }
     },

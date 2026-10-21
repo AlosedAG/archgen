@@ -361,7 +361,7 @@ export default function ProjectsPage() {
         >
           <label className="field">
             <span className="field-label">New client / project</span>
-            <input className="input" placeholder="e.g. Bright Smiles" value={name} onChange={(e) => setName(e.target.value)} />
+            <input id="new-project-name" className="input" placeholder="e.g. Bright Smiles" value={name} onChange={(e) => setName(e.target.value)} />
           </label>
           <label className="field" style={{ maxWidth: 260 }}>
             <span className="field-label">Folder (optional)</span>

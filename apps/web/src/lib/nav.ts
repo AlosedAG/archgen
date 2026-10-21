@@ -11,7 +11,8 @@
 
 import type { NavIconName } from "@/components/NavIcons";
 
-export type NavItem = { label: string; icon: NavIconName; page?: string; href?: string; soon?: string };
+/** `adminOnly` items are hidden from members who aren't workspace owners or admins. */
+export type NavItem = { label: string; icon: NavIconName; page?: string; href?: string; soon?: string; adminOnly?: boolean };
 export type NavGroup = { label: string; items: NavItem[] };
 export type NavSection = {
   id: string;
@@ -162,6 +163,7 @@ export const HELP: NavSection = {
         { label: "User Guide", icon: "book", href: "/guide" },
         { label: "Send Feedback", icon: "chat", href: "#feedback" },
         { label: "Setup & API Keys", icon: "key", href: "/settings" },
+        { label: "Hubzy Answers", icon: "chat", href: "/settings/hubzy", adminOnly: true },
       ],
     },
   ],
@@ -219,10 +221,10 @@ export function locate(pathname: string, projectId: string | null): { section: N
 }
 
 /** Every navigable page, for the search. */
-export function searchablePages(): { section: NavSection; item: NavItem }[] {
+export function searchablePages(isAdmin: boolean): { section: NavSection; item: NavItem }[] {
   return ALL.flatMap((section) =>
     itemsOf(section)
-      .filter((item) => !item.href?.startsWith("#"))
+      .filter((item) => !item.href?.startsWith("#") && (isAdmin || !item.adminOnly))
       .map((item) => ({ section, item })),
   );
 }
