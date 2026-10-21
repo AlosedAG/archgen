@@ -15,10 +15,12 @@ from __future__ import annotations
 import argparse
 import getpass
 import sys
+import time
 from pathlib import Path
 
 from alembic import command
 from alembic.config import Config
+from sqlalchemy.exc import DBAPIError
 
 from .persistence.db import session_scope
 from .persistence.models import ROLES
@@ -37,11 +39,22 @@ def alembic_config(database_url: str) -> Config:
     return config
 
 
-def migrate(settings: Settings) -> None:
-    """Bring the database schema up to date."""
+def migrate(settings: Settings, *, retries: int = 0) -> None:
+    """Bring the database schema up to date. With ``retries``, a database that
+    can't be reached yet (a serverless one resuming from sleep) is retried
+    with growing pauses before giving up."""
     if settings.database_url.startswith("sqlite:///"):
         Path(settings.database_url.removeprefix("sqlite:///")).parent.mkdir(parents=True, exist_ok=True)
-    command.upgrade(alembic_config(settings.database_url), "head")
+    for attempt in range(retries + 1):
+        try:
+            command.upgrade(alembic_config(settings.database_url), "head")
+            return
+        except DBAPIError as exc:
+            if attempt == retries:
+                raise
+            pause = min(3 * (attempt + 1), 15)
+            print(f"Database not reachable yet ({type(exc.orig).__name__}); retrying in {pause}s…", file=sys.stderr, flush=True)
+            time.sleep(pause)
 
 
 def _password(args: argparse.Namespace) -> str:
@@ -56,7 +69,8 @@ def _password(args: argparse.Namespace) -> str:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m archscope_api.cli")
     sub = parser.add_subparsers(dest="command", required=True)
-    sub.add_parser("migrate", help="apply database migrations")
+    mig = sub.add_parser("migrate", help="apply database migrations")
+    mig.add_argument("--retries", type=int, default=0, help="retry this many times while the database can't be reached")
     create = sub.add_parser("create-user", help="create a user (and their workspace if new)")
     create.add_argument("--email", required=True)
     create.add_argument("--name", default="")
@@ -78,7 +92,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     settings = Settings()
     if args.command == "migrate":
-        migrate(settings)
+        migrate(settings, retries=args.retries)
         print("Database is up to date.")
         return 0
     try:

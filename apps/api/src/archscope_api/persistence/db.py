@@ -12,6 +12,8 @@ from sqlalchemy import Engine, create_engine, event
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
+CONNECT_TIMEOUT_S = 10
+
 
 @lru_cache(maxsize=8)
 def get_engine(database_url: str) -> Engine:
@@ -19,6 +21,11 @@ def get_engine(database_url: str) -> Engine:
     on (off by default) and, for in-memory databases, a single shared
     connection so every session sees the same data."""
     kwargs: dict[str, Any] = {"pool_pre_ping": True}
+    if database_url.startswith("postgresql"):
+        # A serverless database (Neon) suspends when idle: don't hang on a slow
+        # resume, and replace connections it has closed in the meantime.
+        kwargs["connect_args"] = {"connect_timeout": CONNECT_TIMEOUT_S}
+        kwargs["pool_recycle"] = 300
     if database_url.startswith("sqlite"):
         kwargs["connect_args"] = {"check_same_thread": False}
         if ":memory:" in database_url or database_url in ("sqlite://", "sqlite+pysqlite://"):

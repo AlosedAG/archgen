@@ -29,4 +29,7 @@ ENV PATH="/app/.venv/bin:$PATH" \
     ARCHSCOPE_BLOB_STORE=database
 
 EXPOSE 8080
-CMD ["sh", "-c", "python -m archscope_api.cli migrate && exec uvicorn archscope_api.main:app --host 0.0.0.0 --port ${PORT:-8080} --proxy-headers --forwarded-allow-ips='*'"]
+# Migrations retry while a sleeping database resumes; if they still can't run,
+# the API starts anyway (the schema only changes on deploys) instead of the
+# container exiting and leaving the service down until the next deploy.
+CMD ["sh", "-c", "python -m archscope_api.cli migrate --retries 4 || echo 'Migrations did not run; starting the API anyway.'; exec uvicorn archscope_api.main:app --host 0.0.0.0 --port ${PORT:-8080} --proxy-headers --forwarded-allow-ips='*'"]

@@ -23,7 +23,10 @@ def run_offline() -> None:
 def run_online() -> None:
     connectable = config.attributes.get("connection")
     if connectable is None:
-        connectable = engine_from_config({"sqlalchemy.url": url}, prefix="sqlalchemy.", poolclass=pool.NullPool)
+        connect_args = {"connect_timeout": 10} if url.startswith("postgresql") else {}
+        connectable = engine_from_config(
+            {"sqlalchemy.url": url}, prefix="sqlalchemy.", poolclass=pool.NullPool, connect_args=connect_args
+        )
         with connectable.connect() as connection:
             _run(connection)
     else:
