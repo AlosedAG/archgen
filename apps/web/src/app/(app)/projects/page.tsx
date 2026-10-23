@@ -1,9 +1,11 @@
 "use client";
 
 /**
- * The workspace's client projects: search and filter them, grouped by
- * folder; see who is in charge and who last edited each one; create, edit
- * (name, client, folder, person in charge) or delete them.
+ * The workspace's client projects: headline figures across them, then the
+ * projects themselves, searchable and grouped by folder. Each card shows
+ * where the project stands (stage, scoping progress, portal health, from
+ * /projects/insights), who is in charge and who last edited it; the whole
+ * card opens the project's dashboard. Create, edit or delete projects here.
  */
 
 import { AnimatePresence, motion } from "framer-motion";
@@ -12,11 +14,24 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { useAppSession } from "@/components/AppSession";
+import { NavIcon, type NavIconName } from "@/components/NavIcons";
 import { PageHeader } from "@/components/PageHeader";
 import { Glyph } from "@/components/icons";
 import { fadeInUp, lift, springs, tween, useStagger } from "@/lib/motion";
 import { Callout } from "@/components/ui";
-import { ApiError, createProject, deleteProject, listMembers, listProjects, updateProject, type Member, type Project } from "@/lib/api";
+import {
+  ApiError,
+  createProject,
+  deleteProject,
+  listMembers,
+  listProjectInsights,
+  listProjects,
+  updateProject,
+  type Member,
+  type Project,
+  type ProjectInsight,
+} from "@/lib/api";
+import { avatarColor, initials } from "@/lib/avatars";
 
 const NO_FOLDER = "\u0000none";
 
@@ -28,13 +43,36 @@ function when(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
 }
 
-function initials(name: string): string {
-  return name
-    .split(/[\s@.]+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
+const HEALTH: Record<ProjectInsight["health"]["status"], { label: string; tone: string }> = {
+  healthy: { label: "Healthy", tone: "ok" },
+  needs_review: { label: "Needs review", tone: "warn" },
+  not_started: { label: "Not started", tone: "idle" },
+};
+
+/** The figures across all projects, above the list. */
+function KpiChips({ projects, insights }: { projects: Project[]; insights: Map<string, ProjectInsight> | null }) {
+  const known = projects.map((p) => insights?.get(p.id)).filter((i): i is ProjectInsight => Boolean(i));
+  const chips: { icon: NavIconName; value: number | null; label: string }[] = [
+    { icon: "grid", value: projects.length, label: "Projects" },
+    { icon: "chart", value: insights && known.filter((i) => i.progress > 0 && i.progress < 100).length, label: "In progress" },
+    { icon: "files", value: projects.reduce((n, p) => n + (p.document_count ?? 0), 0), label: "Documents" },
+    { icon: "check", value: insights && known.reduce((n, i) => n + i.open_tasks, 0), label: "Open tasks" },
+  ];
+  return (
+    <ul className="kpi-chips" aria-label="Across your projects">
+      {chips.map((c) => (
+        <li key={c.label} className="kpi-chip">
+          <span className="kpi-chip-icon" aria-hidden>
+            <NavIcon name={c.icon} size={16} />
+          </span>
+          <span>
+            <b>{c.value ?? "–"}</b>
+            <span>{c.label}</span>
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
 }
 
 function FolderInput({ value, onChange, folders, id }: { value: string; onChange: (v: string) => void; folders: string[]; id: string }) {
@@ -113,12 +151,15 @@ function ProjectGrid({ count, children }: { count: number; children: React.React
 
 function ProjectCard({
   project,
+  insight,
   members,
   folders,
   onChanged,
   onDeleted,
 }: {
   project: Project;
+  /** Where it stands; undefined while loading. */
+  insight: ProjectInsight | undefined;
   members: Member[];
   folders: string[];
   onChanged: (p: Project) => void;
@@ -167,10 +208,18 @@ function ProjectCard({
   };
 
   const title = project.client_name || project.name;
+  const href = `/projects/${project.id}`;
+  const health = insight && HEALTH[insight.health.status];
+  const notStarted = insight?.progress === 0;
+  // Edit / Delete sit above the card's own link; never let their clicks open the project.
+  const own = (fn: () => void) => (e: React.MouseEvent) => {
+    e.stopPropagation();
+    fn();
+  };
   return (
     <motion.div
       layout
-      className="project-card"
+      className={`project-card${mode === "view" ? " proj" : ""}`}
       variants={fadeInUp}
       exit={{ opacity: 0, scale: 0.98, transition: tween.fast }}
       whileHover={mode === "view" ? lift : undefined}
@@ -219,23 +268,63 @@ function ProjectCard({
         </form>
       ) : (
         <>
-          <Link href={`/projects/${project.id}/discovery`} className="project-card-link">
-            <span className="project-card-name">{title}</span>
-            {project.client_name && project.client_name !== project.name && <span className="t-description">{project.name}</span>}
-            <span className="t-caption">
-              {project.document_count ?? 0} saved document{project.document_count === 1 ? "" : "s"}
-            </span>
-          </Link>
+          <div className="proj-top">
+            <div className="project-card-link">
+              {/* The card's link, stretched over the whole card so a click anywhere opens the dashboard. */}
+              <Link href={href} className="project-card-open">
+                <span className="project-card-name">{title}</span>
+              </Link>
+              {project.client_name && project.client_name !== project.name && <span className="t-description">{project.name}</span>}
+              <span className="t-caption">
+                {project.document_count ?? 0} saved document{project.document_count === 1 ? "" : "s"}
+              </span>
+            </div>
+            {insight ? (
+              <span className={`pill ${notStarted ? "pill-idle" : "pill-stage"}`} title="Stage">
+                {insight.stage}
+              </span>
+            ) : (
+              <span className="skeleton pill-skeleton" aria-hidden />
+            )}
+          </div>
+          <div>
+            <div
+              className="proj-progress"
+              role="progressbar"
+              aria-label="Scoping progress"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={insight?.progress ?? 0}
+              aria-busy={!insight}
+            >
+              <motion.i initial={{ width: 0 }} animate={{ width: `${insight?.progress ?? 0}%` }} transition={{ duration: 0.6, ease: [0.2, 0.7, 0.2, 1] }} />
+            </div>
+            <div className="proj-progress-meta">
+              <span>Scoping progress</span>
+              <span>{insight ? `${insight.progress}%` : "…"}</span>
+            </div>
+          </div>
           <div className="project-people">
-            <span className="person-chip" title={project.lead ? `${project.lead.name} <${project.lead.email}>` : "Nobody is in charge yet"}>
-              <span className="avatar" aria-hidden>
-                {project.lead ? initials(project.lead.name) : "?"}
+            <div className="proj-charge">
+              <span className="person-chip" title={project.lead ? `${project.lead.name} <${project.lead.email}>` : "Nobody is in charge yet"}>
+                <span
+                  className={`avatar${project.lead ? " avatar-solid" : ""}`}
+                  style={project.lead ? { background: avatarColor(project.lead.id) } : undefined}
+                  aria-hidden
+                >
+                  {project.lead ? initials(project.lead.name) : "?"}
+                </span>
+                <span>
+                  <span className="person-chip-label">In charge</span>
+                  {project.lead?.name ?? "Nobody yet"}
+                </span>
               </span>
-              <span>
-                <span className="person-chip-label">In charge</span>
-                {project.lead?.name ?? "Nobody yet"}
-              </span>
-            </span>
+              {health && (
+                <span className={`pill pill-${health.tone}`} title="Portal health">
+                  {health.label}
+                </span>
+              )}
+            </div>
             <span className="t-caption" title={new Date(project.updated_at).toLocaleString()}>
               Last edited {when(project.updated_at)}
               {project.last_edited_by ? ` by ${project.last_edited_by.name}` : ""}
@@ -258,11 +347,14 @@ function ProjectCard({
             </div>
           ) : (
             <div className="project-actions">
-              <button type="button" className="btn-link" onClick={startEdit}>
+              <Link href={href} className="btn-link" tabIndex={-1} onClick={(e) => e.stopPropagation()}>
+                Open
+              </Link>
+              <button type="button" className="btn-link" onClick={own(startEdit)}>
                 Edit
               </button>
               {project.can_delete && (
-                <button type="button" className="btn-link btn-link-danger" onClick={() => setMode("delete")}>
+                <button type="button" className="btn-link btn-link-danger" onClick={own(() => setMode("delete"))}>
                   Delete
                 </button>
               )}
@@ -283,6 +375,7 @@ export default function ProjectsPage() {
   const router = useRouter();
   const { me, setProject } = useAppSession();
   const [projects, setProjects] = useState<Project[] | null>(null);
+  const [insights, setInsights] = useState<Map<string, ProjectInsight> | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [name, setName] = useState("");
   const [folder, setFolder] = useState("");
@@ -299,6 +392,10 @@ export default function ProjectsPage() {
       .catch((e: unknown) => setError(e instanceof ApiError ? e.message : "Couldn't load projects."));
     listMembers()
       .then(setMembers)
+      .catch(() => undefined);
+    // The figures fill in when ready; the cards work without them.
+    listProjectInsights()
+      .then((list) => setInsights(new Map(list.map((i) => [i.project_id, i]))))
       .catch(() => undefined);
   }, [setProject]);
 
@@ -343,6 +440,7 @@ export default function ProjectsPage() {
         title="Projects"
       />
       <div className="page-content">
+        {projects && projects.length > 0 && <KpiChips projects={projects} insights={insights} />}
         <form
           className="inline-form"
           onSubmit={async (e) => {
@@ -445,6 +543,7 @@ export default function ProjectsPage() {
                     <ProjectCard
                       key={p.id}
                       project={p}
+                      insight={insights?.get(p.id)}
                       members={members}
                       folders={folders}
                       onChanged={replace}

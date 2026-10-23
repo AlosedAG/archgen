@@ -10,7 +10,17 @@ a proposal has to answer:
    implement it, traced back to the customer's requirements.
 2. **Management** — team, governance cadence, timeline, risks, change
    control and acceptance: how SonaMation will run contract performance.
-3. **Cost** — milestone fees, optional add-ons, rate card, payment terms.
+3. **Cost** — milestone fees grouped by workstream, recurring fees, optional
+   add-ons, rate card, payment schedule and terms.
+
+Commercial completeness (added after benchmarking a real agency SOW): a
+structured executive summary, recurring fees kept apart from one-time
+fees, a payment schedule, client vs. vendor responsibilities, an
+indicative week-based timeline drawn as a Gantt chart, acceptance
+evidence per milestone, a data-quality / known-issues table (required for
+migrations) and the subscription-tier assumption. A proposal can only be
+marked "Ready to send" when :func:`readiness_issues` finds nothing;
+blanks the seller must fill are written ``[[like this]]``.
 
 **Scope** cuts across all three and is the part clients most often get
 wrong, so it's modeled as one explicit list of scope items, each tagged
@@ -32,6 +42,8 @@ import json
 import re
 from typing import Any
 
+from archscope_domain.sow_clauses import PLACEHOLDER_RE, clause_blanks, default_clauses
+
 SCHEMA_VERSION = 1
 
 DOCUMENT_TYPES = ["Proposal + Statement of Work", "Proposal", "Statement of Work"]
@@ -45,6 +57,24 @@ SCOPE_STATUSES = [SCOPE_IN, SCOPE_OUT, SCOPE_OPTIONAL, SCOPE_CLIENT]
 BILLING_OPTIONS = ["One Time", "Monthly", "Per Unit", "Per Year", "Hourly"]
 KPI_TYPES = ["Primary", "Secondary"]
 
+# Recurring fees (retainers, subscriptions) and how many months each period is.
+CADENCES = {"Monthly": 1, "Quarterly": 3, "Per Year": 12}
+DATA_QUALITY_OWNERS = ["Client", "SonaMation"]
+INVOICING_OPTIONS = [
+    "Per milestone, on acceptance",
+    "Monthly in arrears",
+    "Quarterly in advance",
+    "50% at start, 50% on completion",
+    "On completion",
+]
+DEPOSIT_TYPES = ["Percent", "Amount"]
+STATUS_DRAFT = "Draft"
+STATUS_READY = "Ready to send"
+STATUSES = [STATUS_DRAFT, STATUS_READY]
+
+# Blanks the seller must fill before sending ("[[cap amount]]") use
+# sow_clauses.PLACEHOLDER_RE, shared with the terms.
+
 # Every optional section the builder can switch off. The three core
 # volumes (technical, management, cost) and the scope summary are always
 # rendered — they're the point of the document.
@@ -57,6 +87,12 @@ OPTIONAL_SECTIONS = {
     "addons": "Optional Add-on Services Menu",
     "rate_card": "Rate Card (Change Requests)",
     "signatures": "Acceptance & Signatures",
+    "responsibilities": "Client & SonaMation Responsibilities",
+    "timeline_chart": "Timeline Chart",
+    "milestone_acceptance": "Milestone Acceptance Evidence",
+    "data_quality": "Data Quality & Known Issues",
+    "recurring_fees": "Recurring Fees",
+    "tier_assumption": "Subscription-Tier Assumption",
 }
 
 # ---- Row templates (column order = table column order everywhere) ----------
@@ -81,10 +117,31 @@ BLANK_ROWS: dict[str, dict[str, Any]] = {
     "glossary": {"Term": "", "Definition": ""},
     "team": {"Side": "SonaMation", "Role": "", "Name": "", "Email": "", "Responsibilities": ""},
     "governance": {"Meeting / Report": "", "Cadence": "", "Participants": "", "Purpose": ""},
-    "timeline": {"Phase / Milestone": "", "Start": "", "End": "", "Key Deliverables": ""},
+    "timeline": {
+        "Phase / Milestone": "",
+        "Start Week": 0.0,
+        "Duration (Weeks)": 0.0,
+        "Start": "",
+        "End": "",
+        "Key Deliverables": "",
+    },
     "risks": {"Risk": "", "Likelihood": "Medium", "Impact": "Medium", "Mitigation": "", "Owner": ""},
     "kpis": {"KPI": "", "Type": "Primary", "Definition": "", "Target": ""},
-    "milestones": {"Milestone": "", "Deliverables": "", "Start On or Before": "", "Due On or Before": "", "Fee": 0.0},
+    "milestones": {
+        "Milestone": "",
+        "Workstream / Phase": "",
+        "Deliverables": "",
+        "Fee Basis": "",
+        "Start On or Before": "",
+        "Due On or Before": "",
+        "Fee": 0.0,
+        "Acceptance Evidence": "",
+    },
+    "recurring_fees": {"Service": "", "Includes": "", "Amount": 0.0, "Cadence": "Monthly", "Term (Months)": 12.0, "Starts": ""},
+    "client_responsibilities": {"Responsibility": ""},
+    "vendor_responsibilities": {"Responsibility": ""},
+    "data_quality": {"Issue": "", "Risk if Not Resolved": "", "Owner": "Client"},
+    "clauses": {"Key": "", "Title": "", "Body": "", "Include": True},
     "addons": {"Service": "", "Includes": "", "Cost": 0.0, "Billing": "One Time", "Add to Total": False},
     "rate_card": {"Role": "", "Hourly Rate": 0.0},
     "assumptions": {"Assumption": ""},
@@ -262,6 +319,37 @@ DEFAULT_CONFIDENTIALITY = (
     "This document and all Services are confidential information of the parties and may not be shared "
     "outside the client's organization without SonaMation's written consent."
 )
+
+DEFAULT_CLIENT_RESPONSIBILITIES = [
+    {"Responsibility": "Provide Super Admin (or equivalent) access to HubSpot and to every system being integrated."},
+    {"Responsibility": "Name one decision-maker who approves requirements, scope changes and acceptance."},
+    {"Responsibility": "Supply source-data exports, field definitions and sample records for any import or migration."},
+    {"Responsibility": "Make subject-matter experts available and return feedback and UAT results within 5 business days."},
+    {"Responsibility": "Keep the HubSpot subscription active at the tier this SOW assumes."},
+]
+
+DEFAULT_VENDOR_RESPONSIBILITIES = [
+    {"Responsibility": "Deliver every In Scope item up to its stated limit and acceptance criteria."},
+    {"Responsibility": "Build and test in a sandbox or controlled environment before changing production."},
+    {"Responsibility": "Run internal QA before anything is handed to the client for UAT."},
+    {"Responsibility": "Report progress, risks and decisions needed every week."},
+    {"Responsibility": "Hand over documentation for everything delivered."},
+]
+
+DEFAULT_TIER_ASSUMPTION = (
+    "This design assumes the client's current HubSpot subscription: [[HubSpot hubs and tiers, e.g. Sales Hub "
+    "Professional]]. Some features depend on the subscription tier. If a feature described in this SOW is not "
+    "available on that tier, SonaMation will propose a revised design, or the client may change their "
+    "subscription; either goes through the Change Request process and may affect the schedule and fees."
+)
+
+DEFAULT_PAYMENT_SCHEDULE: dict[str, Any] = {
+    "deposit_type": "Percent",
+    "deposit_value": 0.0,
+    "invoicing": "",
+    "due_terms": "",
+    "notes": "",
+}
 
 DEFAULT_RATE_CARD = [
     {"Role": "Solutions Architect", "Hourly Rate": 175.0},
@@ -491,7 +579,12 @@ def default_proposal() -> dict[str, Any]:
         "valid_until": "",
         "client": {"company": "", "contact": "", "address": "", "phone": "", "email": ""},
         "seller": {"company": "SonaMation", "contact": "", "address": "", "phone": "", "email": ""},
+        "status": STATUS_DRAFT,
+        # None = follow the scope (a scope item mentions a migration / import); True / False = set by hand.
+        "is_migration": None,
         "executive_summary": "",
+        "exec_key_risks": "",
+        "exec_dependencies": "",
         "company_overview": DEFAULT_COMPANY_OVERVIEW,
         # ---- Volume I: Technical ----
         "problem_statement": "",
@@ -506,23 +599,33 @@ def default_proposal() -> dict[str, Any]:
         # ---- Scope ----
         "scope": blank_rows("scope", 3),
         "assumptions": copy.deepcopy(DEFAULT_ASSUMPTIONS),
+        "tier_assumption": DEFAULT_TIER_ASSUMPTION,
+        "data_quality": blank_rows("data_quality", 1),
         "change_process": DEFAULT_CHANGE_PROCESS,
         # ---- Volume II: Management ----
         "team": copy.deepcopy(DEFAULT_TEAM),
+        "client_responsibilities": copy.deepcopy(DEFAULT_CLIENT_RESPONSIBILITIES),
+        "vendor_responsibilities": copy.deepcopy(DEFAULT_VENDOR_RESPONSIBILITIES),
         "governance": copy.deepcopy(DEFAULT_GOVERNANCE),
         "timeline": blank_rows("timeline", 3),
+        "timeline_buffer_weeks": 2.0,
+        "timeline_buffer_label": "Validation & buffer",
         "risks": blank_rows("risks", 1),
         "kpis": blank_rows("kpis", 1),
         "acceptance_process": DEFAULT_ACCEPTANCE,
         # ---- Volume III: Cost ----
         "currency": "USD",
         "milestones": blank_rows("milestones", 3),
+        "recurring_fees": [],
         "addons": blank_rows("addons", 1),
         "rate_card": copy.deepcopy(DEFAULT_RATE_CARD),
         "discount_pct": 0.0,
+        "payment_schedule": copy.deepcopy(DEFAULT_PAYMENT_SCHEDULE),
         "payment_terms": DEFAULT_PAYMENT_TERMS,
         "expenses": DEFAULT_EXPENSES,
         "confidentiality": DEFAULT_CONFIDENTIALITY,
+        # ---- Terms (a copy of the firm's clause library; see sow_clauses) ----
+        "clauses": default_clauses(),
         # ---- Layout ----
         "sections": {key: True for key in OPTIONAL_SECTIONS},
     }
@@ -669,11 +772,48 @@ def requirement_coverage(proposal: dict[str, Any]) -> list[dict[str, str]]:
     return rows
 
 
+def workstream_fees(proposal: dict[str, Any]) -> list[dict[str, Any]]:
+    """Milestone fees grouped by their "Workstream / Phase" (in order of first
+    appearance; milestones without one fall under "General"), each with the
+    fee bases of its milestones."""
+    groups: dict[str, dict[str, Any]] = {}
+    for m in nonblank(proposal.get("milestones", []), "Milestone"):
+        name = _text(m.get("Workstream / Phase")) or "General"
+        g = groups.setdefault(name, {"workstream": name, "fee": 0.0, "fee_basis": [], "milestones": []})
+        g["fee"] += to_float(m.get("Fee"))
+        g["milestones"].append(_text(m.get("Milestone")))
+        basis = _text(m.get("Fee Basis"))
+        if basis and basis not in g["fee_basis"]:
+            g["fee_basis"].append(basis)
+    return [{**g, "fee_basis": "; ".join(g["fee_basis"])} for g in groups.values()]
+
+
+def recurring_rows(proposal: dict[str, Any]) -> list[dict[str, Any]]:
+    """The recurring fees, with a known cadence and a term in whole months."""
+    rows = []
+    for r in nonblank(proposal.get("recurring_fees", []), "Service"):
+        cadence = _text(r.get("Cadence"))
+        rows.append(
+            {
+                **r,
+                "Cadence": cadence if cadence in CADENCES else "Monthly",
+                "Amount": to_float(r.get("Amount")),
+                "Term (Months)": max(0.0, to_float(r.get("Term (Months)"))),
+            }
+        )
+    return rows
+
+
 def pricing_summary(proposal: dict[str, Any]) -> dict[str, Any]:
-    """Totals for the cost volume. Add-ons flagged "Add to Total" are
-    included; one-time add-ons join the one-time subtotal, recurring ones
-    are reported separately (a monthly fee isn't comparable to a one-time
-    fee, so they're never silently summed together)."""
+    """Totals for the cost volume. One-time and recurring money are always
+    totalled separately (a monthly fee isn't comparable to a one-time fee,
+    so they're never summed together):
+
+    - one-time: milestone fees plus one-time add-ons flagged "Add to Total",
+      less the discount;
+    - recurring: the recurring fees plus recurring add-ons flagged "Add to
+      Total", per billing period, and what the recurring fees come to over
+      their terms."""
     milestones = nonblank(proposal.get("milestones", []), "Milestone")
     milestone_total = sum(to_float(m.get("Fee")) for m in milestones)
 
@@ -689,6 +829,11 @@ def pricing_summary(proposal: dict[str, Any]) -> dict[str, Any]:
         else:
             recurring[billing] = recurring.get(billing, 0.0) + cost
 
+    term_total = 0.0
+    for r in recurring_rows(proposal):
+        recurring[r["Cadence"]] = recurring.get(r["Cadence"], 0.0) + r["Amount"]
+        term_total += r["Amount"] * (r["Term (Months)"] / CADENCES[r["Cadence"]])
+
     subtotal = milestone_total + selected_one_time
     discount_pct = max(0.0, min(100.0, to_float(proposal.get("discount_pct"))))
     discount = round(subtotal * discount_pct / 100, 2)
@@ -700,7 +845,138 @@ def pricing_summary(proposal: dict[str, Any]) -> dict[str, Any]:
         "discount": discount,
         "total": subtotal - discount,
         "recurring": recurring,
+        "recurring_term_total": round(term_total, 2),
+        "workstreams": workstream_fees(proposal),
     }
+
+
+# ---- Timeline (indicative, in weeks) ----------------------------------------
+
+
+def timeline_chart(proposal: dict[str, Any]) -> dict[str, Any]:
+    """The schedule as Gantt bars, in weeks from 1. A phase without a start
+    week starts when the phases before it end; phases may overlap. The
+    buffer / validation period follows the last phase. Phases without a
+    duration aren't charted."""
+    bars: list[dict[str, Any]] = []
+    cursor = 1.0  # the first week after everything charted so far
+    for row in nonblank(proposal.get("timeline", []), "Phase / Milestone"):
+        weeks = to_float(row.get("Duration (Weeks)"))
+        if weeks <= 0:
+            continue
+        start = to_float(row.get("Start Week")) or cursor
+        bars.append({"Phase": _text(row.get("Phase / Milestone")), "Start": start, "Weeks": weeks, "Buffer": False})
+        cursor = max(cursor, start + weeks)
+    buffer = to_float(proposal.get("timeline_buffer_weeks"))
+    if bars and buffer > 0:
+        label = _text(proposal.get("timeline_buffer_label")) or "Validation & buffer"
+        bars.append({"Phase": label, "Start": cursor, "Weeks": buffer, "Buffer": True})
+        cursor += buffer
+    return {"bars": bars, "total_weeks": cursor - 1}
+
+
+# ---- Migration projects, payment schedule, readiness --------------------------
+
+_MIGRATION_RE = re.compile(r"migrat|\bimport", re.IGNORECASE)
+
+
+def migration_scope_items(proposal: dict[str, Any]) -> list[str]:
+    """IDs of In Scope / add-on items that mention a migration or import."""
+    groups = scope_by_status(proposal)
+    return [
+        _text(s.get("ID"))
+        for s in groups[SCOPE_IN] + groups[SCOPE_OPTIONAL]
+        if _MIGRATION_RE.search(f"{_text(s.get('Workstream'))} {_text(s.get('Item'))}")
+    ]
+
+
+def is_migration(proposal: dict[str, Any]) -> bool:
+    """Set by hand, or else suggested by the scope."""
+    value = proposal.get("is_migration")
+    return value if isinstance(value, bool) else bool(migration_scope_items(proposal))
+
+
+def payment_schedule_present(proposal: dict[str, Any]) -> bool:
+    schedule = proposal.get("payment_schedule") or {}
+    return bool(_text(schedule.get("invoicing")) and _text(schedule.get("due_terms")))
+
+
+# Which fields belong to each switchable section (a switched-off section's
+# blanks don't hold up sending), and how to name fields in messages.
+_SECTION_FIELDS = {
+    "executive_summary": ("executive_summary", "exec_key_risks", "exec_dependencies"),
+    "company_overview": ("company_overview",),
+    "glossary": ("glossary",),
+    "kpis": ("kpis",),
+    "risks": ("risks",),
+    "addons": ("addons",),
+    "rate_card": ("rate_card",),
+    "responsibilities": ("client_responsibilities", "vendor_responsibilities"),
+    "data_quality": ("data_quality",),
+    "recurring_fees": ("recurring_fees",),
+    "tier_assumption": ("tier_assumption",),
+}
+_FIELD_LABELS = {
+    "executive_summary": "Executive summary",
+    "exec_key_risks": "Executive summary (key risks)",
+    "exec_dependencies": "Executive summary (what delivery depends on)",
+    "tier_assumption": "Subscription-tier assumption",
+    "client_responsibilities": "Client responsibilities",
+    "vendor_responsibilities": "SonaMation responsibilities",
+    "data_quality": "Data quality & known issues",
+    "payment_schedule": "Payment schedule",
+    "payment_terms": "Payment terms",
+}
+
+
+def _strings(value: Any) -> list[str]:
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, dict):
+        return [s for v in value.values() for s in _strings(v)]
+    if isinstance(value, list):
+        return [s for v in value for s in _strings(v)]
+    return []
+
+
+def unfilled_placeholders(proposal: dict[str, Any]) -> dict[str, list[str]]:
+    """``[[blank]]`` markers still in the document, by field (sections that
+    are switched off are skipped)."""
+    sections = proposal.get("sections") or {}
+    skip = {f for key, fields in _SECTION_FIELDS.items() if sections.get(key) is False for f in fields}
+    found: dict[str, list[str]] = {}
+    for key, value in proposal.items():
+        if key in skip or key in ("sections", "status", "clauses"):  # clauses: see clause_blanks
+            continue
+        for text in _strings(value):
+            for blank in PLACEHOLDER_RE.findall(text):
+                label = _FIELD_LABELS.get(key, key.replace("_", " ").capitalize())
+                if f"[[{blank}]]" not in found.setdefault(label, []):
+                    found[label].append(f"[[{blank}]]")
+    return found
+
+
+def readiness_issues(proposal: dict[str, Any]) -> list[str]:
+    """What stops the SOW from being marked "Ready to send". Unlike
+    :func:`validate`'s warnings, every one of these must be fixed."""
+    issues: list[str] = []
+    if not payment_schedule_present(proposal):
+        issues.append("Payment schedule: choose how invoices are triggered and the due terms (e.g. Net 30).")
+    if is_migration(proposal) and not nonblank(proposal.get("data_quality", []), "Issue"):
+        issues.append(
+            "This project includes a data migration: list at least one known data-quality issue, the risk if it "
+            "isn't resolved, and who owns it."
+        )
+    for label, blanks in unfilled_placeholders(proposal).items():
+        issues.append(f"{label}: fill in {', '.join(blanks)}.")
+    for title, blanks in clause_blanks(proposal).items():
+        issues.append(f"Terms - {title}: fill in {', '.join(blanks)}.")
+    return issues
+
+
+def is_ready(proposal: dict[str, Any]) -> bool:
+    """Marked "Ready to send" and nothing is holding it up."""
+    return _text(proposal.get("status")) == STATUS_READY and not readiness_issues(proposal)
 
 
 def validate(proposal: dict[str, Any]) -> list[str]:
@@ -727,6 +1003,20 @@ def validate(proposal: dict[str, Any]) -> list[str]:
         warnings.append(f"Requirements not addressed by any scope item: {', '.join(uncovered)}.")
     if pricing_summary(proposal)["milestone_total"] <= 0:
         warnings.append("Cost volume: milestone fees total $0.")
+    undated = [
+        _text(r.get("Phase / Milestone"))
+        for r in nonblank(proposal.get("timeline", []), "Phase / Milestone")
+        if to_float(r.get("Duration (Weeks)")) <= 0
+    ]
+    if undated:
+        warnings.append(f"Schedule: phases without a duration in weeks aren't on the timeline chart: {', '.join(undated)}.")
+    no_evidence = [
+        _text(m.get("Milestone"))
+        for m in nonblank(proposal.get("milestones", []), "Milestone")
+        if not _text(m.get("Acceptance Evidence"))
+    ]
+    if no_evidence and (proposal.get("sections") or {}).get("milestone_acceptance", True):
+        warnings.append(f"Milestones without acceptance evidence: {', '.join(no_evidence)}.")
     return warnings
 
 
@@ -908,6 +1198,78 @@ def scope_from_requirements(proposal: dict[str, Any]) -> dict[str, Any]:
     return p
 
 
+def responsibilities_from_scope(proposal: dict[str, Any]) -> dict[str, Any]:
+    """Add every Client Responsibility scope item to the client's
+    responsibilities (skipping ones already listed)."""
+    p = copy.deepcopy(proposal)
+    new = [{"Responsibility": _text(s.get("Item"))} for s in scope_by_status(p)[SCOPE_CLIENT]]
+    p["client_responsibilities"] = merge_rows(p.get("client_responsibilities", []), new, "Responsibility")
+    return p
+
+
+# Typical weeks per methodology phase when drafting the schedule from it.
+_PHASE_WEEKS = (2.0, 2.0, 4.0, 2.0, 1.0)
+
+
+def timeline_from_methodology(proposal: dict[str, Any]) -> dict[str, Any]:
+    """When no schedule phase has a duration yet, draft one phase per
+    methodology phase with typical durations, back to back (the seller then
+    adjusts weeks and overlaps). A schedule that already has durations is
+    left alone."""
+    p = copy.deepcopy(proposal)
+    timeline = nonblank(p.get("timeline", []), "Phase / Milestone")
+    if any(to_float(r.get("Duration (Weeks)")) > 0 for r in timeline):
+        return p
+    start = 1.0
+    drafted = []
+    for i, phase in enumerate(nonblank(p.get("methodology", []), "Phase")):
+        weeks = _PHASE_WEEKS[i] if i < len(_PHASE_WEEKS) else 2.0
+        drafted.append(
+            {
+                **BLANK_ROWS["timeline"],
+                "Phase / Milestone": re.sub(r"^\s*\d+[.)]\s*", "", _text(phase.get("Phase"))),
+                "Start Week": start,
+                "Duration (Weeks)": weeks,
+                "Key Deliverables": _text(phase.get("Outputs")),
+            }
+        )
+        start += weeks
+    by_name = {_same_text(r.get("Phase / Milestone")): r for r in timeline}
+    for row in drafted:
+        existing = by_name.get(_same_text(row["Phase / Milestone"]))
+        if existing is not None:
+            existing.update({"Start Week": row["Start Week"], "Duration (Weeks)": row["Duration (Weeks)"]})
+    p["timeline"] = timeline + [r for r in drafted if _same_text(r["Phase / Milestone"]) not in by_name]
+    return p
+
+
+_SEVERITY_RISK = {
+    "High": "High: carried into the new setup, it can lose or corrupt records and break automation or reports.",
+    "Medium": "Medium: carried into the new setup, it makes reports and segmentation unreliable.",
+}
+
+
+def data_quality_from_findings(proposal: dict[str, Any], findings: list[dict[str, Any]], limit: int = 15) -> dict[str, Any]:
+    """Add the Portal Auditor's High and Medium findings as known data-quality
+    issues (owned by the client, whose data it is; editable)."""
+    p = copy.deepcopy(proposal)
+    order = {"High": 0, "Medium": 1}
+    picked = sorted(
+        (f for f in findings if isinstance(f, dict) and _text(f.get("severity")) in order and _text(f.get("description"))),
+        key=lambda f: order[_text(f.get("severity"))],
+    )[:limit]
+    new = [
+        {
+            "Issue": _text(f.get("description")),
+            "Risk if Not Resolved": _SEVERITY_RISK[_text(f.get("severity"))],
+            "Owner": "Client",
+        }
+        for f in picked
+    ]
+    p["data_quality"] = merge_rows(p.get("data_quality", []), new, "Issue")
+    return p
+
+
 # ---- JSON round-trip (templates / re-editing) --------------------------------
 
 
@@ -924,7 +1286,7 @@ def from_json(text: str | bytes) -> dict[str, Any]:
         raise ValueError("Proposal file must contain a JSON object.")
     merged = default_proposal()
     for key, value in data.items():
-        if key in ("client", "seller", "sections") and isinstance(value, dict):
+        if key in ("client", "seller", "sections", "payment_schedule") and isinstance(value, dict):
             merged[key].update(value)
         elif key in merged:
             merged[key] = value
@@ -946,6 +1308,7 @@ def as_saved_template(proposal: dict[str, Any]) -> dict[str, Any]:
     template["client"] = {key: "" for key in template.get("client", {})} or copy.deepcopy(default_proposal()["client"])
     for field in CLIENT_SPECIFIC_FIELDS:
         template[field] = ""
+    template["status"] = STATUS_DRAFT
     for row in template.get("team", []):
         if _text(row.get("Side")).lower() == "client":
             row["Name"] = ""
@@ -984,8 +1347,15 @@ def as_template(proposal: dict[str, Any]) -> dict[str, Any]:
         "addons",
         "rate_card",
         "payment_terms",
+        "payment_schedule",
+        "client_responsibilities",
+        "vendor_responsibilities",
+        "tier_assumption",
+        "timeline_buffer_weeks",
+        "timeline_buffer_label",
         "expenses",
         "confidentiality",
+        "clauses",
         "sections",
         "kpis",
     ):

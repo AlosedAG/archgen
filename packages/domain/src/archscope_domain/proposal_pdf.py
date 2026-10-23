@@ -29,14 +29,19 @@ from archscope_domain.proposal import (
     SCOPE_OPTIONAL,
     SCOPE_OUT,
     format_money,
+    is_migration,
+    is_ready,
     nonblank,
     number_requirements,
     pricing_summary,
+    recurring_rows,
     requirement_coverage,
     scope_by_status,
+    timeline_chart,
     to_bool,
     to_float,
 )
+from archscope_domain.sow_clauses import included_clauses
 
 
 def _rgb(hex_color: str) -> tuple[int, int, int]:
@@ -95,6 +100,8 @@ class _ProposalPDF(FPDF):
         self.set_title(_t(f"{proposal.get('document_type', '')} - {proposal.get('title', '')}"))
         self.set_author(_t(proposal.get("seller", {}).get("company") or "SonaMation"))
         self.alias_nb_pages()
+        # Marked on every page until the SOW is "Ready to send" and passes its checks.
+        self.draft = not is_ready(proposal)
 
     _skip_next_add_page = False
 
@@ -127,6 +134,12 @@ class _ProposalPDF(FPDF):
         self.set_text_color(*MUTED)
         client = self.p.get("client", {}).get("company") or ""
         label = f"{self.p.get('document_type', '')} - {self.p.get('title', '')}" + (f" - {client}" if client else "")
+        if self.draft:
+            self.set_font("Helvetica", "B", 8)
+            self.set_text_color(*ORANGE)
+            self.cell(16, 5, "DRAFT")
+            self.set_font("Helvetica", "", 8)
+            self.set_text_color(*MUTED)
         self.cell(0, 5, _t(label), align="R", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         self.set_fill_color(*ORANGE)
         self.rect(self.l_margin, 13.5, 14, 0.9, style="F")
@@ -247,6 +260,58 @@ class _ProposalPDF(FPDF):
         self.ln(3)
 
 
+def _gantt(pdf: _ProposalPDF, chart: dict[str, Any]) -> None:
+    """The indicative schedule as horizontal bars over a week axis (vector
+    shapes, so it prints crisp). The buffer / validation period is drawn in
+    the accent colour."""
+    bars, total = chart["bars"], max(1.0, float(chart["total_weeks"]))
+    if not bars:
+        return
+    label_w, row_h, axis_h = 46.0, 7.0, 6.0
+    track_w = pdf.content_w - label_w
+    unit = track_w / total
+    height = axis_h + row_h * len(bars) + 2
+    if pdf.get_y() + height > pdf.h - pdf.b_margin:
+        pdf.add_page()
+    x0, y0 = pdf.l_margin + label_w, pdf.get_y()
+    step = 1 if total <= 16 else 2 if total <= 32 else 4
+
+    # Week axis and grid
+    pdf.set_font("Helvetica", "B", 6.5)
+    pdf.set_text_color(*MUTED)
+    pdf.set_draw_color(*BORDER)
+    pdf.set_line_width(0.15)
+    week = 1
+    while week <= total:
+        x = x0 + (week - 1) * unit
+        pdf.set_xy(x, y0)
+        pdf.cell(unit * step, axis_h - 1, f"W{week}", align="L")
+        pdf.line(x, y0 + axis_h, x, y0 + axis_h + row_h * len(bars))
+        week += step
+    pdf.line(x0 + track_w, y0 + axis_h, x0 + track_w, y0 + axis_h + row_h * len(bars))
+
+    for i, bar in enumerate(bars):
+        y = y0 + axis_h + i * row_h
+        if i % 2 == 0:
+            pdf.set_fill_color(*BG_ALT)
+            pdf.rect(pdf.l_margin, y, pdf.content_w, row_h, style="F")
+        pdf.set_xy(pdf.l_margin + 1, y + 1)
+        pdf.set_font("Helvetica", "I" if bar["Buffer"] else "", 8)
+        pdf.set_text_color(*(TEXT_BODY if bar["Buffer"] else TEXT_DARK))
+        pdf.cell(label_w - 2, row_h - 2, _t(bar["Phase"]))
+        bx = x0 + (float(bar["Start"]) - 1) * unit
+        bw = max(1.5, float(bar["Weeks"]) * unit)
+        pdf.set_fill_color(*((253, 210, 175) if bar["Buffer"] else PURPLE_LIGHT))
+        pdf.rect(bx + 0.4, y + 1.6, bw - 0.8, row_h - 3.2, style="F", round_corners=True, corner_radius=1.6)
+        weeks = float(bar["Weeks"])
+        pdf.set_xy(bx, y + 1.6)
+        pdf.set_font("Helvetica", "B", 6.5)
+        pdf.set_text_color(*(PURPLE_DARK if bar["Buffer"] else WHITE))
+        if bw > 9:
+            pdf.cell(bw, row_h - 3.2, f"{weeks:g} wk", align="C")
+    pdf.set_y(y0 + height + 1)
+
+
 # ---- Sections -----------------------------------------------------------------
 
 
@@ -284,6 +349,13 @@ def _cover(pdf: _ProposalPDF) -> None:
     pdf.cell(0, 6, _t(f"Prepared for {client}"), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     pdf.set_font("Helvetica", "", 9)
     pdf.cell(0, 5, _t(f"Issued {issue}" + (f"   |   Ref. {p['reference_number']}" if p.get("reference_number") else "")))
+    if pdf.draft:
+        pdf.set_fill_color(*ORANGE)
+        pdf.rect(pdf.w - pdf.r_margin - 44, 20, 44, 8, style="F", round_corners=True, corner_radius=1.5)
+        pdf.set_xy(pdf.w - pdf.r_margin - 44, 21.5)
+        pdf.set_font("Helvetica", "B", 8.5)
+        pdf.set_text_color(*WHITE)
+        pdf.cell(44, 5, "DRAFT - NOT FOR SIGNATURE", align="C")
 
     # Addresses and contacts for notices (SOW page 1)
     pdf.set_y(band_h + 12)
@@ -558,6 +630,9 @@ def _technical(pdf: _ProposalPDF, sections: dict[str, bool]) -> None:
     pdf.heading("1.9 Assumptions")
     for row in nonblank(p.get("assumptions", []), "Assumption"):
         pdf.para(f"- {row['Assumption']}", size=9)
+    if sections.get("tier_assumption") and (p.get("tier_assumption") or "").strip():
+        pdf.heading("Subscription tier", level=2)
+        pdf.para(p["tier_assumption"], size=9)
 
     pdf.heading("1.10 Change Request Process")
     pdf.para(p.get("change_process", ""))
@@ -581,21 +656,50 @@ def _management(pdf: _ProposalPDF, sections: dict[str, bool]) -> None:
         nonblank(p.get("team", []), "Name", "Role"), ["Side", "Role", "Name", "Email", "Responsibilities"], (22, 32, 32, 38, 36)
     )
 
-    pdf.heading("2.2 Governance & Communication")
+    n = 2
+    client_r = [r["Responsibility"] for r in nonblank(p.get("client_responsibilities", []), "Responsibility")]
+    vendor_r = [r["Responsibility"] for r in nonblank(p.get("vendor_responsibilities", []), "Responsibility")]
+    if sections.get("responsibilities") and (client_r or vendor_r):
+        pdf.heading(f"2.{n} Responsibilities")
+        n += 1
+        pdf.para("What each party commits to. The schedule depends on both columns being met.", size=9)
+        seller = p.get("seller", {}).get("company") or "SonaMation"
+        rows = [
+            {"The client": client_r[i] if i < len(client_r) else "", seller: vendor_r[i] if i < len(vendor_r) else ""}
+            for i in range(max(len(client_r), len(vendor_r)))
+        ]
+        pdf.data_table(rows, ["The client", seller], (80, 80))
+
+    pdf.heading(f"2.{n} Governance & Communication")
+    n += 1
     pdf.data_table(
         nonblank(p.get("governance", []), "Meeting / Report"),
         ["Meeting / Report", "Cadence", "Participants", "Purpose"],
         (36, 24, 38, 62),
     )
 
-    pdf.heading("2.3 Schedule")
+    pdf.heading(f"2.{n} Schedule")
+    n += 1
+    chart = timeline_chart(p)
+    if sections.get("timeline_chart") and chart["bars"]:
+        pdf.heading("Indicative Timeline", level=2)
+        buffer = next((b for b in chart["bars"] if b["Buffer"]), None)
+        pdf.para(
+            f"About {chart['total_weeks']:g} weeks from kickoff"
+            + (f", including {buffer['Weeks']:g} weeks of {buffer['Phase'].lower()}" if buffer else "")
+            + ". Indicative: dates are confirmed at kickoff and depend on the client responsibilities above.",
+            size=9,
+        )
+        _gantt(pdf, chart)
+    weeks = lambda v: f"{to_float(v):g}" if to_float(v) else ""  # noqa: E731
     pdf.data_table(
         nonblank(p.get("timeline", []), "Phase / Milestone"),
-        ["Phase / Milestone", "Start", "End", "Key Deliverables"],
-        (50, 22, 22, 66),
+        ["Phase / Milestone", "Start Week", "Duration (Weeks)", "Start", "End", "Key Deliverables"],
+        (40, 14, 17, 20, 20, 49),
+        formatters={"Start Week": weeks, "Duration (Weeks)": weeks},
+        font_size=8,
     )
 
-    n = 4
     if sections.get("risks"):
         pdf.heading(f"2.{n} Risk Management")
         n += 1
@@ -610,14 +714,40 @@ def _management(pdf: _ProposalPDF, sections: dict[str, bool]) -> None:
             size=9,
         )
         pdf.data_table(nonblank(p.get("kpis", []), "KPI"), ["KPI", "Type", "Definition", "Target"], (40, 18, 72, 30))
+    quality = nonblank(p.get("data_quality", []), "Issue")
+    if sections.get("data_quality") and (quality or is_migration(p)):
+        pdf.heading(f"2.{n} Data Quality & Known Issues")
+        n += 1
+        pdf.para(
+            "Known problems in the client's data and what happens if they are not resolved before or during the "
+            "work. The owner is responsible for resolving each one; SonaMation is not liable for the consequences "
+            "of issues listed here that remain unresolved.",
+            size=9,
+        )
+        pdf.data_table(
+            quality,
+            ["Issue", "Risk if Not Resolved", "Owner"],
+            (66, 70, 24),
+            cell_style=lambda r, c: FontFace(emphasis="BOLD", color=PURPLE) if c == "Owner" else None,
+            empty="No known data-quality issues listed.",
+        )
     pdf.heading(f"2.{n} Acceptance Process")
+    n += 1
     pdf.para(p.get("acceptance_process", ""))
+    evidence = [m for m in nonblank(p.get("milestones", []), "Milestone") if (m.get("Acceptance Evidence") or "").strip()]
+    if sections.get("milestone_acceptance") and evidence:
+        pdf.heading(f"2.{n} Milestone Acceptance Evidence")
+        pdf.para("What the client receives for each milestone, and accepts it against.", size=9)
+        pdf.data_table(evidence, ["Milestone", "Deliverables", "Acceptance Evidence"], (36, 62, 62))
 
 
 def _cost(pdf: _ProposalPDF, sections: dict[str, bool]) -> None:
     p = pdf.p
     currency = p.get("currency", "USD")
-    money = lambda v: format_money(to_float(v), currency)  # noqa: E731
+
+    def money(value: Any) -> str:
+        return format_money(to_float(value), currency)
+
     totals = pricing_summary(p)
 
     pdf.volume(
@@ -627,33 +757,69 @@ def _cost(pdf: _ProposalPDF, sections: dict[str, bool]) -> None:
     )
     pdf.heading("3.1 Deliverables & Milestone Schedule")
     milestones = nonblank(p.get("milestones", []), "Milestone")
-    total_row = {
-        "Milestone": "Total",
-        "Deliverables": "",
-        "Start On or Before": "",
-        "Due On or Before": "",
-        "Fee": totals["milestone_total"],
-        "_total": True,
-    }
 
     def _ms_style(row: dict[str, Any], col: str) -> FontFace | None:
         if row.get("_total"):
             return FontFace(emphasis="BOLD", color=WHITE, fill_color=PURPLE_DARK)
-        if col == "Milestone":
+        if col in ("Milestone", "Workstream"):
             return FontFace(emphasis="BOLD", color=TEXT_DARK)
         return None
 
-    pdf.data_table(
-        milestones + ([total_row] if milestones else []),
-        ["Milestone", "Deliverables", "Start On or Before", "Due On or Before", "Fee"],
-        (34, 62, 22, 22, 20),
-        align=("LEFT", "LEFT", "LEFT", "LEFT", "RIGHT"),
-        formatters={"Fee": money},
-        cell_style=_ms_style,
-    )
+    columns = ["Milestone", "Deliverables", "Start On or Before", "Due On or Before", "Fee"]
+    groups = totals["workstreams"]
+    if len(groups) <= 1 and (not groups or groups[0]["workstream"] == "General"):
+        # No workstreams named: one table, as before.
+        total_row = {"Milestone": "Total", "Fee": totals["milestone_total"], "_total": True}
+        pdf.data_table(
+            milestones + ([total_row] if milestones else []),
+            columns,
+            (34, 62, 22, 22, 20),
+            align=("LEFT", "LEFT", "LEFT", "LEFT", "RIGHT"),
+            formatters={"Fee": money},
+            cell_style=_ms_style,
+        )
+    else:
+        pdf.para("Fees are grouped by workstream; each group states what its fee covers.", size=9)
+        for g in groups:
+            pdf.heading(f"{g['workstream']}  -  {money(g['fee'])}", level=2, toc=False)
+            if g["fee_basis"]:
+                pdf.para(f"Fee basis: {g['fee_basis']}", size=8.5, italic=True)
+            rows = [m for m in milestones if ((m.get("Workstream / Phase") or "").strip() or "General") == g["workstream"]]
+            pdf.data_table(
+                rows,
+                columns,
+                (34, 62, 22, 22, 20),
+                align=("LEFT", "LEFT", "LEFT", "LEFT", "RIGHT"),
+                formatters={"Fee": money},
+                cell_style=_ms_style,
+                font_size=8,
+            )
+        summary_rows = [{"Workstream": g["workstream"], "Fee Basis": g["fee_basis"], "Fee": g["fee"]} for g in groups]
+        summary_rows.append({"Workstream": "Total", "Fee": totals["milestone_total"], "_total": True})
+        pdf.heading("Fees by workstream", level=2, toc=False)
+        pdf.data_table(
+            summary_rows,
+            ["Workstream", "Fee Basis", "Fee"],
+            (44, 90, 26),
+            align=("LEFT", "LEFT", "RIGHT"),
+            formatters={"Fee": money},
+            cell_style=_ms_style,
+        )
 
     addons = nonblank(p.get("addons", []), "Service")
     n = 2
+    recurring = recurring_rows(p)
+    if sections.get("recurring_fees") and recurring:
+        pdf.heading(f"3.{n} Recurring Fees")
+        n += 1
+        pdf.para("Billed every period for the term shown, separately from the one-time fees.", size=9)
+        pdf.data_table(
+            recurring,
+            ["Service", "Includes", "Amount", "Cadence", "Term (Months)", "Starts"],
+            (34, 46, 22, 18, 20, 20),
+            align=("LEFT", "LEFT", "RIGHT", "LEFT", "RIGHT", "LEFT"),
+            formatters={"Amount": money, "Term (Months)": lambda v: f"{to_float(v):g}"},
+        )
     if sections.get("addons") and addons:
         pdf.heading(f"3.{n} Optional Add-on Services Menu")
         n += 1
@@ -680,6 +846,7 @@ def _cost(pdf: _ProposalPDF, sections: dict[str, bool]) -> None:
 
     pdf.heading(f"3.{n} Pricing Summary")
     n += 1
+    pdf.para("One-time and recurring fees are totalled separately; they are never added together.", size=9)
     summary = [{"Item": "Milestone fees", "Amount": totals["milestone_total"]}]
     if totals["selected_addons_one_time"]:
         summary.append({"Item": "Selected one-time add-ons", "Amount": totals["selected_addons_one_time"]})
@@ -687,7 +854,9 @@ def _cost(pdf: _ProposalPDF, sections: dict[str, bool]) -> None:
         summary.append({"Item": f"Discount ({totals['discount_pct']:g}%)", "Amount": -totals["discount"]})
     summary.append({"Item": "Total one-time fee", "Amount": totals["total"], "_total": True})
     for billing, amount in totals["recurring"].items():
-        summary.append({"Item": f"Selected recurring add-ons ({billing})", "Amount": amount})
+        summary.append({"Item": f"Recurring fees, {billing.lower()}", "Amount": amount})
+    if totals["recurring_term_total"]:
+        summary.append({"Item": "Recurring fees over their terms", "Amount": totals["recurring_term_total"], "_total": True})
     pdf.data_table(
         summary,
         ["Item", "Amount"],
@@ -695,6 +864,34 @@ def _cost(pdf: _ProposalPDF, sections: dict[str, bool]) -> None:
         align=("LEFT", "RIGHT"),
         formatters={"Amount": money},
         cell_style=lambda r, c: FontFace(emphasis="BOLD", color=WHITE, fill_color=PURPLE_DARK) if r.get("_total") else None,
+    )
+
+    schedule = p.get("payment_schedule") or {}
+    pdf.heading(f"3.{n} Payment Schedule")
+    n += 1
+    deposit_value = to_float(schedule.get("deposit_value"))
+    if deposit_value <= 0:
+        deposit = "None"
+    elif schedule.get("deposit_type") == "Amount":
+        deposit = f"{money(deposit_value)}, invoiced on signature"
+    else:
+        deposit = (
+            f"{deposit_value:g}% of the one-time total ({money(totals['total'] * deposit_value / 100)}), invoiced on signature"
+        )
+    rows = [
+        {"Term": "Deposit", "Detail": deposit},
+        {"Term": "Invoicing", "Detail": schedule.get("invoicing") or "To be agreed"},
+        {"Term": "Due", "Detail": schedule.get("due_terms") or "To be agreed"},
+    ]
+    if recurring:
+        rows.append({"Term": "Recurring fees", "Detail": "Invoiced at the start of each billing period for the term shown."})
+    if (schedule.get("notes") or "").strip():
+        rows.append({"Term": "Notes", "Detail": schedule["notes"]})
+    pdf.data_table(
+        rows,
+        ["Term", "Detail"],
+        (36, 124),
+        cell_style=lambda r, c: FontFace(emphasis="BOLD", color=TEXT_DARK) if c == "Term" else None,
     )
 
     pdf.heading(f"3.{n} Payment Terms")
@@ -741,6 +938,40 @@ def _signatures(pdf: _ProposalPDF) -> None:
     pdf.set_y(y + 64)
 
 
+def _at_a_glance(pdf: _ProposalPDF) -> None:
+    """The executive summary's facts for a non-technical approver: what it
+    costs, the key risks, what delivery depends on, and how long it takes."""
+    p = pdf.p
+    currency = p.get("currency", "USD")
+    totals = pricing_summary(p)
+    investment = f"{format_money(totals['total'], currency)} one-time"
+    for billing, amount in totals["recurring"].items():
+        investment += f" + {format_money(amount, currency)} {billing.lower()}"
+
+    def listed(items: list[str]) -> str:
+        return "; ".join(str(i).strip().rstrip(".") for i in items) + ("." if items else "")
+
+    risks = (p.get("exec_key_risks") or "").strip() or listed([r["Risk"] for r in nonblank(p.get("risks", []), "Risk")[:3]])
+    depends = (p.get("exec_dependencies") or "").strip() or listed(
+        [r["Responsibility"] for r in nonblank(p.get("client_responsibilities", []), "Responsibility")[:3]]
+    )
+    chart = timeline_chart(p)
+    rows = [{"Topic": "Total investment", "Summary": investment}]
+    if chart["bars"]:
+        rows.append({"Topic": "Timeline", "Summary": f"About {chart['total_weeks']:g} weeks from kickoff"})
+    if risks:
+        rows.append({"Topic": "Key risks", "Summary": risks})
+    if depends:
+        rows.append({"Topic": "Delivery depends on", "Summary": depends})
+    pdf.heading("At a Glance", level=2, toc=False)
+    pdf.data_table(
+        rows,
+        ["Topic", "Summary"],
+        (40, 120),
+        cell_style=lambda r, c: FontFace(emphasis="BOLD", color=PURPLE) if c == "Topic" else None,
+    )
+
+
 def proposal_to_pdf(proposal: dict[str, Any]) -> bytes:
     sections = {key: bool(proposal.get("sections", {}).get(key, True)) for key in OPTIONAL_SECTIONS}
     pdf = _ProposalPDF(proposal)
@@ -748,11 +979,14 @@ def proposal_to_pdf(proposal: dict[str, Any]) -> bytes:
     _cover(pdf)
     pdf.contents_page()
 
-    if sections["executive_summary"] and (proposal.get("executive_summary") or "").strip():
+    if sections["executive_summary"] and any(
+        (proposal.get(k) or "").strip() for k in ("executive_summary", "exec_key_risks", "exec_dependencies")
+    ):
         pdf.add_page()
         pdf.start_section("Executive Summary", level=0)
         pdf.heading("Executive Summary", toc=False)
-        pdf.para(proposal["executive_summary"])
+        pdf.para(proposal.get("executive_summary", ""))
+        _at_a_glance(pdf)
         if sections["company_overview"]:
             pdf.heading("About SonaMation")
             pdf.para(proposal.get("company_overview", ""))
@@ -771,6 +1005,12 @@ def proposal_to_pdf(proposal: dict[str, Any]) -> bytes:
     pdf.start_section("Terms & Acceptance", level=0)
     pdf.heading("Confidentiality")
     pdf.para(proposal.get("confidentiality", ""))
+    clauses = included_clauses(proposal)
+    if clauses:
+        pdf.heading("Terms & Conditions")
+        for clause in clauses:  # sub-headings: one contents entry for all the terms
+            pdf.heading(clause["Title"], level=2)
+            pdf.para(clause["Body"], size=9)
     if sections["signatures"]:
         _signatures(pdf)
 

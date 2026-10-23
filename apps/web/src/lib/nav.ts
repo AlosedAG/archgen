@@ -164,6 +164,7 @@ export const HELP: NavSection = {
         { label: "Send Feedback", icon: "chat", href: "#feedback" },
         { label: "Setup & API Keys", icon: "key", href: "/settings" },
         { label: "Hubzy Answers", icon: "chat", href: "/settings/hubzy", adminOnly: true },
+        { label: "SOW Clause Library", icon: "sign", href: "/settings/clauses", adminOnly: true },
       ],
     },
   ],

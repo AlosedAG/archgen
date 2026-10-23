@@ -81,6 +81,49 @@
         "title": "Account",
         "type": "object"
       },
+      "ActivityItem": {
+        "additionalProperties": false,
+        "properties": {
+          "at": {
+            "description": "ISO 8601 time.",
+            "title": "At",
+            "type": "string"
+          },
+          "by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Who did it, by name.",
+            "title": "By"
+          },
+          "kind": {
+            "enum": [
+              "document",
+              "task",
+              "audit",
+              "edit"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "title",
+          "at"
+        ],
+        "title": "ActivityItem",
+        "type": "object"
+      },
       "AddLibraryAddonsRequest": {
         "additionalProperties": false,
         "properties": {
@@ -1023,6 +1066,36 @@
         "title": "BuildSectionInfo",
         "type": "object"
       },
+      "ClauseRow": {
+        "additionalProperties": false,
+        "description": "One clause of this SOW's terms (a copy of the firm's library clause, editable here).",
+        "properties": {
+          "body": {
+            "default": "",
+            "description": "[[blanks]] are filled per SOW; {{client}}, {{seller}}, {{valid_until}}, {{effective_date}} fill in automatically.",
+            "title": "Body",
+            "type": "string"
+          },
+          "include": {
+            "default": true,
+            "title": "Include",
+            "type": "boolean"
+          },
+          "key": {
+            "default": "",
+            "description": "The library clause it came from; empty for a clause added to this SOW only.",
+            "title": "Key",
+            "type": "string"
+          },
+          "title": {
+            "default": "",
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "title": "ClauseRow",
+        "type": "object"
+      },
       "ClientExplainerRequest": {
         "additionalProperties": false,
         "properties": {
@@ -1191,6 +1264,76 @@
         "title": "CompanyOverviewResponse",
         "type": "object"
       },
+      "Completion": {
+        "additionalProperties": false,
+        "description": "The project's deliverables as percentages (they add up to 100).",
+        "properties": {
+          "deliverables": {
+            "description": "How many deliverables there are in all.",
+            "title": "Deliverables",
+            "type": "integer"
+          },
+          "in_progress": {
+            "description": "Their tool has work, but no document is saved yet.",
+            "title": "In Progress",
+            "type": "integer"
+          },
+          "outstanding": {
+            "description": "Not started.",
+            "title": "Outstanding",
+            "type": "integer"
+          },
+          "scoped": {
+            "description": "Saved as a document.",
+            "title": "Scoped",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "scoped",
+          "in_progress",
+          "outstanding",
+          "deliverables"
+        ],
+        "title": "Completion",
+        "type": "object"
+      },
+      "Contributor": {
+        "additionalProperties": false,
+        "properties": {
+          "documents": {
+            "title": "Documents",
+            "type": "integer"
+          },
+          "edits": {
+            "description": "Tools they last saved work in.",
+            "title": "Edits",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "role": {
+            "description": "\"In charge\", or their workspace role.",
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role",
+          "documents",
+          "edits"
+        ],
+        "title": "Contributor",
+        "type": "object"
+      },
       "CoverageRow": {
         "additionalProperties": false,
         "properties": {
@@ -1257,6 +1400,58 @@
           "plural_label"
         ],
         "title": "CustomObjectDef",
+        "type": "object"
+      },
+      "DashboardPerson": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A workspace member's id; None for someone known only by name.",
+            "title": "Id"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "DashboardPerson",
+        "type": "object"
+      },
+      "DataQualityRow": {
+        "additionalProperties": false,
+        "properties": {
+          "issue": {
+            "default": "",
+            "title": "Issue",
+            "type": "string"
+          },
+          "owner": {
+            "default": "Client",
+            "enum": [
+              "Client",
+              "SonaMation"
+            ],
+            "title": "Owner",
+            "type": "string"
+          },
+          "risk_if_not_resolved": {
+            "default": "",
+            "title": "Risk if Not Resolved",
+            "type": "string"
+          }
+        },
+        "title": "DataQualityRow",
         "type": "object"
       },
       "Diagram": {
@@ -2314,6 +2509,107 @@
         "title": "KpiRow",
         "type": "object"
       },
+      "LibraryClause": {
+        "additionalProperties": false,
+        "description": "A clause of the workspace's standard SOW terms.",
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "include_by_default": {
+            "title": "Include By Default",
+            "type": "boolean"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "title",
+          "body",
+          "include_by_default"
+        ],
+        "title": "LibraryClause",
+        "type": "object"
+      },
+      "LibraryClauseIn": {
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "maxLength": 10000,
+            "minLength": 1,
+            "title": "Body",
+            "type": "string"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Omit for a new clause.",
+            "title": "Id"
+          },
+          "include_by_default": {
+            "default": true,
+            "title": "Include By Default",
+            "type": "boolean"
+          },
+          "key": {
+            "default": "",
+            "description": "Kept stable so SOW copies keep matching; made from the title when empty.",
+            "maxLength": 80,
+            "pattern": "^[a-z0-9_]*$",
+            "title": "Key",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "body"
+        ],
+        "title": "LibraryClauseIn",
+        "type": "object"
+      },
+      "LibraryClausesSave": {
+        "additionalProperties": false,
+        "properties": {
+          "clauses": {
+            "items": {
+              "$ref": "#/components/schemas/LibraryClauseIn"
+            },
+            "maxItems": 100,
+            "title": "Clauses",
+            "type": "array"
+          }
+        },
+        "required": [
+          "clauses"
+        ],
+        "title": "LibraryClausesSave",
+        "type": "object"
+      },
       "MarkdownExportRequest": {
         "additionalProperties": false,
         "properties": {
@@ -2631,6 +2927,12 @@
       "MilestoneRow": {
         "additionalProperties": false,
         "properties": {
+          "acceptance_evidence": {
+            "default": "",
+            "description": "What the client receives to accept the milestone.",
+            "title": "Acceptance Evidence",
+            "type": "string"
+          },
           "deliverables": {
             "default": "",
             "title": "Deliverables",
@@ -2647,6 +2949,12 @@
             "title": "Fee",
             "type": "number"
           },
+          "fee_basis": {
+            "default": "",
+            "description": "What the fee covers (e.g. 'Fixed fee: 2 pipelines, 10 workflows').",
+            "title": "Fee Basis",
+            "type": "string"
+          },
           "milestone": {
             "default": "",
             "title": "Milestone",
@@ -2655,6 +2963,12 @@
           "start_on_or_before": {
             "default": "",
             "title": "Start On or Before",
+            "type": "string"
+          },
+          "workstream": {
+            "default": "",
+            "description": "Fees are grouped and subtotalled by this.",
+            "title": "Workstream / Phase",
             "type": "string"
           }
         },
@@ -3026,6 +3340,46 @@
         "title": "PasswordResetConfirm",
         "type": "object"
       },
+      "PaymentSchedule": {
+        "additionalProperties": false,
+        "properties": {
+          "deposit_type": {
+            "default": "Percent",
+            "enum": [
+              "Percent",
+              "Amount"
+            ],
+            "title": "Deposit Type",
+            "type": "string"
+          },
+          "deposit_value": {
+            "default": 0.0,
+            "description": "Percent of the one-time total, or an amount; 0 = no deposit.",
+            "minimum": 0.0,
+            "title": "Deposit Value",
+            "type": "number"
+          },
+          "due_terms": {
+            "default": "",
+            "description": "e.g. 'Net 30'.",
+            "title": "Due Terms",
+            "type": "string"
+          },
+          "invoicing": {
+            "default": "",
+            "description": "What triggers invoices, e.g. 'Per milestone, on acceptance'.",
+            "title": "Invoicing",
+            "type": "string"
+          },
+          "notes": {
+            "default": "",
+            "title": "Notes",
+            "type": "string"
+          }
+        },
+        "title": "PaymentSchedule",
+        "type": "object"
+      },
       "Person": {
         "additionalProperties": false,
         "description": "A workspace member as shown on a project.",
@@ -3229,6 +3583,53 @@
           "source"
         ],
         "title": "PlannerBuildItem",
+        "type": "object"
+      },
+      "PortalHealth": {
+        "additionalProperties": false,
+        "properties": {
+          "high": {
+            "default": 0,
+            "title": "High",
+            "type": "integer"
+          },
+          "low": {
+            "default": 0,
+            "title": "Low",
+            "type": "integer"
+          },
+          "medium": {
+            "default": 0,
+            "title": "Medium",
+            "type": "integer"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "0-100: 100 - 15 per High - 4 per Medium - 1 per Low finding. None before the first audit.",
+            "title": "Score"
+          },
+          "status": {
+            "description": "needs_review when the Portal Auditor found any High-severity issue; not_started before the first audit.",
+            "enum": [
+              "healthy",
+              "needs_review",
+              "not_started"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "PortalHealth",
         "type": "object"
       },
       "PortalPipeline": {
@@ -3436,6 +3837,42 @@
         "title": "PortalWorkflow",
         "type": "object"
       },
+      "PrefillRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "findings": {
+            "description": "Portal Auditor findings (severity, description), for the data_quality part.",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Findings",
+            "type": "array"
+          },
+          "parts": {
+            "items": {
+              "enum": [
+                "responsibilities",
+                "timeline",
+                "data_quality"
+              ],
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Parts",
+            "type": "array"
+          },
+          "proposal": {
+            "$ref": "#/components/schemas/ProposalDocument"
+          }
+        },
+        "required": [
+          "proposal",
+          "parts"
+        ],
+        "title": "PrefillRequest",
+        "type": "object"
+      },
       "PricingSummary": {
         "additionalProperties": false,
         "properties": {
@@ -3455,9 +3892,14 @@
             "additionalProperties": {
               "type": "number"
             },
-            "description": "Recurring add-on totals keyed by billing period.",
+            "description": "Recurring fees and selected recurring add-ons, keyed by billing period.",
             "title": "Recurring",
             "type": "object"
+          },
+          "recurring_term_total": {
+            "description": "What the recurring fees come to over their terms.",
+            "title": "Recurring Term Total",
+            "type": "number"
           },
           "selected_addons_one_time": {
             "title": "Selected Addons One Time",
@@ -3468,8 +3910,16 @@
             "type": "number"
           },
           "total": {
+            "description": "The one-time total.",
             "title": "Total",
             "type": "number"
+          },
+          "workstreams": {
+            "items": {
+              "$ref": "#/components/schemas/WorkstreamFee"
+            },
+            "title": "Workstreams",
+            "type": "array"
           }
         },
         "required": [
@@ -3479,7 +3929,9 @@
           "discount_pct",
           "discount",
           "total",
-          "recurring"
+          "recurring",
+          "recurring_term_total",
+          "workstreams"
         ],
         "title": "PricingSummary",
         "type": "object"
@@ -3618,6 +4070,140 @@
           "name"
         ],
         "title": "ProjectCreate",
+        "type": "object"
+      },
+      "ProjectDashboard": {
+        "additionalProperties": false,
+        "properties": {
+          "activity": {
+            "items": {
+              "$ref": "#/components/schemas/ActivityItem"
+            },
+            "title": "Activity",
+            "type": "array"
+          },
+          "completion": {
+            "$ref": "#/components/schemas/Completion"
+          },
+          "continue_label": {
+            "title": "Continue Label",
+            "type": "string"
+          },
+          "continue_page": {
+            "description": "The tool page to pick up from, e.g. \"proposal\" (under /projects/:id/).",
+            "title": "Continue Page",
+            "type": "string"
+          },
+          "contributors": {
+            "items": {
+              "$ref": "#/components/schemas/Contributor"
+            },
+            "title": "Contributors",
+            "type": "array"
+          },
+          "documents": {
+            "title": "Documents",
+            "type": "integer"
+          },
+          "documents_by_stage": {
+            "items": {
+              "$ref": "#/components/schemas/StageDocuments"
+            },
+            "title": "Documents By Stage",
+            "type": "array"
+          },
+          "insight": {
+            "$ref": "#/components/schemas/ProjectInsight"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "string"
+          },
+          "team": {
+            "description": "Everyone on the project, person in charge first.",
+            "items": {
+              "$ref": "#/components/schemas/DashboardPerson"
+            },
+            "title": "Team",
+            "type": "array"
+          },
+          "workstreams": {
+            "items": {
+              "$ref": "#/components/schemas/Workstream"
+            },
+            "title": "Workstreams",
+            "type": "array"
+          }
+        },
+        "required": [
+          "project_id",
+          "insight",
+          "continue_page",
+          "continue_label",
+          "team",
+          "workstreams",
+          "completion",
+          "documents_by_stage",
+          "contributors",
+          "activity",
+          "documents"
+        ],
+        "title": "ProjectDashboard",
+        "type": "object"
+      },
+      "ProjectInsight": {
+        "additionalProperties": false,
+        "properties": {
+          "health": {
+            "$ref": "#/components/schemas/PortalHealth"
+          },
+          "open_tasks": {
+            "description": "Unfinished tasks in the project's Tasks tracker.",
+            "title": "Open Tasks",
+            "type": "integer"
+          },
+          "progress": {
+            "description": "Scoping progress: % of the RevOps tools started.",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Progress",
+            "type": "integer"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "string"
+          },
+          "stage": {
+            "description": "The furthest stage with a started tool.",
+            "enum": [
+              "Discover",
+              "Assess",
+              "Design",
+              "Propose",
+              "Deliver"
+            ],
+            "title": "Stage",
+            "type": "string"
+          },
+          "tools_started": {
+            "title": "Tools Started",
+            "type": "integer"
+          },
+          "tools_total": {
+            "title": "Tools Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "project_id",
+          "stage",
+          "progress",
+          "tools_started",
+          "tools_total",
+          "open_tasks",
+          "health"
+        ],
+        "title": "ProjectInsight",
         "type": "object"
       },
       "ProjectTasksAssistRequest": {
@@ -3941,8 +4527,29 @@
             "title": "Coverage",
             "type": "array"
           },
+          "is_migration": {
+            "description": "Whether this counts as a migration project (set by hand, or from the scope).",
+            "title": "Is Migration",
+            "type": "boolean"
+          },
+          "migration_items": {
+            "description": "IDs of scope items that mention a migration or import.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Migration Items",
+            "type": "array"
+          },
           "pricing": {
             "$ref": "#/components/schemas/PricingSummary"
+          },
+          "readiness": {
+            "description": "What stops the SOW from being marked \"Ready to send\". Empty = it can be.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Readiness",
+            "type": "array"
           },
           "scope_by_status": {
             "additionalProperties": {
@@ -3962,6 +4569,9 @@
             "title": "Scope By Status",
             "type": "object"
           },
+          "timeline": {
+            "$ref": "#/components/schemas/TimelineChart"
+          },
           "warnings": {
             "description": "Gaps a client would ask about. Advisory; they never block generation.",
             "items": {
@@ -3975,7 +4585,11 @@
           "pricing",
           "coverage",
           "scope_by_status",
-          "warnings"
+          "warnings",
+          "readiness",
+          "is_migration",
+          "migration_items",
+          "timeline"
         ],
         "title": "ProposalAnalysis",
         "type": "object"
@@ -4052,8 +4666,23 @@
             "title": "Change Process",
             "type": "string"
           },
+          "clauses": {
+            "description": "This SOW's terms, copied from the firm's clause library.",
+            "items": {
+              "$ref": "#/components/schemas/ClauseRow"
+            },
+            "title": "Clauses",
+            "type": "array"
+          },
           "client": {
             "$ref": "#/components/schemas/Party"
+          },
+          "client_responsibilities": {
+            "items": {
+              "$ref": "#/components/schemas/ResponsibilityRow"
+            },
+            "title": "Client Responsibilities",
+            "type": "array"
           },
           "company_overview": {
             "default": "",
@@ -4077,6 +4706,13 @@
             "title": "Current State",
             "type": "string"
           },
+          "data_quality": {
+            "items": {
+              "$ref": "#/components/schemas/DataQualityRow"
+            },
+            "title": "Data Quality",
+            "type": "array"
+          },
           "discount_pct": {
             "default": 0.0,
             "maximum": 100.0,
@@ -4099,8 +4735,20 @@
             "title": "Effective Date",
             "type": "string"
           },
+          "exec_dependencies": {
+            "default": "",
+            "description": "What delivery depends on.",
+            "title": "Exec Dependencies",
+            "type": "string"
+          },
+          "exec_key_risks": {
+            "default": "",
+            "title": "Exec Key Risks",
+            "type": "string"
+          },
           "executive_summary": {
             "default": "",
+            "description": "Plain-language overview: what is being done.",
             "title": "Executive Summary",
             "type": "string"
           },
@@ -4127,6 +4775,18 @@
             },
             "title": "Governance",
             "type": "array"
+          },
+          "is_migration": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "None = suggested from the scope (a migration / import item).",
+            "title": "Is Migration"
           },
           "issue_date": {
             "default": "",
@@ -4161,6 +4821,9 @@
             "title": "Objectives",
             "type": "array"
           },
+          "payment_schedule": {
+            "$ref": "#/components/schemas/PaymentSchedule"
+          },
           "payment_terms": {
             "default": "",
             "title": "Payment Terms",
@@ -4176,6 +4839,13 @@
               "$ref": "#/components/schemas/RateCardRow"
             },
             "title": "Rate Card",
+            "type": "array"
+          },
+          "recurring_fees": {
+            "items": {
+              "$ref": "#/components/schemas/RecurringFeeRow"
+            },
+            "title": "Recurring Fees",
             "type": "array"
           },
           "reference_number": {
@@ -4213,7 +4883,7 @@
             "additionalProperties": {
               "type": "boolean"
             },
-            "description": "Optional sections to include: executive_summary, company_overview, glossary, kpis, risks, addons, rate_card, signatures.",
+            "description": "Optional sections to include: executive_summary, company_overview, glossary, kpis, risks, addons, rate_card, signatures, responsibilities, timeline_chart, milestone_acceptance, data_quality, recurring_fees, tier_assumption.",
             "title": "Sections",
             "type": "object"
           },
@@ -4223,6 +4893,16 @@
           "solution_overview": {
             "default": "",
             "title": "Solution Overview",
+            "type": "string"
+          },
+          "status": {
+            "default": "Draft",
+            "description": "\"Ready to send\" only when the readiness checks pass.",
+            "enum": [
+              "Draft",
+              "Ready to send"
+            ],
+            "title": "Status",
             "type": "string"
           },
           "team": {
@@ -4239,12 +4919,29 @@
             "title": "Techniques",
             "type": "array"
           },
+          "tier_assumption": {
+            "default": "",
+            "title": "Tier Assumption",
+            "type": "string"
+          },
           "timeline": {
             "items": {
               "$ref": "#/components/schemas/TimelineRow"
             },
             "title": "Timeline",
             "type": "array"
+          },
+          "timeline_buffer_label": {
+            "default": "Validation & buffer",
+            "title": "Timeline Buffer Label",
+            "type": "string"
+          },
+          "timeline_buffer_weeks": {
+            "default": 0.0,
+            "description": "Validation / buffer period after the last phase.",
+            "minimum": 0.0,
+            "title": "Timeline Buffer Weeks",
+            "type": "number"
           },
           "title": {
             "default": "",
@@ -4262,6 +4959,13 @@
             "default": "",
             "title": "Valid Until",
             "type": "string"
+          },
+          "vendor_responsibilities": {
+            "items": {
+              "$ref": "#/components/schemas/ResponsibilityRow"
+            },
+            "title": "Vendor Responsibilities",
+            "type": "array"
           }
         },
         "title": "ProposalDocument",
@@ -4540,6 +5244,51 @@
         "title": "RateCardRow",
         "type": "object"
       },
+      "RecurringFeeRow": {
+        "additionalProperties": false,
+        "properties": {
+          "amount": {
+            "default": 0.0,
+            "description": "Per billing period.",
+            "minimum": 0.0,
+            "title": "Amount",
+            "type": "number"
+          },
+          "cadence": {
+            "default": "Monthly",
+            "enum": [
+              "Monthly",
+              "Quarterly",
+              "Per Year"
+            ],
+            "title": "Cadence",
+            "type": "string"
+          },
+          "includes": {
+            "default": "",
+            "title": "Includes",
+            "type": "string"
+          },
+          "service": {
+            "default": "",
+            "title": "Service",
+            "type": "string"
+          },
+          "starts": {
+            "default": "",
+            "title": "Starts",
+            "type": "string"
+          },
+          "term_months": {
+            "default": 12.0,
+            "minimum": 0.0,
+            "title": "Term (Months)",
+            "type": "number"
+          }
+        },
+        "title": "RecurringFeeRow",
+        "type": "object"
+      },
       "ReportContext": {
         "additionalProperties": false,
         "description": "Every number and grouping the executive report shows — computed\nonce, so the client and internal documents never disagree.",
@@ -4782,6 +5531,18 @@
           }
         },
         "title": "RequirementRow",
+        "type": "object"
+      },
+      "ResponsibilityRow": {
+        "additionalProperties": false,
+        "properties": {
+          "responsibility": {
+            "default": "",
+            "title": "Responsibility",
+            "type": "string"
+          }
+        },
+        "title": "ResponsibilityRow",
         "type": "object"
       },
       "RiskRow": {
@@ -5340,6 +6101,47 @@
         "title": "StageDef",
         "type": "object"
       },
+      "StageDocuments": {
+        "additionalProperties": false,
+        "properties": {
+          "generated": {
+            "description": "Saved documents for this stage's deliverables.",
+            "title": "Generated",
+            "type": "integer"
+          },
+          "outstanding": {
+            "description": "Deliverables of this stage with no saved document yet.",
+            "title": "Outstanding",
+            "type": "integer"
+          },
+          "outstanding_names": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Outstanding Names",
+            "type": "array"
+          },
+          "stage": {
+            "enum": [
+              "Discover",
+              "Assess",
+              "Design",
+              "Propose",
+              "Deliver"
+            ],
+            "title": "Stage",
+            "type": "string"
+          }
+        },
+        "required": [
+          "stage",
+          "generated",
+          "outstanding",
+          "outstanding_names"
+        ],
+        "title": "StageDocuments",
+        "type": "object"
+      },
       "StagePlannerAssistRequest": {
         "additionalProperties": false,
         "properties": {
@@ -5764,9 +6566,68 @@
         "title": "TemplateChoice",
         "type": "object"
       },
+      "TimelineBar": {
+        "additionalProperties": false,
+        "properties": {
+          "buffer": {
+            "title": "Buffer",
+            "type": "boolean"
+          },
+          "phase": {
+            "title": "Phase",
+            "type": "string"
+          },
+          "start": {
+            "description": "First week (1-based).",
+            "title": "Start",
+            "type": "number"
+          },
+          "weeks": {
+            "title": "Weeks",
+            "type": "number"
+          }
+        },
+        "required": [
+          "phase",
+          "start",
+          "weeks",
+          "buffer"
+        ],
+        "title": "TimelineBar",
+        "type": "object"
+      },
+      "TimelineChart": {
+        "additionalProperties": false,
+        "properties": {
+          "bars": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineBar"
+            },
+            "title": "Bars",
+            "type": "array"
+          },
+          "total_weeks": {
+            "title": "Total Weeks",
+            "type": "number"
+          }
+        },
+        "required": [
+          "bars",
+          "total_weeks"
+        ],
+        "title": "TimelineChart",
+        "type": "object"
+      },
       "TimelineRow": {
         "additionalProperties": false,
         "properties": {
+          "duration_weeks": {
+            "default": 0.0,
+            "description": "0 = not on the timeline chart.",
+            "minimum": 0.0,
+            "title": "Duration (Weeks)",
+            "type": "number"
+          },
           "end": {
             "default": "",
             "title": "End",
@@ -5786,6 +6647,13 @@
             "default": "",
             "title": "Start",
             "type": "string"
+          },
+          "start_week": {
+            "default": 0.0,
+            "description": "Week the phase starts (1 = first week); 0 = right after the phases before it.",
+            "minimum": 0.0,
+            "title": "Start Week",
+            "type": "number"
           }
         },
         "title": "TimelineRow",
@@ -5890,6 +6758,78 @@
           "action_summary"
         ],
         "title": "WorkflowSuggestion",
+        "type": "object"
+      },
+      "Workstream": {
+        "additionalProperties": false,
+        "description": "A Tasks-tracker stage in progress.",
+        "properties": {
+          "done": {
+            "title": "Done",
+            "type": "integer"
+          },
+          "people": {
+            "description": "The stage owner, then whoever ticked its tasks.",
+            "items": {
+              "$ref": "#/components/schemas/DashboardPerson"
+            },
+            "title": "People",
+            "type": "array"
+          },
+          "stage": {
+            "title": "Stage",
+            "type": "string"
+          },
+          "title": {
+            "description": "Its next open task.",
+            "title": "Title",
+            "type": "string"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "stage",
+          "title",
+          "people",
+          "done",
+          "total"
+        ],
+        "title": "Workstream",
+        "type": "object"
+      },
+      "WorkstreamFee": {
+        "additionalProperties": false,
+        "properties": {
+          "fee": {
+            "title": "Fee",
+            "type": "number"
+          },
+          "fee_basis": {
+            "title": "Fee Basis",
+            "type": "string"
+          },
+          "milestones": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Milestones",
+            "type": "array"
+          },
+          "workstream": {
+            "title": "Workstream",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workstream",
+          "fee",
+          "fee_basis",
+          "milestones"
+        ],
+        "title": "WorkstreamFee",
         "type": "object"
       },
       "WrdImportRequest": {
@@ -7954,6 +8894,36 @@
         ]
       }
     },
+    "/api/v1/projects/insights": {
+      "get": {
+        "operationId": "projects_list_insights",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectInsight"
+                  },
+                  "title": "Response Projects List Insights",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Where each project stands: stage, progress, portal health, open tasks",
+        "tags": [
+          "projects"
+        ]
+      }
+    },
     "/api/v1/projects/{project_id}": {
       "delete": {
         "operationId": "projects_delete_project",
@@ -8089,6 +9059,53 @@
           }
         ],
         "summary": "Edit a project: name, client, folder, person in charge, archive",
+        "tags": [
+          "projects"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/dashboard": {
+      "get": {
+        "operationId": "projects_get_dashboard",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectDashboard"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Everything the project dashboard shows",
         "tags": [
           "projects"
         ]
@@ -8614,6 +9631,84 @@
         ]
       }
     },
+    "/api/v1/proposals/clauses": {
+      "get": {
+        "operationId": "proposals_list_clauses",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LibraryClause"
+                  },
+                  "title": "Response Proposals List Clauses",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "The firm's standard SOW clauses",
+        "tags": [
+          "proposals"
+        ]
+      },
+      "put": {
+        "operationId": "proposals_save_clauses",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LibraryClausesSave"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LibraryClause"
+                  },
+                  "title": "Response Proposals Save Clauses",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Replace the firm's standard SOW clauses (admins)",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
     "/api/v1/proposals/default": {
       "get": {
         "operationId": "proposals_default_proposal",
@@ -8634,7 +9729,7 @@
             "SessionCookie": []
           }
         ],
-        "summary": "A new proposal with standard boilerplate",
+        "summary": "A new proposal with standard boilerplate and the firm's clauses",
         "tags": [
           "proposals"
         ]
@@ -8800,6 +9895,52 @@
           }
         ],
         "summary": "Render the branded proposal / SOW PDF",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
+    "/api/v1/proposals/prefill": {
+      "post": {
+        "operationId": "proposals_prefill",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrefillRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalDocument"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Fill sections from earlier steps (scope, methodology, portal audit)",
         "tags": [
           "proposals"
         ]

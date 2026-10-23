@@ -11,6 +11,16 @@ import type { ProposalDocument } from "./api";
 export const DOCUMENT_TYPES = ["Proposal + Statement of Work", "Proposal", "Statement of Work"];
 export const SCOPE_STATUSES = ["In Scope", "Out of Scope", "Optional Add-on", "Client Responsibility"] as const;
 export const CURRENCIES = ["USD", "CAD", "MXN", "EUR", "GBP"];
+export const CADENCES = ["Monthly", "Quarterly", "Per Year"];
+export const INVOICING_OPTIONS = [
+  "Per milestone, on acceptance",
+  "Monthly in arrears",
+  "Quarterly in advance",
+  "50% at start, 50% on completion",
+  "On completion",
+];
+export const DUE_TERMS = ["Due on receipt", "Net 15", "Net 30", "Net 45", "Net 60"];
+export const STATUS_READY = "Ready to send";
 const SIDES = ["SonaMation", "Client", "Third Party"];
 const LEVELS = ["Low", "Medium", "High"];
 
@@ -24,6 +34,12 @@ export const OPTIONAL_SECTIONS: Record<string, string> = {
   addons: "Optional Add-on Services Menu",
   rate_card: "Rate Card (Change Requests)",
   signatures: "Acceptance & Signatures",
+  responsibilities: "Client & SonaMation Responsibilities",
+  timeline_chart: "Timeline Chart",
+  milestone_acceptance: "Milestone Acceptance Evidence",
+  data_quality: "Data Quality & Known Issues",
+  recurring_fees: "Recurring Fees",
+  tier_assumption: "Subscription-Tier Assumption",
 };
 
 export const SCOPE_HINTS: Record<string, string> = {
@@ -49,7 +65,11 @@ export type TableField =
   | "kpis"
   | "milestones"
   | "addons"
-  | "rate_card";
+  | "rate_card"
+  | "recurring_fees"
+  | "client_responsibilities"
+  | "vendor_responsibilities"
+  | "data_quality";
 
 const wide = "minmax(220px, 2fr)";
 
@@ -109,8 +129,10 @@ export const TABLES: Record<TableField, Column[]> = {
   ],
   timeline: [
     { key: "phase", label: "Phase" },
-    { key: "start", label: "Start", width: "130px" },
-    { key: "end", label: "End", width: "130px" },
+    { key: "start_week", label: "Start week", kind: "number", width: "110px", placeholder: "auto" },
+    { key: "duration_weeks", label: "Weeks", kind: "number", width: "90px" },
+    { key: "start", label: "Start date", width: "120px" },
+    { key: "end", label: "End date", width: "120px" },
     { key: "key_deliverables", label: "Key deliverables", kind: "textarea", width: wide },
   ],
   risks: [
@@ -128,10 +150,28 @@ export const TABLES: Record<TableField, Column[]> = {
   ],
   milestones: [
     { key: "milestone", label: "Milestone" },
+    { key: "workstream", label: "Workstream / phase", width: "150px", placeholder: "e.g. Discovery" },
     { key: "deliverables", label: "Deliverables", kind: "textarea", width: wide },
-    { key: "start_on_or_before", label: "Start on/before", width: "140px" },
-    { key: "due_on_or_before", label: "Due on/before", width: "140px" },
-    { key: "fee", label: "Fee", kind: "number", width: "120px" },
+    { key: "fee_basis", label: "Fee basis", kind: "textarea", width: "minmax(180px, 1.2fr)", placeholder: "What the fee covers" },
+    { key: "start_on_or_before", label: "Start on/before", width: "130px" },
+    { key: "due_on_or_before", label: "Due on/before", width: "130px" },
+    { key: "fee", label: "Fee", kind: "number", width: "110px" },
+    { key: "acceptance_evidence", label: "Acceptance evidence", kind: "textarea", width: "minmax(180px, 1.2fr)", placeholder: "e.g. Signed WRD" },
+  ],
+  recurring_fees: [
+    { key: "service", label: "Service" },
+    { key: "includes", label: "Includes", kind: "textarea", width: wide },
+    { key: "amount", label: "Amount", kind: "number", width: "110px" },
+    { key: "cadence", label: "Cadence", kind: "select", options: CADENCES, width: "130px" },
+    { key: "term_months", label: "Term (months)", kind: "number", width: "120px" },
+    { key: "starts", label: "Starts", width: "130px", placeholder: "e.g. At go-live" },
+  ],
+  client_responsibilities: [{ key: "responsibility", label: "The client", kind: "textarea", width: "minmax(240px, 1fr)" }],
+  vendor_responsibilities: [{ key: "responsibility", label: "SonaMation", kind: "textarea", width: "minmax(240px, 1fr)" }],
+  data_quality: [
+    { key: "issue", label: "Issue", kind: "textarea", width: wide },
+    { key: "risk_if_not_resolved", label: "Risk if not resolved", kind: "textarea", width: wide },
+    { key: "owner", label: "Owner", kind: "select", options: ["Client", "SonaMation"], width: "140px" },
   ],
   addons: [
     { key: "service", label: "Service" },
@@ -177,7 +217,14 @@ export function toRows(doc: ProposalDocument, field: TableField): Row[] {
   const rows = (doc[field] ?? []) as Record<string, unknown>[];
   return rows.map((r) =>
     Object.fromEntries(
-      TABLES[field].map((c) => [c.key, c.kind === "checkbox" ? r[c.key] === true : r[c.key] == null ? "" : String(r[c.key])]),
+      TABLES[field].map((c) => [
+        c.key,
+        c.kind === "checkbox"
+          ? r[c.key] === true
+          : r[c.key] == null || (c.kind === "number" && c.placeholder && Number(r[c.key]) === 0)
+            ? "" // a number column with a hint ("auto") shows the hint instead of 0
+            : String(r[c.key]),
+      ]),
     ),
   );
 }

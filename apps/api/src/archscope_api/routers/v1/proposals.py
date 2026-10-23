@@ -6,11 +6,15 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Response
 
+from ...persistence.models import SowClause
 from ...schemas.proposal import (
     AddLibraryAddonsRequest,
     AddLibraryItemsRequest,
     CoverageRow,
     JepImportRequest,
+    LibraryClause,
+    LibraryClausesSave,
+    PrefillRequest,
     PricingSummary,
     ProposalAnalysis,
     ProposalDocument,
@@ -20,18 +24,38 @@ from ...schemas.proposal import (
     ProposalTemplateSummary,
     ProposalTemplateUpdate,
     ScopeRow,
+    TimelineChart,
     WrdImportRequest,
 )
-from ...services import proposal_templates, proposals
+from ...services import proposal_templates, proposals, sow_clauses
 from ...services.auth import Principal
 from ..deps import DbDep, PrincipalDep, binary_responses, file_response, offload
 
 router = APIRouter(prefix="/proposals", tags=["proposals"])
 
 
-@router.get("/default", response_model=ProposalDocument, summary="A new proposal with standard boilerplate")
-async def default_proposal() -> ProposalDocument:
-    return ProposalDocument.from_domain(proposals.default_proposal())
+@router.get(
+    "/default", response_model=ProposalDocument, summary="A new proposal with standard boilerplate and the firm's clauses"
+)
+def default_proposal(principal: PrincipalDep, db: DbDep) -> ProposalDocument:
+    doc = proposals.default_proposal()
+    doc["clauses"] = sow_clauses.as_sow_rows(sow_clauses.list_clauses(db, principal))
+    return ProposalDocument.from_domain(doc)
+
+
+def _clauses(rows: list[SowClause]) -> list[LibraryClause]:
+    return [LibraryClause(id=c.id, key=c.key, title=c.title, body=c.body, include_by_default=c.include_by_default) for c in rows]
+
+
+@router.get("/clauses", response_model=list[LibraryClause], summary="The firm's standard SOW clauses")
+def list_clauses(principal: PrincipalDep, db: DbDep) -> list[LibraryClause]:
+    return _clauses(sow_clauses.list_clauses(db, principal))
+
+
+@router.put("/clauses", response_model=list[LibraryClause], summary="Replace the firm's standard SOW clauses (admins)")
+def save_clauses(body: LibraryClausesSave, principal: PrincipalDep, db: DbDep) -> list[LibraryClause]:
+    rows = [sow_clauses.ClauseInput(c.id, c.key, c.title.strip(), c.body.strip(), c.include_by_default) for c in body.clauses]
+    return _clauses(sow_clauses.save_clauses(db, principal, rows))
 
 
 @router.get("/libraries", response_model=ProposalLibraries, summary="Reusable scope items and add-on services")
@@ -47,6 +71,24 @@ async def analyse(body: ProposalRequest) -> ProposalAnalysis:
         coverage=[CoverageRow.from_domain(row) for row in result.coverage],
         scope_by_status={status: [ScopeRow.from_row(r) for r in rows] for status, rows in result.scope_by_status.items()},
         warnings=result.warnings,
+        readiness=result.readiness,
+        is_migration=result.is_migration,
+        migration_items=result.migration_items,
+        timeline=TimelineChart.model_validate(
+            {
+                "bars": [{k.lower(): v for k, v in b.items()} for b in result.timeline["bars"]],
+                "total_weeks": result.timeline["total_weeks"],
+            }
+        ),
+    )
+
+
+@router.post(
+    "/prefill", response_model=ProposalDocument, summary="Fill sections from earlier steps (scope, methodology, portal audit)"
+)
+async def prefill(body: PrefillRequest) -> ProposalDocument:
+    return ProposalDocument.from_domain(
+        await offload(proposals.prefill, body.proposal.to_domain(), list(body.parts), body.findings)
     )
 
 

@@ -59,6 +59,16 @@ def _people(db: Session, ids: set[str | None]) -> dict[str, Person]:
     return {u.id: Person(u.id, u.name or u.email, u.email) for u in db.scalars(select(User).where(User.id.in_(wanted)))}
 
 
+def people(db: Session, ids: set[str | None]) -> dict[str, Person]:
+    """Workspace users by id, as shown on projects."""
+    return _people(db, ids)
+
+
+def roles(db: Session, workspace_id: str) -> dict[str, str]:
+    """Each member's role in the workspace, by user id."""
+    return dict(db.execute(select(Membership.user_id, Membership.role).where(Membership.workspace_id == workspace_id)).all())
+
+
 def summarize(db: Session, project: Project, document_count: int) -> ProjectSummary:
     """One project with its document count and the people shown on it."""
     people = _people(db, {project.lead_user_id, project.updated_by})

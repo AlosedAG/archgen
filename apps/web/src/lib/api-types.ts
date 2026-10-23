@@ -751,6 +751,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/insights": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Where each project stands: stage, progress, portal health, open tasks */
+        get: operations["projects_list_insights"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects/{project_id}": {
         parameters: {
             query?: never;
@@ -768,6 +785,23 @@ export interface paths {
         head?: never;
         /** Edit a project: name, client, folder, person in charge, archive */
         patch: operations["projects_update_project"];
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Everything the project dashboard shows */
+        get: operations["projects_get_dashboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/projects/{project_id}/documents": {
@@ -875,6 +909,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/proposals/clauses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The firm's standard SOW clauses */
+        get: operations["proposals_list_clauses"];
+        /** Replace the firm's standard SOW clauses (admins) */
+        put: operations["proposals_save_clauses"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/proposals/default": {
         parameters: {
             query?: never;
@@ -882,7 +934,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** A new proposal with standard boilerplate */
+        /** A new proposal with standard boilerplate and the firm's clauses */
         get: operations["proposals_default_proposal"];
         put?: never;
         post?: never;
@@ -954,6 +1006,23 @@ export interface paths {
         put?: never;
         /** Render the branded proposal / SOW PDF */
         post: operations["proposals_render_pdf"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/proposals/prefill": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Fill sections from earlier steps (scope, methodology, portal audit) */
+        post: operations["proposals_prefill"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1300,6 +1369,26 @@ export interface components {
             user_id: string;
             /** Workspace Name */
             workspace_name: string;
+        };
+        /** ActivityItem */
+        ActivityItem: {
+            /**
+             * At
+             * @description ISO 8601 time.
+             */
+            at: string;
+            /**
+             * By
+             * @description Who did it, by name.
+             */
+            by?: string | null;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "document" | "task" | "audit" | "edit";
+            /** Title */
+            title: string;
         };
         /** AddLibraryAddonsRequest */
         AddLibraryAddonsRequest: {
@@ -1777,6 +1866,34 @@ export interface components {
             /** Title */
             title: string;
         };
+        /**
+         * ClauseRow
+         * @description One clause of this SOW's terms (a copy of the firm's library clause, editable here).
+         */
+        ClauseRow: {
+            /**
+             * Body
+             * @description [[blanks]] are filled per SOW; {{client}}, {{seller}}, {{valid_until}}, {{effective_date}} fill in automatically.
+             * @default
+             */
+            body: string;
+            /**
+             * Include
+             * @default true
+             */
+            include: boolean;
+            /**
+             * Key
+             * @description The library clause it came from; empty for a clause added to this SOW only.
+             * @default
+             */
+            key: string;
+            /**
+             * Title
+             * @default
+             */
+            title: string;
+        };
         /** ClientExplainerRequest */
         ClientExplainerRequest: {
             /**
@@ -1856,6 +1973,51 @@ export interface components {
              */
             website: string;
         };
+        /**
+         * Completion
+         * @description The project's deliverables as percentages (they add up to 100).
+         */
+        Completion: {
+            /**
+             * Deliverables
+             * @description How many deliverables there are in all.
+             */
+            deliverables: number;
+            /**
+             * In Progress
+             * @description Their tool has work, but no document is saved yet.
+             */
+            in_progress: number;
+            /**
+             * Outstanding
+             * @description Not started.
+             */
+            outstanding: number;
+            /**
+             * Scoped
+             * @description Saved as a document.
+             */
+            scoped: number;
+        };
+        /** Contributor */
+        Contributor: {
+            /** Documents */
+            documents: number;
+            /**
+             * Edits
+             * @description Tools they last saved work in.
+             */
+            edits: number;
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /**
+             * Role
+             * @description "In charge", or their workspace role.
+             */
+            role: string;
+        };
         /** CoverageRow */
         CoverageRow: {
             /**
@@ -1886,6 +2048,35 @@ export interface components {
             plural_label: string;
             /** Properties */
             properties?: components["schemas"]["PropertyDef"][];
+        };
+        /** DashboardPerson */
+        DashboardPerson: {
+            /**
+             * Id
+             * @description A workspace member's id; None for someone known only by name.
+             */
+            id?: string | null;
+            /** Name */
+            name: string;
+        };
+        /** DataQualityRow */
+        DataQualityRow: {
+            /**
+             * Issue
+             * @default
+             */
+            issue: string;
+            /**
+             * Owner
+             * @default Client
+             * @enum {string}
+             */
+            owner: "Client" | "SonaMation";
+            /**
+             * Risk if Not Resolved
+             * @default
+             */
+            risk_if_not_resolved: string;
         };
         /** Diagram */
         Diagram: {
@@ -2420,6 +2611,50 @@ export interface components {
              */
             type: "Primary" | "Secondary";
         };
+        /**
+         * LibraryClause
+         * @description A clause of the workspace's standard SOW terms.
+         */
+        LibraryClause: {
+            /** Body */
+            body: string;
+            /** Id */
+            id: string;
+            /** Include By Default */
+            include_by_default: boolean;
+            /** Key */
+            key: string;
+            /** Title */
+            title: string;
+        };
+        /** LibraryClauseIn */
+        LibraryClauseIn: {
+            /** Body */
+            body: string;
+            /**
+             * Id
+             * @description Omit for a new clause.
+             */
+            id?: string | null;
+            /**
+             * Include By Default
+             * @default true
+             */
+            include_by_default: boolean;
+            /**
+             * Key
+             * @description Kept stable so SOW copies keep matching; made from the title when empty.
+             * @default
+             */
+            key: string;
+            /** Title */
+            title: string;
+        };
+        /** LibraryClausesSave */
+        LibraryClausesSave: {
+            /** Clauses */
+            clauses: components["schemas"]["LibraryClauseIn"][];
+        };
         /** MarkdownExportRequest */
         MarkdownExportRequest: {
             /**
@@ -2575,6 +2810,12 @@ export interface components {
         /** MilestoneRow */
         MilestoneRow: {
             /**
+             * Acceptance Evidence
+             * @description What the client receives to accept the milestone.
+             * @default
+             */
+            acceptance_evidence: string;
+            /**
              * Deliverables
              * @default
              */
@@ -2590,6 +2831,12 @@ export interface components {
              */
             fee: number;
             /**
+             * Fee Basis
+             * @description What the fee covers (e.g. 'Fixed fee: 2 pipelines, 10 workflows').
+             * @default
+             */
+            fee_basis: string;
+            /**
              * Milestone
              * @default
              */
@@ -2599,6 +2846,12 @@ export interface components {
              * @default
              */
             start_on_or_before: string;
+            /**
+             * Workstream / Phase
+             * @description Fees are grouped and subtotalled by this.
+             * @default
+             */
+            workstream: string;
         };
         /**
          * ModuleState
@@ -2776,6 +3029,38 @@ export interface components {
             /** Password */
             password: string;
         };
+        /** PaymentSchedule */
+        PaymentSchedule: {
+            /**
+             * Deposit Type
+             * @default Percent
+             * @enum {string}
+             */
+            deposit_type: "Percent" | "Amount";
+            /**
+             * Deposit Value
+             * @description Percent of the one-time total, or an amount; 0 = no deposit.
+             * @default 0
+             */
+            deposit_value: number;
+            /**
+             * Due Terms
+             * @description e.g. 'Net 30'.
+             * @default
+             */
+            due_terms: string;
+            /**
+             * Invoicing
+             * @description What triggers invoices, e.g. 'Per milestone, on acceptance'.
+             * @default
+             */
+            invoicing: string;
+            /**
+             * Notes
+             * @default
+             */
+            notes: string;
+        };
         /**
          * Person
          * @description A workspace member as shown on a project.
@@ -2874,6 +3159,35 @@ export interface components {
             /** Source */
             source: string;
         };
+        /** PortalHealth */
+        PortalHealth: {
+            /**
+             * High
+             * @default 0
+             */
+            high: number;
+            /**
+             * Low
+             * @default 0
+             */
+            low: number;
+            /**
+             * Medium
+             * @default 0
+             */
+            medium: number;
+            /**
+             * Score
+             * @description 0-100: 100 - 15 per High - 4 per Medium - 1 per Low finding. None before the first audit.
+             */
+            score?: number | null;
+            /**
+             * Status
+             * @description needs_review when the Portal Auditor found any High-severity issue; not_started before the first audit.
+             * @enum {string}
+             */
+            status: "healthy" | "needs_review" | "not_started";
+        };
         /** PortalPipeline */
         PortalPipeline: {
             /** Label */
@@ -2969,6 +3283,19 @@ export interface components {
             /** Workflow Id */
             workflow_id: string;
         };
+        /** PrefillRequest */
+        PrefillRequest: {
+            /**
+             * Findings
+             * @description Portal Auditor findings (severity, description), for the data_quality part.
+             */
+            findings?: {
+                [key: string]: unknown;
+            }[];
+            /** Parts */
+            parts: ("responsibilities" | "timeline" | "data_quality")[];
+            proposal: components["schemas"]["ProposalDocument"];
+        };
         /** PricingSummary */
         PricingSummary: {
             /** Discount */
@@ -2979,17 +3306,27 @@ export interface components {
             milestone_total: number;
             /**
              * Recurring
-             * @description Recurring add-on totals keyed by billing period.
+             * @description Recurring fees and selected recurring add-ons, keyed by billing period.
              */
             recurring: {
                 [key: string]: number;
             };
+            /**
+             * Recurring Term Total
+             * @description What the recurring fees come to over their terms.
+             */
+            recurring_term_total: number;
             /** Selected Addons One Time */
             selected_addons_one_time: number;
             /** Subtotal */
             subtotal: number;
-            /** Total */
+            /**
+             * Total
+             * @description The one-time total.
+             */
             total: number;
+            /** Workstreams */
+            workstreams: components["schemas"]["WorkstreamFee"][];
         };
         /** ProfileUpdate */
         ProfileUpdate: {
@@ -3057,6 +3394,61 @@ export interface components {
             lead_user_id?: string | null;
             /** Name */
             name: string;
+        };
+        /** ProjectDashboard */
+        ProjectDashboard: {
+            /** Activity */
+            activity: components["schemas"]["ActivityItem"][];
+            completion: components["schemas"]["Completion"];
+            /** Continue Label */
+            continue_label: string;
+            /**
+             * Continue Page
+             * @description The tool page to pick up from, e.g. "proposal" (under /projects/:id/).
+             */
+            continue_page: string;
+            /** Contributors */
+            contributors: components["schemas"]["Contributor"][];
+            /** Documents */
+            documents: number;
+            /** Documents By Stage */
+            documents_by_stage: components["schemas"]["StageDocuments"][];
+            insight: components["schemas"]["ProjectInsight"];
+            /** Project Id */
+            project_id: string;
+            /**
+             * Team
+             * @description Everyone on the project, person in charge first.
+             */
+            team: components["schemas"]["DashboardPerson"][];
+            /** Workstreams */
+            workstreams: components["schemas"]["Workstream"][];
+        };
+        /** ProjectInsight */
+        ProjectInsight: {
+            health: components["schemas"]["PortalHealth"];
+            /**
+             * Open Tasks
+             * @description Unfinished tasks in the project's Tasks tracker.
+             */
+            open_tasks: number;
+            /**
+             * Progress
+             * @description Scoping progress: % of the RevOps tools started.
+             */
+            progress: number;
+            /** Project Id */
+            project_id: string;
+            /**
+             * Stage
+             * @description The furthest stage with a started tool.
+             * @enum {string}
+             */
+            stage: "Discover" | "Assess" | "Design" | "Propose" | "Deliver";
+            /** Tools Started */
+            tools_started: number;
+            /** Tools Total */
+            tools_total: number;
         };
         /** ProjectTasksAssistRequest */
         ProjectTasksAssistRequest: {
@@ -3192,11 +3584,27 @@ export interface components {
         ProposalAnalysis: {
             /** Coverage */
             coverage: components["schemas"]["CoverageRow"][];
+            /**
+             * Is Migration
+             * @description Whether this counts as a migration project (set by hand, or from the scope).
+             */
+            is_migration: boolean;
+            /**
+             * Migration Items
+             * @description IDs of scope items that mention a migration or import.
+             */
+            migration_items: string[];
             pricing: components["schemas"]["PricingSummary"];
+            /**
+             * Readiness
+             * @description What stops the SOW from being marked "Ready to send". Empty = it can be.
+             */
+            readiness: string[];
             /** Scope By Status */
             scope_by_status: {
                 [key: string]: components["schemas"]["ScopeRow"][];
             };
+            timeline: components["schemas"]["TimelineChart"];
             /**
              * Warnings
              * @description Gaps a client would ask about. Advisory; they never block generation.
@@ -3238,7 +3646,14 @@ export interface components {
              * @default
              */
             change_process: string;
+            /**
+             * Clauses
+             * @description This SOW's terms, copied from the firm's clause library.
+             */
+            clauses?: components["schemas"]["ClauseRow"][];
             client?: components["schemas"]["Party"];
+            /** Client Responsibilities */
+            client_responsibilities?: components["schemas"]["ResponsibilityRow"][];
             /**
              * Company Overview
              * @default
@@ -3259,6 +3674,8 @@ export interface components {
              * @default
              */
             current_state: string;
+            /** Data Quality */
+            data_quality?: components["schemas"]["DataQualityRow"][];
             /**
              * Discount Pct
              * @default 0
@@ -3276,7 +3693,19 @@ export interface components {
              */
             effective_date: string;
             /**
+             * Exec Dependencies
+             * @description What delivery depends on.
+             * @default
+             */
+            exec_dependencies: string;
+            /**
+             * Exec Key Risks
+             * @default
+             */
+            exec_key_risks: string;
+            /**
              * Executive Summary
+             * @description Plain-language overview: what is being done.
              * @default
              */
             executive_summary: string;
@@ -3295,6 +3724,11 @@ export interface components {
             /** Governance */
             governance?: components["schemas"]["GovernanceRow"][];
             /**
+             * Is Migration
+             * @description None = suggested from the scope (a migration / import item).
+             */
+            is_migration?: boolean | null;
+            /**
              * Issue Date
              * @default
              */
@@ -3307,6 +3741,7 @@ export interface components {
             milestones?: components["schemas"]["MilestoneRow"][];
             /** Objectives */
             objectives?: components["schemas"]["ObjectiveRow"][];
+            payment_schedule?: components["schemas"]["PaymentSchedule"];
             /**
              * Payment Terms
              * @default
@@ -3319,6 +3754,8 @@ export interface components {
             problem_statement: string;
             /** Rate Card */
             rate_card?: components["schemas"]["RateCardRow"][];
+            /** Recurring Fees */
+            recurring_fees?: components["schemas"]["RecurringFeeRow"][];
             /**
              * Reference Number
              * @default
@@ -3337,7 +3774,7 @@ export interface components {
             scope?: components["schemas"]["ScopeRow"][];
             /**
              * Sections
-             * @description Optional sections to include: executive_summary, company_overview, glossary, kpis, risks, addons, rate_card, signatures.
+             * @description Optional sections to include: executive_summary, company_overview, glossary, kpis, risks, addons, rate_card, signatures, responsibilities, timeline_chart, milestone_acceptance, data_quality, recurring_fees, tier_assumption.
              */
             sections?: {
                 [key: string]: boolean;
@@ -3348,12 +3785,35 @@ export interface components {
              * @default
              */
             solution_overview: string;
+            /**
+             * Status
+             * @description "Ready to send" only when the readiness checks pass.
+             * @default Draft
+             * @enum {string}
+             */
+            status: "Draft" | "Ready to send";
             /** Team */
             team?: components["schemas"]["TeamRow"][];
             /** Techniques */
             techniques?: components["schemas"]["TechniqueRow"][];
+            /**
+             * Tier Assumption
+             * @default
+             */
+            tier_assumption: string;
             /** Timeline */
             timeline?: components["schemas"]["TimelineRow"][];
+            /**
+             * Timeline Buffer Label
+             * @default Validation & buffer
+             */
+            timeline_buffer_label: string;
+            /**
+             * Timeline Buffer Weeks
+             * @description Validation / buffer period after the last phase.
+             * @default 0
+             */
+            timeline_buffer_weeks: number;
             /**
              * Title
              * @default
@@ -3366,6 +3826,8 @@ export interface components {
              * @default
              */
             valid_until: string;
+            /** Vendor Responsibilities */
+            vendor_responsibilities?: components["schemas"]["ResponsibilityRow"][];
         };
         /** ProposalLibraries */
         ProposalLibraries: {
@@ -3503,6 +3965,41 @@ export interface components {
              */
             role: string;
         };
+        /** RecurringFeeRow */
+        RecurringFeeRow: {
+            /**
+             * Amount
+             * @description Per billing period.
+             * @default 0
+             */
+            amount: number;
+            /**
+             * Cadence
+             * @default Monthly
+             * @enum {string}
+             */
+            cadence: "Monthly" | "Quarterly" | "Per Year";
+            /**
+             * Includes
+             * @default
+             */
+            includes: string;
+            /**
+             * Service
+             * @default
+             */
+            service: string;
+            /**
+             * Starts
+             * @default
+             */
+            starts: string;
+            /**
+             * Term (Months)
+             * @default 12
+             */
+            term_months: number;
+        };
         /**
          * ReportContext
          * @description Every number and grouping the executive report shows — computed
@@ -3615,6 +4112,14 @@ export interface components {
              * @default
              */
             source: string;
+        };
+        /** ResponsibilityRow */
+        ResponsibilityRow: {
+            /**
+             * Responsibility
+             * @default
+             */
+            responsibility: string;
         };
         /** RiskRow */
         RiskRow: {
@@ -3914,6 +4419,26 @@ export interface components {
              */
             probability?: number | null;
         };
+        /** StageDocuments */
+        StageDocuments: {
+            /**
+             * Generated
+             * @description Saved documents for this stage's deliverables.
+             */
+            generated: number;
+            /**
+             * Outstanding
+             * @description Deliverables of this stage with no saved document yet.
+             */
+            outstanding: number;
+            /** Outstanding Names */
+            outstanding_names: string[];
+            /**
+             * Stage
+             * @enum {string}
+             */
+            stage: "Discover" | "Assess" | "Design" | "Propose" | "Deliver";
+        };
         /** StagePlannerAssistRequest */
         StagePlannerAssistRequest: {
             context: components["schemas"]["AssistContext"];
@@ -4125,8 +4650,35 @@ export interface components {
             /** Label */
             label: string;
         };
+        /** TimelineBar */
+        TimelineBar: {
+            /** Buffer */
+            buffer: boolean;
+            /** Phase */
+            phase: string;
+            /**
+             * Start
+             * @description First week (1-based).
+             */
+            start: number;
+            /** Weeks */
+            weeks: number;
+        };
+        /** TimelineChart */
+        TimelineChart: {
+            /** Bars */
+            bars: components["schemas"]["TimelineBar"][];
+            /** Total Weeks */
+            total_weeks: number;
+        };
         /** TimelineRow */
         TimelineRow: {
+            /**
+             * Duration (Weeks)
+             * @description 0 = not on the timeline chart.
+             * @default 0
+             */
+            duration_weeks: number;
             /**
              * End
              * @default
@@ -4147,6 +4699,12 @@ export interface components {
              * @default
              */
             start: string;
+            /**
+             * Start Week
+             * @description Week the phase starts (1 = first week); 0 = right after the phases before it.
+             * @default 0
+             */
+            start_week: number;
         };
         /** ToolRow */
         ToolRow: {
@@ -4199,6 +4757,39 @@ export interface components {
             risk_reason: string;
             /** Trigger */
             trigger: string;
+        };
+        /**
+         * Workstream
+         * @description A Tasks-tracker stage in progress.
+         */
+        Workstream: {
+            /** Done */
+            done: number;
+            /**
+             * People
+             * @description The stage owner, then whoever ticked its tasks.
+             */
+            people: components["schemas"]["DashboardPerson"][];
+            /** Stage */
+            stage: string;
+            /**
+             * Title
+             * @description Its next open task.
+             */
+            title: string;
+            /** Total */
+            total: number;
+        };
+        /** WorkstreamFee */
+        WorkstreamFee: {
+            /** Fee */
+            fee: number;
+            /** Fee Basis */
+            fee_basis: string;
+            /** Milestones */
+            milestones: string[];
+            /** Workstream */
+            workstream: string;
         };
         /** WrdImportRequest */
         WrdImportRequest: {
@@ -5615,6 +6206,26 @@ export interface operations {
             };
         };
     };
+    projects_list_insights: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectInsight"][];
+                };
+            };
+        };
+    };
     projects_get_project: {
         parameters: {
             query?: never;
@@ -5697,6 +6308,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Project"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    projects_get_dashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectDashboard"];
                 };
             };
             /** @description Validation Error */
@@ -6010,6 +6652,59 @@ export interface operations {
             };
         };
     };
+    proposals_list_clauses: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LibraryClause"][];
+                };
+            };
+        };
+    };
+    proposals_save_clauses: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LibraryClausesSave"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LibraryClause"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     proposals_default_proposal: {
         parameters: {
             query?: never;
@@ -6136,6 +6831,39 @@ export interface operations {
                 };
                 content: {
                     "application/pdf": string;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    proposals_prefill: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PrefillRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalDocument"];
                 };
             };
             /** @description Validation Error */

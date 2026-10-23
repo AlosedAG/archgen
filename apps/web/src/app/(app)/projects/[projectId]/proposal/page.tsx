@@ -6,7 +6,11 @@
  * technical approach, scope (every item In / Out / Optional / Client),
  * management approach and cost — then a branded PDF. The proposal is
  * saved to the project; all merge, pricing and coverage logic is the
- * API's.
+ * API's. Commercial sections (executive summary at a glance, workstream
+ * pricing, recurring fees, payment schedule, responsibilities, a week-based
+ * timeline, acceptance evidence, data-quality issues, the subscription-tier
+ * assumption) can be pre-filled from earlier steps, and the SOW can only be
+ * marked "Ready to send" once the API's readiness checks pass.
  */
 
 import { useEffect, useId, useState } from "react";
@@ -22,6 +26,8 @@ import { ProposalTemplatesBar } from "@/components/project/ProposalTemplatesBar"
 import { SaveBanner } from "@/components/project/SaveBanner";
 import { Stats } from "@/components/project/Stats";
 import { normalizeDocument } from "@/components/project/TableDocument";
+import { TermsTab } from "@/components/project/TermsTab";
+import { TimelinePreview } from "@/components/project/TimelinePreview";
 import { Callout, Checkbox, ExportFooter, TabPanel, Tabs } from "@/components/ui";
 import {
   addLibraryAddons,
@@ -35,6 +41,7 @@ import {
   draftScopeFromRequirements,
   getModuleState,
   importJepIntoProposal,
+  prefillProposal,
   importWrdIntoProposal,
   proposalLibraries,
   proposalPdf,
@@ -49,7 +56,22 @@ import {
 import { projectContext } from "@/lib/assist";
 import { JOINT_EVALUATION_PLAN, REQUIREMENTS_DOCUMENT } from "@/lib/documents";
 import { useModuleState, type ModuleStore } from "@/lib/module-state";
-import { assignIds, CURRENCIES, DOCUMENT_TYPES, fromRows, money, OPTIONAL_SECTIONS, SCOPE_HINTS, SCOPE_STATUSES, TABLES, toRows, type TableField } from "@/lib/proposal";
+import {
+  assignIds,
+  CURRENCIES,
+  DOCUMENT_TYPES,
+  DUE_TERMS,
+  fromRows,
+  INVOICING_OPTIONS,
+  money,
+  OPTIONAL_SECTIONS,
+  SCOPE_HINTS,
+  SCOPE_STATUSES,
+  STATUS_READY,
+  TABLES,
+  toRows,
+  type TableField,
+} from "@/lib/proposal";
 import { Glyph } from "@/components/icons";
 
 type ProposalState = { doc: ProposalDocument | null };
@@ -61,12 +83,16 @@ function addressedTo(doc: ProposalDocument, company: string): ProposalDocument {
   return { ...doc, client: { address: c?.address ?? "", contact: c?.contact ?? "", email: c?.email ?? "", phone: c?.phone ?? "", company } };
 }
 
-type TabId = "setup" | "technical" | "scope" | "management" | "cost" | "review";
+type TabId = "setup" | "technical" | "scope" | "management" | "cost" | "terms" | "review";
 type Store = ModuleStore<ProposalState>;
 type Props = { doc: ProposalDocument; set: (patch: Partial<ProposalDocument>) => void };
 
 const TEXT_FIELDS = [
   "executive_summary",
+  "exec_key_risks",
+  "exec_dependencies",
+  "tier_assumption",
+  "timeline_buffer_label",
   "company_overview",
   "problem_statement",
   "current_state",
@@ -134,6 +160,36 @@ function Select({ label, value, options, onChange }: { label: string; value: str
   );
 }
 
+type PaymentSchedule = { deposit_type: "Percent" | "Amount"; deposit_value: number; invoicing: string; due_terms: string; notes: string };
+
+/** The payment schedule with every field present (older proposals may lack it). */
+function schedule(doc: ProposalDocument): PaymentSchedule {
+  const p = doc.payment_schedule;
+  return {
+    deposit_type: p?.deposit_type ?? "Percent",
+    deposit_value: p?.deposit_value ?? 0,
+    invoicing: p?.invoicing ?? "",
+    due_terms: p?.due_terms ?? "",
+    notes: p?.notes ?? "",
+  };
+}
+
+/** A text field with suggestions (any value can be typed). */
+function ChoiceInput({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (v: string) => void }) {
+  const id = useId();
+  return (
+    <label className="field">
+      <span className="field-label">{label}</span>
+      <input className="input" list={id} value={value} placeholder="Choose or type" onChange={(e) => onChange(e.target.value)} />
+      <datalist id={id}>
+        {options.map((o) => (
+          <option key={o} value={o} />
+        ))}
+      </datalist>
+    </label>
+  );
+}
+
 // ---- Setup ----------------------------------------------------------------------------
 
 const PARTY_FIELDS = [
@@ -155,7 +211,21 @@ const SUGGESTED_PARTS: Record<string, string> = {
   risks: "risks",
   kpis: "KPIs",
   glossary: "glossary",
+  exec_key_risks: "key risks",
+  exec_dependencies: "dependencies",
+  client_responsibilities: "client responsibilities",
+  vendor_responsibilities: "SonaMation responsibilities",
+  data_quality: "data-quality issues",
+  timeline: "timeline",
 };
+
+/** The fees shown up front: one-time, then each recurring period (never added together). */
+function investment(analysis: ProposalAnalysis | null, currency: string): string {
+  const pricing = analysis?.pricing;
+  if (!pricing) return "…";
+  const recurring = Object.entries(pricing.recurring ?? {}).map(([period, amount]) => ` + ${money(Number(amount), currency)} ${period.toLowerCase()}`);
+  return `${money(pricing.total, currency)} one-time${recurring.join("")}`;
+}
 
 function Setup({
   doc,
@@ -165,7 +235,9 @@ function Setup({
   busy,
   suggest,
   applyTemplate,
+  analysis,
 }: Props & {
+  analysis: ProposalAnalysis | null;
   project: Project;
   apply: (label: string, work: () => Promise<ProposalDocument>) => void;
   busy: boolean;
@@ -273,6 +345,27 @@ function Setup({
           <DateField doc={doc} set={set} field="effective_date" label="Effective date" />
           <DateField doc={doc} set={set} field="expiration_date" label="Expiration date" />
         </div>
+        <div className="stack" style={{ gap: 4 }}>
+          <Checkbox checked={analysis?.is_migration ?? doc.is_migration === true} onChange={(on) => set({ is_migration: on })}>
+            This project includes a data migration
+          </Checkbox>
+          <span className="t-caption">
+            {doc.is_migration == null
+              ? analysis?.migration_items.length
+                ? `Suggested from the scope (${analysis.migration_items.join(", ")} mentions a migration or import).`
+                : "Suggested from the scope: no scope item mentions a migration or import."
+              : "Set by hand."}{" "}
+            Migration projects need at least one data-quality issue (Management tab) before the SOW can be sent.
+            {doc.is_migration != null && (
+              <>
+                {" "}
+                <button type="button" className="btn-link" onClick={() => set({ is_migration: null })}>
+                  Follow the scope again
+                </button>
+              </>
+            )}
+          </span>
+        </div>
       </section>
 
       <section className="stack" style={{ gap: 12 }}>
@@ -293,8 +386,16 @@ function Setup({
       </section>
 
       <section className="stack" style={{ gap: 12 }}>
-        <h2 className="t-section">Introduction</h2>
-        <Text doc={doc} set={set} field="executive_summary" label="Executive summary" rows={4} placeholder="Two or three sentences: the client's problem, what SonaMation will deliver, and the outcome." />
+        <h2 className="t-section">Executive summary</h2>
+        <span className="t-caption">The first page a non-technical approver reads: plain language, no jargon.</span>
+        <Text doc={doc} set={set} field="executive_summary" label="What's being done" rows={4} placeholder="Two or three sentences: the client's problem, what SonaMation will deliver, and the outcome." />
+        <div className="grid-2" style={{ alignItems: "start" }}>
+          <Text doc={doc} set={set} field="exec_key_risks" label="Key risks" rows={3} help="Left blank, the PDF lists the top risks from the Management tab." />
+          <Text doc={doc} set={set} field="exec_dependencies" label="What delivery depends on" rows={3} help="Left blank, the PDF lists the first client responsibilities." />
+        </div>
+        <p className="t-caption">
+          Total investment (from the Cost tab): <b>{investment(analysis, doc.currency || "USD")}</b>
+        </p>
         <Text doc={doc} set={set} field="company_overview" label="About SonaMation (standard text)" rows={4} />
       </section>
     </div>
@@ -439,6 +540,14 @@ function ScopeTab({ doc, set, analysis, apply, busy, suggest }: Props & { analys
       </section>
 
       <Table doc={doc} set={set} field="assumptions" title="Assumptions" addLabel="+ Add assumption" />
+      <Text
+        doc={doc}
+        set={set}
+        field="tier_assumption"
+        label="Subscription-tier assumption"
+        rows={4}
+        help="Replace the [[blank]] with the client's HubSpot hubs and tiers. The SOW can't be sent while a [[blank]] is left."
+      />
       <Text doc={doc} set={set} field="change_process" label="Change Request process (standard text)" rows={5} />
     </div>
   );
@@ -460,6 +569,24 @@ function Builder({ project, store }: { project: Project; store: Store }) {
     if (doc) return;
     void defaultProposal().then((fresh) => replace({ doc: addressedTo(fresh, clientName) }));
   }, [doc, replace, clientName]);
+
+  // A proposal saved before the commercial sections existed gets their defaults once (nothing typed is touched).
+  const missing = doc ? (["client_responsibilities", "vendor_responsibilities", "tier_assumption", "payment_schedule", "timeline_buffer_weeks", "clauses"] as const).filter((k) => doc[k] === undefined) : [];
+  useEffect(() => {
+    if (!missing.length) return;
+    void defaultProposal().then((fresh) =>
+      change((s) => ({ doc: { ...Object.fromEntries(missing.map((k) => [k, fresh[k]])), ...(s.doc as ProposalDocument) } as ProposalDocument })),
+    );
+    // Runs when the set of missing fields changes (i.e. once per old proposal).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [missing.join()]);
+
+  // "Ready to send" only holds while the checks pass; an edit that breaks one puts it back to Draft.
+  useEffect(() => {
+    if (doc?.status === STATUS_READY && analysis && analysis.readiness.length) {
+      change((s) => ({ doc: { ...(s.doc as ProposalDocument), status: "Draft" } }));
+    }
+  }, [analysis, doc?.status, change]);
 
   useEffect(() => {
     if (!doc) return;
@@ -503,6 +630,15 @@ function Builder({ project, store }: { project: Project; store: Store }) {
     replace({ doc: result.proposal });
     return `Added the template's ${result.changed.map((c) => SUGGESTED_PARTS[c] ?? c).join(", ")}.`;
   };
+  /** Fill one section from earlier steps (the API merges; nothing typed is replaced). */
+  const prefill = (label: string, part: "responsibilities" | "timeline" | "data_quality") =>
+    apply(label, async () => {
+      if (part !== "data_quality") return prefillProposal(doc, [part]);
+      const portal = await getModuleState(project.id, "portal");
+      const findings = (portal.data as { findings?: Record<string, unknown>[] } | null)?.findings ?? [];
+      if (!findings.length) throw new ApiError("No portal audit findings yet: run the Portal Auditor first.");
+      return prefillProposal(doc, ["data_quality"], findings);
+    });
   const props = { doc, set };
   const currency = doc.currency || "USD";
   const pricing = analysis?.pricing;
@@ -526,7 +662,8 @@ function Builder({ project, store }: { project: Project; store: Store }) {
           { id: "scope", label: "3 · Scope" },
           { id: "management", label: "4 · Management" },
           { id: "cost", label: "5 · Cost" },
-          { id: "review", label: "6 · Review & generate" },
+          { id: "terms", label: "6 · Terms" },
+          { id: "review", label: "7 · Review & generate" },
         ]}
         active={tab}
         onChange={(next) => {
@@ -541,7 +678,7 @@ function Builder({ project, store }: { project: Project; store: Store }) {
       )}
 
       <TabPanel panelKey={tab} id="proposal-tabs">
-        {tab === "setup" && <Setup {...props} project={project} apply={apply} busy={busy} suggest={suggest} applyTemplate={applyTemplate} />}
+        {tab === "setup" && <Setup {...props} project={project} apply={apply} busy={busy} suggest={suggest} applyTemplate={applyTemplate} analysis={analysis} />}
 
         {tab === "technical" && (
           <div className="stack" style={{ gap: 24 }}>
@@ -563,9 +700,62 @@ function Builder({ project, store }: { project: Project; store: Store }) {
         {tab === "management" && (
           <div className="stack" style={{ gap: 24 }}>
             <Table {...props} field="team" title="2.1 Project team & roles" addLabel="+ Add team member" />
-            <Table {...props} field="governance" title="2.2 Governance & communication" addLabel="+ Add meeting" />
-            <Table {...props} field="timeline" title="2.3 Schedule" addLabel="+ Add phase" />
+            <section className="stack" style={{ gap: 10 }}>
+              <div className="heading-row">
+                <h3 className="t-card-title">Responsibilities</h3>
+                <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => prefill("Added the scope's client responsibilities", "responsibilities")}>
+                  Add client items from scope
+                </button>
+              </div>
+              <span className="t-caption">What each party commits to; shown side by side in the SOW.</span>
+              <div className="grid-2" style={{ alignItems: "start" }}>
+                <Table {...props} field="client_responsibilities" title="The client" addLabel="+ Add responsibility" />
+                <Table {...props} field="vendor_responsibilities" title="SonaMation" addLabel="+ Add responsibility" />
+              </div>
+            </section>
+            <Table {...props} field="governance" title="Governance & communication" addLabel="+ Add meeting" />
+            <section className="stack" style={{ gap: 10 }}>
+              <div className="heading-row">
+                <h3 className="t-card-title">Schedule</h3>
+                <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => prefill("Drafted the schedule from the methodology", "timeline")}>
+                  Draft from methodology
+                </button>
+              </div>
+              <span className="t-caption">
+                Give each phase a duration in weeks. Leave the start week blank to begin right after the phase before; set it to overlap phases.
+              </span>
+              <Table {...props} field="timeline" title="Phases" addLabel="+ Add phase" />
+              <div className="grid-4">
+                <label className="field">
+                  <span className="field-label">Buffer / validation (weeks)</span>
+                  <input
+                    type="number"
+                    className="input"
+                    min={0}
+                    value={doc.timeline_buffer_weeks ?? 0}
+                    onChange={(e) => set({ timeline_buffer_weeks: Math.max(0, Number(e.target.value) || 0) })}
+                  />
+                </label>
+                <Text {...props} field="timeline_buffer_label" label="Buffer label" />
+              </div>
+              {analysis && <TimelinePreview chart={analysis.timeline} />}
+            </section>
             <Table {...props} field="risks" title="Risk management" addLabel="+ Add risk" />
+            <section className="stack" style={{ gap: 10 }}>
+              <div className="heading-row">
+                <h3 className="t-card-title">Data quality & known issues</h3>
+                <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => prefill("Added the portal audit's High and Medium findings", "data_quality")}>
+                  Import from portal audit
+                </button>
+              </div>
+              <span className="t-caption">Each known problem in the client's data, what happens if it isn't fixed, and who owns it. This protects SonaMation when bad source data causes trouble later.</span>
+              {analysis?.is_migration && (
+                <Callout tone="info" title="Required for this migration project">
+                  The SOW can&apos;t be marked ready to send until at least one issue is listed.
+                </Callout>
+              )}
+              <Table {...props} field="data_quality" title="Issues" addLabel="+ Add issue" />
+            </section>
             <Table {...props} field="kpis" title="Targeted KPIs" addLabel="+ Add KPI" />
             <Text {...props} field="acceptance_process" label="Acceptance process (standard text)" rows={5} />
           </div>
@@ -586,7 +776,25 @@ function Builder({ project, store }: { project: Project; store: Store }) {
                 />
               </label>
             </div>
-            <Table {...props} field="milestones" title="3.1 Deliverables & milestone schedule" addLabel="+ Add milestone" />
+            <Table
+              {...props}
+              field="milestones"
+              title="3.1 Deliverables & milestone schedule"
+              caption="Group milestones by workstream / phase; the SOW subtotals each group and states its fee basis. Acceptance evidence is what the client receives to accept the milestone."
+              addLabel="+ Add milestone"
+            />
+            {pricing && pricing.workstreams.length > 1 && (
+              <DataTable
+                label="Fees by workstream"
+                columns={[
+                  { key: "workstream", label: "Workstream", width: "minmax(140px, 1fr)" },
+                  { key: "basis", label: "Fee basis", width: "minmax(200px, 2fr)" },
+                  { key: "fee", label: "Fee", width: "130px" },
+                ]}
+                rows={pricing.workstreams.map((w) => ({ workstream: w.workstream, basis: w.fee_basis || "—", fee: money(w.fee, currency) }))}
+              />
+            )}
+            <Table {...props} field="recurring_fees" title="Recurring fees" caption="Retainers and subscriptions: billed every period for the term, totalled apart from the one-time fees." addLabel="+ Add recurring fee" />
             <Table {...props} field="addons" title="Optional add-on services menu" addLabel="+ Add service" />
             <Table {...props} field="rate_card" title="Rate card (for Change Requests)" addLabel="+ Add role" />
             {pricing && (
@@ -599,21 +807,97 @@ function Builder({ project, store }: { project: Project; store: Store }) {
                     ["Total one-time fee", money(pricing.total, currency)],
                   ]}
                 />
-                {Object.entries(pricing.recurring ?? {}).map(([billing, amount]) => (
-                  <span key={billing} className="t-caption">
-                    Plus selected recurring add-ons: {money(Number(amount), currency)} ({billing}).
-                  </span>
-                ))}
+                {Object.keys(pricing.recurring ?? {}).length > 0 && (
+                  <Stats
+                    items={[
+                      ...Object.entries(pricing.recurring ?? {}).map(([period, amount]): [string, string] => [`Recurring, ${period.toLowerCase()}`, money(Number(amount), currency)]),
+                      ["Recurring over their terms", money(pricing.recurring_term_total, currency)],
+                    ]}
+                  />
+                )}
               </>
             )}
+            <section className="card stack" style={{ gap: 12 }} aria-label="Payment schedule">
+              <h3 className="t-card-title">Payment schedule</h3>
+              <span className="t-caption">Required before the SOW can be sent.</span>
+              <div className="grid-4">
+                <Select
+                  label="Deposit as"
+                  value={doc.payment_schedule?.deposit_type ?? "Percent"}
+                  options={["Percent", "Amount"]}
+                  onChange={(v) => set({ payment_schedule: { ...schedule(doc), deposit_type: v as "Percent" | "Amount" } })}
+                />
+                <label className="field">
+                  <span className="field-label">{doc.payment_schedule?.deposit_type === "Amount" ? `Deposit (${currency})` : "Deposit (%)"}</span>
+                  <input
+                    type="number"
+                    className="input"
+                    min={0}
+                    value={doc.payment_schedule?.deposit_value ?? 0}
+                    onChange={(e) => set({ payment_schedule: { ...schedule(doc), deposit_value: Math.max(0, Number(e.target.value) || 0) } })}
+                  />
+                </label>
+                <ChoiceInput
+                  label="Invoices are raised"
+                  value={doc.payment_schedule?.invoicing ?? ""}
+                  options={INVOICING_OPTIONS}
+                  onChange={(v) => set({ payment_schedule: { ...schedule(doc), invoicing: v } })}
+                />
+                <ChoiceInput
+                  label="Due"
+                  value={doc.payment_schedule?.due_terms ?? ""}
+                  options={DUE_TERMS}
+                  onChange={(v) => set({ payment_schedule: { ...schedule(doc), due_terms: v } })}
+                />
+              </div>
+              <label className="field">
+                <span className="field-label">Notes (optional)</span>
+                <input className="input" value={doc.payment_schedule?.notes ?? ""} onChange={(e) => set({ payment_schedule: { ...schedule(doc), notes: e.target.value } })} />
+              </label>
+            </section>
             <Text {...props} field="payment_terms" label="Payment terms (standard text)" rows={4} />
             <Text {...props} field="expenses" label="Expenses (standard text)" rows={3} />
-            <Text {...props} field="confidentiality" label="Confidentiality (standard text)" rows={3} />
           </div>
         )}
 
+        {tab === "terms" && <TermsTab {...props} />}
+
         {tab === "review" && (
           <div className="stack" style={{ gap: 24 }}>
+            <section className="card stack" style={{ gap: 10 }} aria-label="Status">
+              <div className="heading-row">
+                <h2 className="t-section">Status: {doc.status === STATUS_READY ? "Ready to send" : "Draft"}</h2>
+                {doc.status === STATUS_READY ? (
+                  <button type="button" className="btn btn-secondary" onClick={() => set({ status: "Draft" })}>
+                    Back to draft
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    disabled={!analysis || analysis.readiness.length > 0}
+                    onClick={() => set({ status: STATUS_READY })}
+                  >
+                    Mark ready to send
+                  </button>
+                )}
+              </div>
+              {analysis && analysis.readiness.length > 0 ? (
+                <Callout tone="error" title="Can't be marked ready to send yet">
+                  <ul style={{ margin: 0, paddingLeft: 18 }}>
+                    {analysis.readiness.map((r) => (
+                      <li key={r}>{r}</li>
+                    ))}
+                  </ul>
+                </Callout>
+              ) : (
+                <span className="t-caption">
+                  {doc.status === STATUS_READY
+                    ? "The PDF is final (no DRAFT mark)."
+                    : "All checks pass. Until you mark it ready, the PDF is marked DRAFT."}
+                </span>
+              )}
+            </section>
             <section className="stack" style={{ gap: 10 }}>
               <h2 className="t-section">Sections to include</h2>
               <div className="grid-4">

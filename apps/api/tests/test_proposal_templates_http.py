@@ -85,3 +85,44 @@ async def test_templates_are_shared_but_only_creator_or_admin_deletes(
     app.dependency_overrides[current_principal] = lambda: principal
     assert (await client.delete(f"/api/v1/proposals/templates/{tid}")).status_code == 204
     assert (await client.get("/api/v1/proposals/templates")).json() == []
+
+
+async def test_firm_clause_library_is_seeded_shared_and_admin_edited(
+    app: FastAPI, client: AsyncClient, settings: Settings, principal: Principal
+) -> None:
+    from archscope_domain.sow_clauses import DEFAULT_CLAUSES
+
+    library = (await client.get("/api/v1/proposals/clauses")).json()
+    assert [c["key"] for c in library] == [k for k, *_ in DEFAULT_CLAUSES]
+
+    # New SOWs start from the firm's current clauses.
+    edited = [{**c, "body": "Our counsel's warranty."} if c["key"] == "warranty" else c for c in library]
+    edited.append({"title": "Insurance", "body": "Each party keeps [[insurance cover]].", "include_by_default": True})
+    saved = await client.put("/api/v1/proposals/clauses", json={"clauses": edited})
+    assert saved.status_code == 200
+    keys = [c["key"] for c in saved.json()]
+    assert keys[-1] == "insurance"
+    assert keys[:-1] == [k for k, *_ in DEFAULT_CLAUSES]  # keys never change
+    fresh = (await client.get("/api/v1/proposals/default")).json()
+    by_key = {c["key"]: c for c in fresh["clauses"]}
+    assert by_key["warranty"]["body"] == "Our counsel's warranty."
+    assert by_key["insurance"]["include"] is True
+    assert by_key["msa_reference"]["include"] is False
+
+    with session_scope(settings.database_url) as db:
+        user = auth.create_user(db, email="mo@example.test", name="Mo", workspace_id=principal.workspace_id, role="member")
+        mo = Principal(user.id, user.email, "Mo", principal.workspace_id, principal.workspace_name, "member")
+    app.dependency_overrides[current_principal] = lambda: mo
+    assert (await client.get("/api/v1/proposals/clauses")).status_code == 200  # members read
+    assert (await client.put("/api/v1/proposals/clauses", json={"clauses": []})).status_code == 403
+    app.dependency_overrides[current_principal] = lambda: principal
+
+
+async def test_sow_with_clause_blanks_is_not_ready(client: AsyncClient) -> None:
+    doc = (await client.get("/api/v1/proposals/default")).json()
+    analysis = (await client.post("/api/v1/proposals/analysis", json={"proposal": doc})).json()
+    assert any(r.startswith("Terms - Limitation of Liability") for r in analysis["readiness"])
+    for c in doc["clauses"]:
+        c["include"] = False
+    analysis = (await client.post("/api/v1/proposals/analysis", json={"proposal": doc})).json()
+    assert not any(r.startswith("Terms") for r in analysis["readiness"])

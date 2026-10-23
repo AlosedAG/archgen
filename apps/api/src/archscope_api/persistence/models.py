@@ -60,6 +60,8 @@ class Workspace(Base):
     signup_domains: Mapped[list[str]] = mapped_column(JSON, default=list, server_default="[]")
     # Set once Hubzy's default questions have been copied in, so deleting them all doesn't bring them back.
     hubzy_seeded: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
+    # Same for the standard SOW clauses.
+    clauses_seeded: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
 
 
 class User(Base):
@@ -233,6 +235,25 @@ class HubzyTopic(Base):
     page: Mapped[str] = mapped_column(String(80), default="")
     question: Mapped[str] = mapped_column(String(300))
     answer: Mapped[str] = mapped_column(Text)
+    position: Mapped[int] = mapped_column(Integer, default=0)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=utcnow, onupdate=utcnow)
+    updated_by: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+
+
+class SowClause(Base):
+    """One clause of the workspace's standard SOW terms: boilerplate the firm
+    owns, edited by its admins, copied into every new SOW (where it can be
+    switched off or edited for that deal). ``key`` matches a SOW's copy back
+    to its library clause."""
+
+    __tablename__ = "sow_clauses"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    workspace_id: Mapped[str] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"), index=True)
+    key: Mapped[str] = mapped_column(String(80))
+    title: Mapped[str] = mapped_column(String(200))
+    body: Mapped[str] = mapped_column(Text)
+    include_by_default: Mapped[bool] = mapped_column(Boolean, default=True)
     position: Mapped[int] = mapped_column(Integer, default=0)
     updated_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=utcnow, onupdate=utcnow)
     updated_by: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)

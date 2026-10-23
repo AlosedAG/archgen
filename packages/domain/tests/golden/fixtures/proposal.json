@@ -68,6 +68,74 @@
    }
   ],
   "change_process": "Anything not listed as In Scope in this document is out of scope, even if it is related. To add or change scope, either party submits a written Change Request describing the need. SonaMation replies within 3 business days with the impact on schedule and cost (priced from the add-on menu or the rate card). Work starts only after the client approves the Change Request in writing; approved changes become part of this SOW.",
+  "clauses": [
+   {
+    "Body": "On full payment of the fees for a deliverable, ownership of that deliverable (the configuration, documentation and materials created specifically for {{client}} under this SOW) transfers to {{client}}. {{seller}} keeps ownership of its pre-existing materials, tools, templates and know-how, including anything it uses across clients, and grants {{client}} a non-exclusive, perpetual licence to use them as part of the deliverables. Third-party software, including HubSpot, remains subject to its own licence terms.",
+    "Include": true,
+    "Key": "ip_ownership",
+    "Title": "Intellectual Property & Ownership of Deliverables"
+   },
+   {
+    "Body": "{{seller}} warrants that the Services will be performed in a professional manner consistent with generally accepted industry standards. For [[warranty period, e.g. 30 days]] after acceptance of each milestone, {{seller}} will correct at no additional charge any defect where a deliverable does not meet its acceptance criteria, provided the defect is reported in writing within that period and is not caused by changes made by {{client}} or third parties, or by changes to the HubSpot platform. Correction is {{client}}'s sole remedy for defective Services. No other warranties, express or implied, are given.",
+    "Include": true,
+    "Key": "warranty",
+    "Title": "Warranty & Defect Correction"
+   },
+   {
+    "Body": "To the extent permitted by law, neither party is liable for indirect, incidental, special or consequential damages, including lost profits, revenue or data. Each party's total liability arising out of this SOW is limited to [[liability cap, e.g. the fees paid under this SOW in the 12 months before the claim]]. These limits do not apply to [[exclusions, e.g. breach of confidentiality, gross negligence, wilful misconduct or payment obligations]].",
+    "Include": true,
+    "Key": "liability",
+    "Title": "Limitation of Liability"
+   },
+   {
+    "Body": "Either party may terminate this SOW for cause if the other party materially breaches it and does not cure the breach within [[cure period, e.g. 15 days]] of written notice. Either party may terminate for convenience with [[notice period, e.g. 30 days]] written notice. On termination for any reason, {{client}} pays for Services performed and expenses incurred up to the termination date, with any milestone in progress charged in proportion to the work completed, plus [[termination fee, or 'no further fees']]; {{seller}} delivers all work completed to date.",
+    "Include": true,
+    "Key": "termination",
+    "Title": "Termination"
+   },
+   {
+    "Body": "This SOW is governed by the laws of [[governing state or country]], without regard to its conflict-of-law rules. The parties will first try to resolve any dispute through good-faith negotiation between their executive sponsors for [[negotiation period, e.g. 30 days]]. A dispute not resolved that way will be decided by [[forum, e.g. the courts of a named county and state, or binding arbitration under named rules]].",
+    "Include": true,
+    "Key": "governing_law",
+    "Title": "Governing Law & Dispute Resolution"
+   },
+   {
+    "Body": "{{client}} remains responsible for the personal data in its systems; {{seller}} processes personal data only to perform the Services and on {{client}}'s documented instructions. {{seller}} will access only the data it needs, keep it confidential, protect it with appropriate technical and organisational measures, and notify {{client}} within [[breach notification period, e.g. 72 hours]] of becoming aware of a personal-data breach. For data migrations, data moves only through methods {{client}} approves, extracts and working copies are deleted within [[deletion period, e.g. 30 days]] of acceptance, and {{client}} confirms it has the right to migrate the data. Where the law requires it, the parties will sign a data processing agreement.",
+    "Include": true,
+    "Key": "data_protection",
+    "Title": "Data Protection & Personal Information"
+   },
+   {
+    "Body": "Neither party is liable for a delay or failure caused by events beyond its reasonable control, such as natural disasters, epidemics, war, government action, or failures of utilities, internet service or third-party platforms (including HubSpot outages). The affected party will notify the other promptly and resume as soon as possible, and the dates in this SOW move by the length of the delay. If the event lasts more than [[period, e.g. 30 days]], either party may end this SOW by written notice; fees for work performed to date remain payable.",
+    "Include": true,
+    "Key": "force_majeure",
+    "Title": "Force Majeure"
+   },
+   {
+    "Body": "During this SOW and for [[non-solicitation period, e.g. 12 months]] after it ends, neither party will directly solicit for employment any employee or contractor of the other party who worked on the Services, without the other party's written consent. General job advertisements not aimed at those people are not a breach.",
+    "Include": true,
+    "Key": "non_solicitation",
+    "Title": "Non-Solicitation"
+   },
+   {
+    "Body": "This SOW, including its schedules, is the entire agreement between the parties about its subject matter and replaces all prior proposals, discussions and understandings. It can be changed only by a written Change Request or amendment signed by both parties. If documents conflict, they apply in this order: [[order of precedence, e.g. (1) the Master Services Agreement, (2) this SOW, (3) approved Change Requests]].",
+    "Include": true,
+    "Key": "entire_agreement",
+    "Title": "Entire Agreement & Order of Precedence"
+   },
+   {
+    "Body": "This SOW is issued under, and governed by, the Master Services Agreement between {{client}} and {{seller}} dated [[MSA date]]. Terms defined in that agreement have the same meaning in this SOW.",
+    "Include": false,
+    "Key": "msa_reference",
+    "Title": "Master Services Agreement"
+   },
+   {
+    "Body": "This proposal is valid until {{valid_until}}. Once signed by both parties, this SOW takes effect on {{effective_date}}.",
+    "Include": true,
+    "Key": "validity",
+    "Title": "Proposal Validity & Effective Date"
+   }
+  ],
   "client": {
    "address": "",
    "company": "Acme",
@@ -75,13 +143,39 @@
    "email": "",
    "phone": ""
   },
+  "client_responsibilities": [
+   {
+    "Responsibility": "Provide Super Admin (or equivalent) access to HubSpot and to every system being integrated."
+   },
+   {
+    "Responsibility": "Name one decision-maker who approves requirements, scope changes and acceptance."
+   },
+   {
+    "Responsibility": "Supply source-data exports, field definitions and sample records for any import or migration."
+   },
+   {
+    "Responsibility": "Make subject-matter experts available and return feedback and UAT results within 5 business days."
+   },
+   {
+    "Responsibility": "Keep the HubSpot subscription active at the tier this SOW assumes."
+   }
+  ],
   "company_overview": "SonaMation is a HubSpot Solutions Partner focused on revenue-operations architecture: CRM data models, sales and marketing automation, integrations, and the documentation that keeps them maintainable. Every engagement follows the same requirements-first method — requirements are written down and agreed before anything is built, and every deliverable is traced back to a requirement and signed off against written acceptance criteria.",
   "confidentiality": "This document and all Services are confidential information of the parties and may not be shared outside the client's organization without SonaMation's written consent.",
   "currency": "USD",
   "current_state": "",
+  "data_quality": [
+   {
+    "Issue": "",
+    "Owner": "Client",
+    "Risk if Not Resolved": ""
+   }
+  ],
   "discount_pct": 12.5,
   "document_type": "Proposal + Statement of Work",
   "effective_date": "",
+  "exec_dependencies": "",
+  "exec_key_risks": "",
   "executive_summary": "",
   "expenses": "SonaMation bears sole responsibility for all expenses incurred in performing the Services, unless otherwise agreed in writing by the client. Third-party software licenses and subscriptions are the client's responsibility unless listed as an included add-on.",
   "expiration_date": "",
@@ -117,6 +211,7 @@
     "Purpose": "Milestone acceptance, scope and budget decisions"
    }
   ],
+  "is_migration": null,
   "issue_date": "2026-09-01",
   "kpis": [
    {
@@ -155,25 +250,34 @@
   ],
   "milestones": [
    {
+    "Acceptance Evidence": "",
     "Deliverables": "",
     "Due On or Before": "",
     "Fee": 11500,
+    "Fee Basis": "",
     "Milestone": "M1",
-    "Start On or Before": ""
+    "Start On or Before": "",
+    "Workstream / Phase": ""
    },
    {
+    "Acceptance Evidence": "",
     "Deliverables": "",
     "Due On or Before": "",
     "Fee": "2,500",
+    "Fee Basis": "",
     "Milestone": "M2",
-    "Start On or Before": ""
+    "Start On or Before": "",
+    "Workstream / Phase": ""
    },
    {
+    "Acceptance Evidence": "",
     "Deliverables": "",
     "Due On or Before": "",
     "Fee": 999,
+    "Fee Basis": "",
     "Milestone": "",
-    "Start On or Before": ""
+    "Start On or Before": "",
+    "Workstream / Phase": ""
    }
   ],
   "objectives": [
@@ -182,6 +286,13 @@
     "Success Measure": ""
    }
   ],
+  "payment_schedule": {
+   "deposit_type": "Percent",
+   "deposit_value": 0.0,
+   "due_terms": "",
+   "invoicing": "",
+   "notes": ""
+  },
   "payment_terms": "As complete and final payment for Services completed, delivered and accepted, the client shall pay SonaMation the fees in the milestone schedule. Invoices are issued on milestone acceptance and are due net 30 days. All amounts are in U.S. Dollars.",
   "problem_statement": "Replace spreadsheets",
   "rate_card": [
@@ -198,6 +309,7 @@
     "Role": "Developer / Integrations"
    }
   ],
+  "recurring_fees": [],
   "reference_number": "",
   "requirements": [
    {
@@ -328,12 +440,18 @@
   "sections": {
    "addons": true,
    "company_overview": true,
+   "data_quality": true,
    "executive_summary": true,
    "glossary": true,
    "kpis": true,
+   "milestone_acceptance": true,
    "rate_card": true,
+   "recurring_fees": true,
+   "responsibilities": true,
    "risks": true,
-   "signatures": true
+   "signatures": true,
+   "tier_assumption": true,
+   "timeline_chart": true
   },
   "seller": {
    "address": "",
@@ -343,6 +461,7 @@
    "phone": ""
   },
   "solution_overview": "",
+  "status": "Draft",
   "team": [
    {
     "Email": "",
@@ -391,6 +510,7 @@
     "Technique / Procedure": "Two-round testing (QA, then UAT)"
    }
   ],
+  "tier_assumption": "This design assumes the client's current HubSpot subscription: [[HubSpot hubs and tiers, e.g. Sales Hub Professional]]. Some features depend on the subscription tier. If a feature described in this SOW is not available on that tier, SonaMation will propose a revised design, or the client may change their subscription; either goes through the Change Request process and may affect the schedule and fees.",
   "timeline": [
    {
     "End": "2026-12-01",
@@ -405,6 +525,8 @@
     "Start": ""
    }
   ],
+  "timeline_buffer_label": "Validation & buffer",
+  "timeline_buffer_weeks": 2.0,
   "title": "HubSpot Implementation",
   "tools": [
    {
@@ -428,7 +550,24 @@
     "Tool / Platform": "Shared project workspace"
    }
   ],
-  "valid_until": ""
+  "valid_until": "",
+  "vendor_responsibilities": [
+   {
+    "Responsibility": "Deliver every In Scope item up to its stated limit and acceptance criteria."
+   },
+   {
+    "Responsibility": "Build and test in a sandbox or controlled environment before changing production."
+   },
+   {
+    "Responsibility": "Run internal QA before anything is handed to the client for UAT."
+   },
+   {
+    "Responsibility": "Report progress, risks and decisions needed every week."
+   },
+   {
+    "Responsibility": "Hand over documentation for everything delivered."
+   }
+  ]
  },
  "money": [
   "$1,234.50",
@@ -437,19 +576,21 @@
   "1,000,000.00 GBP"
  ],
  "pdf": [
-  "SonaMation\nPROPOSAL + STATEMENT OF WORK\nHubSpot Implementation\nPrepared for Acme\nIssued 2026-09-01\nAddresses and contacts for notices\nClient SonaMation\nCompany Acme SonaMation\nPrimary contact Aylin\nAddress\nPhone\nEmail\nConfidential Page 1 of 13",
-  "SonaMation Proposal + Statement of Work - HubSpot Implementation - Acme\nConfidential Page 2 of 13\nContents\nAbout SonaMation 3\nScope at a Glance 4\nI. Technical Approach 5\n1.1 Understanding of the Problem 5\n1.2 Objectives 5\n1.3 Requirements 5\n1.4 Proposed Solution 5\n1.5 Methodology 5\n1.6 Tools & Platforms 6\n1.7 Techniques & Procedures 6\n1.8 Detailed Scope of Work 6\n1.9 Assumptions 7\n1.10 Change Request Process 8\n1.11 Glossary of Terms 8\nII. Management Approach 9\n2.1 Project Team & Roles 9\n2.2 Governance & Communication 9\n2.3 Schedule 10\n2.4 Risk Management 10\n2.5 Targeted KPIs 10\n2.6 Acceptance Process 10\nIII. Cost & Pricing 11\n3.1 Deliverables & Milestone Schedule 11\n3.2 Optional Add-on Services Menu 11\n3.3 Rate Card 11\n3.4 Pricing Summary 11\n3.5 Payment Terms 12\n3.6 Expenses 12\nTerms & Acceptance 13\nConfidentiality 13\nAcceptance & Signatures 13",
-  "SonaMation Proposal + Statement of Work - HubSpot Implementation - Acme\nAbout SonaMation\nSonaMation is a HubSpot Solutions Partner focused on revenue-operations architecture: CRM data models, sales and\nmarketing automation, integrations, and the documentation that keeps them maintainable. Every engagement follows\nthe same requirements-first method - requirements are written down and agreed before anything is built, and every\ndeliverable is traced back to a requirement and signed off against written acceptance criteria.\nConfidential Page 3 of 13",
-  "SonaMation Proposal + Statement of Work - HubSpot Implementation - Acme\nScope at a Glance\nEvery item a client might ask about sits in exactly one of the lists below. If something is not listed as Included, it is not\npart of this agreement - it can still be added through the Change Request process described in the Technical volume.\nItem IDs (S-1, S-2...) are the reference to use when asking about scope.\n6\nIncluded items\n1\nExcluded items\n1\nOptional add-ons\n$12,250.00\nTotal one-time fee\nINCLUDED  (6) Delivered under this agreement, up to the stated limit.\nS-1 Discovery: Current-state portal audit 1 portal\nS-2 Discovery: Written Requirements Document Up to 3 workshops\nS-5 Sync contacts nightly\nS-6 Log SMS\nS-7 ERP sync\nS-8 Forecasting\nNOT INCLUDED  (1) Not part of this agreement. Can be added only through a Change Request.\nS-3 Architecture: Data model & architecture blueprint Up to 2 custom objects\nAVAILABLE AS ADD-ON  (1) Pre-priced options you can add at any time - see the Cost volume.\nS-4 Add-on: Marketing Automation Platform Setup $5,000.00 One Time\nConfidential Page 4 of 13",
-  "SonaMation Proposal + Statement of Work - HubSpot Implementation - Acme\nVOLUME I\nTechnical Approach\nOur understanding of the problem, the proposed solution, and the specific tools, techniques and procedures\nSonaMation will use to implement it - including the detailed scope of work.\n1.1 Understanding of the Problem\nReplace spreadsheets\n1.2 Objectives\nObjective Success Measure\nOne source of truth\n1.3 Requirements\nRequirements the solution must satisfy. Each one is traced to the scope items that deliver it (section 1.8).\nID Requirement Priority Source\nR-1 Sync contacts nightly Must Have Requirements\nDocument\nR-2 Log SMS Must Have Requirements\nDocument\nR-3 ERP sync Must Have Joint Evaluation Plan\n(Technical need)\nR-4 Forecasting To Confirm Joint Evaluation Plan\n(Business need)\n1.4 Proposed Solution\nTo be completed.\n1.5 Methodology\nPhase Activities Outputs\n1. Discovery & Requirements Stakeholder interviews, current-state portal audit, written\nrequirements, joint evaluation plan\nWritten Requirements Document,\naudit findings, signed-off scope\nConfidential Page 5 of 13",
-  "SonaMation Proposal + Statement of Work - HubSpot Implementation - Acme\nPhase Activities Outputs\n2. Architecture & Design Object model, property data dictionary, associations,\npipelines, naming conventions Architecture blueprint and diagram\n3. Build & Configure Configuration in a sandbox or controlled portal,\nintegrations, automation Configured solution, build log\n4. Test & Accept Internal QA, then customer UAT against each\nrequirement's acceptance criteria Test Case Document, UAT sign-off\n5. Launch & Enable Go-live, user training, hand-off documentation, hypercare Documentation pack, training\nrecording\n1.6 Tools & Platforms\nTool / Platform Purpose Provided By\nHubSpot (customer portal) System being configured Client\nHubSpot sandbox Build and test without touching live data Client\nArchitectureScope Read-only portal audit, blueprint, documentation, diagrams SonaMation\nShared project workspace Status reporting, decisions log, file exchange SonaMation\n1.7 Techniques & Procedures\nTechnique / Procedure How It Is Applied\nRequirements traceability Every scope item cites the requirement it satisfies; nothing is built without one.\nRead-only audit before change The live portal is audited first so changes are made against a known baseline.\nSandbox-first configuration Changes are built and tested in a sandbox before being promoted to production.\nTwo-round testing (QA, then UAT) SonaMation tests internally first; the client then accepts against written criteria.\n1.8 Detailed Scope of Work\nThe table below is the complete list of work included in this agreement. Quantities are upper limits; each item is complete\nwhen it meets its acceptance criteria.\nID Workstream Item\nQuantity /\nLimit\nTools / Techniques Acceptance Criteria Req. ID\nS-1 Discovery Current-state portal audit 1 portal\nArchitectureScope\nPortal Auditor\n(read-only)\nAudit report delivered\nand reviewed with client\nConfidential Page 6 of 13",
-  "SonaMation Proposal + Statement of Work - HubSpot Implementation - Acme\nID Workstream Item\nQuantity /\nLimit\nTools / Techniques Acceptance Criteria Req. ID\nS-2 Discovery\nWritten Requirements\nDocument\nUp to 3\nworkshops\nStakeholder\ninterviews, WRD\ntemplate\nWRD signed off by client\ndecision-maker\nS-5 Sync contacts nightly R-1\nS-6 Log SMS R-2\nS-7 ERP sync R-3\nS-8 Forecasting R-4\nOut of scope\nExplicitly excluded. Any of these can be added through a Change Request.\nID Workstream Item Quantity / Limit\nS-3 Architecture Data model & architecture blueprint Up to 2 custom objects\nOptional add-ons\nAvailable at the prices in the Cost volume; not included unless selected.\nID Workstream Item Quantity / Limit\nS-4 Add-on Marketing Automation Platform Setup\nRequirements traceability\nID Requirement Scope Items Coverage\nR-1 Sync contacts nightly S-5 Covered\nR-2 Log SMS S-6 Covered\nR-3 ERP sync S-7 Covered\nR-4 Forecasting S-8 Covered\n1.9 Assumptions\n- The client provides portal access (Super Admin or equivalent) within 5 business days of kickoff.\n- The client names one decision-maker who can approve requirements, scope changes and acceptance.\n- Client feedback and UAT results are returned within 5 business days of each request.\n- Quantities in the scope table are upper limits; anything beyond them goes through change control.\n- To be confirmed: Which ERP?\nConfidential Page 7 of 13",
-  "SonaMation Proposal + Statement of Work - HubSpot Implementation - Acme\n1.10 Change Request Process\nAnything not listed as In Scope in this document is out of scope, even if it is related. To add or change scope, either\nparty submits a written Change Request describing the need. SonaMation replies within 3 business days with the\nimpact on schedule and cost (priced from the add-on menu or the rate card). Work starts only after the client approves\nthe Change Request in writing; approved changes become part of this SOW.\n1.11 Glossary of Terms\nTerm Definition\nMember Paying customer\nConfidential Page 8 of 13",
-  "SonaMation Proposal + Statement of Work - HubSpot Implementation - Acme\nVOLUME II\nManagement Approach\nHow SonaMation will manage contract performance: who is involved, how progress is reported, the schedule, how risks\nare handled, and how deliverables are accepted.\n2.1 Project Team & Roles\nSide Role Name Email Responsibilities\nSonaMation Executive Sponsor\nAccountable for the\nengagement's success; the\nfinal escalation point.\nApproves scope changes\nand signs off on\nacceptance with the client's\nsponsor.\nSonaMation Team Lead of Client\nDelivery\nOwns day-to-day delivery:\nplans the work, leads the\nimplementation team, runs\nthe status meetings,\nmanages risks and reports\nprogress to the client.\nSonaMation Onboarding Lead\nRuns kickoff and\nonboarding: collects\naccess, schedules\ndiscovery and training\nsessions, and is the client's\nfirst point of contact during\nsetup.\nClient Sponsor Jane j@acme.com\n2.2 Governance & Communication\nMeeting / Report Cadence Participants Purpose\nKickoff Once Both teams Confirm scope, roles, timeline, access\nStatus call Weekly Project leads Progress, blockers, decisions needed\nWritten status report Weekly Sponsor, project leads Progress against milestones, risks, open change\nrequests\nSteering review Per milestone Sponsors Milestone acceptance, scope and budget\ndecisions\nConfidential Page 9 of 13",
-  "SonaMation Proposal + Statement of Work - HubSpot Implementation - Acme\n2.3 Schedule\nPhase / Milestone Start End Key Deliverables\nGo live 2026-12-01 1\nDemo 2026-10-01\n2.4 Risk Management\nRisk Likelihood Impact Mitigation Owner\nRisk: Dirty data Medium Medium\n2.5 Targeted KPIs\nPrimary KPIs are the value drivers tied to return on investment; secondary KPIs track operational improvement.\nNone specified.\n2.6 Acceptance Process\nEach milestone is complete when its deliverables meet the acceptance criteria in the scope table. The client has 5\nbusiness days after delivery to accept or to list specific deficiencies against those criteria; SonaMation will correct listed\ndeficiencies and resubmit. A deliverable not rejected in writing within that window is deemed accepted.\nConfidential Page 10 of 13",
-  "SonaMation Proposal + Statement of Work - HubSpot Implementation - Acme\nVOLUME III\nCost & Pricing\nWhat the proposed work costs, when it is invoiced, and the price of anything beyond the agreed scope.\n3.1 Deliverables & Milestone Schedule\nMilestone Deliverables Start On or\nBefore\nDue On or\nBefore Fee\nM1 $11,500.00\nM2 $2,500.00\nTotal $14,000.00\n3.2 Optional Add-on Services Menu\nPre-priced services the client can add to this agreement at any time. Items marked Selected are included in the total below.\nService Includes Cost Billing Selected\nMarketing Automation Platform\nSetup Portal setup, domains, tracking code, email settings $5,000.00 One Time\nSupport $500.00 Monthly Selected\nSEO $2,500.50 One Time\n3.3 Rate Card\nUsed to price approved Change Requests that are not on the add-on menu.\nRole Hourly Rate\nSolutions Architect $175.00\nHubSpot Consultant $150.00\nDeveloper / Integrations $165.00\n3.4 Pricing Summary\nItem Amount\nMilestone fees $14,000.00\nDiscount (12.5%) -$1,750.00\nConfidential Page 11 of 13",
-  "SonaMation Proposal + Statement of Work - HubSpot Implementation - Acme\nItem Amount\nTotal one-time fee $12,250.00\nSelected recurring add-ons (Monthly) $500.00\n3.5 Payment Terms\nAs complete and final payment for Services completed, delivered and accepted, the client shall pay SonaMation the\nfees in the milestone schedule. Invoices are issued on milestone acceptance and are due net 30 days. All amounts are\nin U.S. Dollars.\n3.6 Expenses\nSonaMation bears sole responsibility for all expenses incurred in performing the Services, unless otherwise agreed in\nwriting by the client. Third-party software licenses and subscriptions are the client's responsibility unless listed as an\nincluded add-on.\nConfidential Page 12 of 13",
-  "SonaMation Proposal + Statement of Work - HubSpot Implementation - Acme\nConfidentiality\nThis document and all Services are confidential information of the parties and may not be shared outside the client's\norganization without SonaMation's written consent.\nAcceptance & Signatures\nBy signing below, the parties agree to this Proposal + Statement of Work, including the scope, exclusions, assumptions and\nfees described above, effective as of the effective date.\nAcme\nSignature\nName\nTitle\nDate\nSonaMation\nSignature\nName\nTitle\nDate\nConfidential Page 13 of 13"
+  "SonaMation\nPROPOSAL + STATEMENT OF WORK\nHubSpot Implementation\nPrepared for Acme\nIssued 2026-09-01\nDRAFT - NOT FOR SIGNATURE\nAddresses and contacts for notices\nClient SonaMation\nCompany Acme SonaMation\nPrimary contact Aylin\nAddress\nPhone\nEmail\nConfidential Page 1 of 15",
+  "SonaMation DRAFT Proposal + Statement of Work - HubSpot Implementation - Acme\nConfidential Page 2 of 15\nContents\nAbout SonaMation 3\nScope at a Glance 4\nI. Technical Approach 5\n1.1 Understanding of the Problem 5\n1.2 Objectives 5\n1.3 Requirements 5\n1.4 Proposed Solution 5\n1.5 Methodology 5\n1.6 Tools & Platforms 6\n1.7 Techniques & Procedures 6\n1.8 Detailed Scope of Work 6\n1.9 Assumptions 7\n1.10 Change Request Process 8\n1.11 Glossary of Terms 8\nII. Management Approach 9\n2.1 Project Team & Roles 9\n2.2 Responsibilities 9\n2.3 Governance & Communication 10\n2.4 Schedule 10\n2.5 Risk Management 10\n2.6 Targeted KPIs 10\n2.7 Acceptance Process 11\nIII. Cost & Pricing 12\n3.1 Deliverables & Milestone Schedule 12\n3.2 Optional Add-on Services Menu 12\n3.3 Rate Card 12\n3.4 Pricing Summary 12\n3.5 Payment Schedule 13\n3.6 Payment Terms 13\n3.7 Expenses 13\nTerms & Acceptance 14\nConfidentiality 14\nTerms & Conditions 14\nAcceptance & Signatures 15",
+  "SonaMation DRAFT Proposal + Statement of Work - HubSpot Implementation - Acme\nAbout SonaMation\nSonaMation is a HubSpot Solutions Partner focused on revenue-operations architecture: CRM data models, sales and\nmarketing automation, integrations, and the documentation that keeps them maintainable. Every engagement follows\nthe same requirements-first method - requirements are written down and agreed before anything is built, and every\ndeliverable is traced back to a requirement and signed off against written acceptance criteria.\nConfidential Page 3 of 15",
+  "SonaMation DRAFT Proposal + Statement of Work - HubSpot Implementation - Acme\nScope at a Glance\nEvery item a client might ask about sits in exactly one of the lists below. If something is not listed as Included, it is not\npart of this agreement - it can still be added through the Change Request process described in the Technical volume.\nItem IDs (S-1, S-2...) are the reference to use when asking about scope.\n6\nIncluded items\n1\nExcluded items\n1\nOptional add-ons\n$12,250.00\nTotal one-time fee\nINCLUDED  (6) Delivered under this agreement, up to the stated limit.\nS-1 Discovery: Current-state portal audit 1 portal\nS-2 Discovery: Written Requirements Document Up to 3 workshops\nS-5 Sync contacts nightly\nS-6 Log SMS\nS-7 ERP sync\nS-8 Forecasting\nNOT INCLUDED  (1) Not part of this agreement. Can be added only through a Change Request.\nS-3 Architecture: Data model & architecture blueprint Up to 2 custom objects\nAVAILABLE AS ADD-ON  (1) Pre-priced options you can add at any time - see the Cost volume.\nS-4 Add-on: Marketing Automation Platform Setup $5,000.00 One Time\nConfidential Page 4 of 15",
+  "SonaMation DRAFT Proposal + Statement of Work - HubSpot Implementation - Acme\nVOLUME I\nTechnical Approach\nOur understanding of the problem, the proposed solution, and the specific tools, techniques and procedures\nSonaMation will use to implement it - including the detailed scope of work.\n1.1 Understanding of the Problem\nReplace spreadsheets\n1.2 Objectives\nObjective Success Measure\nOne source of truth\n1.3 Requirements\nRequirements the solution must satisfy. Each one is traced to the scope items that deliver it (section 1.8).\nID Requirement Priority Source\nR-1 Sync contacts nightly Must Have Requirements\nDocument\nR-2 Log SMS Must Have Requirements\nDocument\nR-3 ERP sync Must Have Joint Evaluation Plan\n(Technical need)\nR-4 Forecasting To Confirm Joint Evaluation Plan\n(Business need)\n1.4 Proposed Solution\nTo be completed.\n1.5 Methodology\nPhase Activities Outputs\n1. Discovery & Requirements Stakeholder interviews, current-state portal audit, written\nrequirements, joint evaluation plan\nWritten Requirements Document,\naudit findings, signed-off scope\nConfidential Page 5 of 15",
+  "SonaMation DRAFT Proposal + Statement of Work - HubSpot Implementation - Acme\nPhase Activities Outputs\n2. Architecture & Design Object model, property data dictionary, associations,\npipelines, naming conventions Architecture blueprint and diagram\n3. Build & Configure Configuration in a sandbox or controlled portal,\nintegrations, automation Configured solution, build log\n4. Test & Accept Internal QA, then customer UAT against each\nrequirement's acceptance criteria Test Case Document, UAT sign-off\n5. Launch & Enable Go-live, user training, hand-off documentation, hypercare Documentation pack, training\nrecording\n1.6 Tools & Platforms\nTool / Platform Purpose Provided By\nHubSpot (customer portal) System being configured Client\nHubSpot sandbox Build and test without touching live data Client\nArchitectureScope Read-only portal audit, blueprint, documentation, diagrams SonaMation\nShared project workspace Status reporting, decisions log, file exchange SonaMation\n1.7 Techniques & Procedures\nTechnique / Procedure How It Is Applied\nRequirements traceability Every scope item cites the requirement it satisfies; nothing is built without one.\nRead-only audit before change The live portal is audited first so changes are made against a known baseline.\nSandbox-first configuration Changes are built and tested in a sandbox before being promoted to production.\nTwo-round testing (QA, then UAT) SonaMation tests internally first; the client then accepts against written criteria.\n1.8 Detailed Scope of Work\nThe table below is the complete list of work included in this agreement. Quantities are upper limits; each item is complete\nwhen it meets its acceptance criteria.\nID Workstream Item\nQuantity /\nLimit\nTools / Techniques Acceptance Criteria Req. ID\nS-1 Discovery Current-state portal audit 1 portal\nArchitectureScope\nPortal Auditor\n(read-only)\nAudit report delivered\nand reviewed with client\nConfidential Page 6 of 15",
+  "SonaMation DRAFT Proposal + Statement of Work - HubSpot Implementation - Acme\nID Workstream Item\nQuantity /\nLimit\nTools / Techniques Acceptance Criteria Req. ID\nS-2 Discovery\nWritten Requirements\nDocument\nUp to 3\nworkshops\nStakeholder\ninterviews, WRD\ntemplate\nWRD signed off by client\ndecision-maker\nS-5 Sync contacts nightly R-1\nS-6 Log SMS R-2\nS-7 ERP sync R-3\nS-8 Forecasting R-4\nOut of scope\nExplicitly excluded. Any of these can be added through a Change Request.\nID Workstream Item Quantity / Limit\nS-3 Architecture Data model & architecture blueprint Up to 2 custom objects\nOptional add-ons\nAvailable at the prices in the Cost volume; not included unless selected.\nID Workstream Item Quantity / Limit\nS-4 Add-on Marketing Automation Platform Setup\nRequirements traceability\nID Requirement Scope Items Coverage\nR-1 Sync contacts nightly S-5 Covered\nR-2 Log SMS S-6 Covered\nR-3 ERP sync S-7 Covered\nR-4 Forecasting S-8 Covered\n1.9 Assumptions\n- The client provides portal access (Super Admin or equivalent) within 5 business days of kickoff.\n- The client names one decision-maker who can approve requirements, scope changes and acceptance.\n- Client feedback and UAT results are returned within 5 business days of each request.\n- Quantities in the scope table are upper limits; anything beyond them goes through change control.\n- To be confirmed: Which ERP?\nConfidential Page 7 of 15",
+  "SonaMation DRAFT Proposal + Statement of Work - HubSpot Implementation - Acme\nSubscription tier\nThis design assumes the client's current HubSpot subscription: [[HubSpot hubs and tiers, e.g. Sales Hub Professional]]. Some\nfeatures depend on the subscription tier. If a feature described in this SOW is not available on that tier, SonaMation will\npropose a revised design, or the client may change their subscription; either goes through the Change Request process and\nmay affect the schedule and fees.\n1.10 Change Request Process\nAnything not listed as In Scope in this document is out of scope, even if it is related. To add or change scope, either\nparty submits a written Change Request describing the need. SonaMation replies within 3 business days with the\nimpact on schedule and cost (priced from the add-on menu or the rate card). Work starts only after the client approves\nthe Change Request in writing; approved changes become part of this SOW.\n1.11 Glossary of Terms\nTerm Definition\nMember Paying customer\nConfidential Page 8 of 15",
+  "SonaMation DRAFT Proposal + Statement of Work - HubSpot Implementation - Acme\nVOLUME II\nManagement Approach\nHow SonaMation will manage contract performance: who is involved, how progress is reported, the schedule, how risks\nare handled, and how deliverables are accepted.\n2.1 Project Team & Roles\nSide Role Name Email Responsibilities\nSonaMation Executive Sponsor\nAccountable for the\nengagement's success; the\nfinal escalation point.\nApproves scope changes\nand signs off on\nacceptance with the client's\nsponsor.\nSonaMation Team Lead of Client\nDelivery\nOwns day-to-day delivery:\nplans the work, leads the\nimplementation team, runs\nthe status meetings,\nmanages risks and reports\nprogress to the client.\nSonaMation Onboarding Lead\nRuns kickoff and\nonboarding: collects\naccess, schedules\ndiscovery and training\nsessions, and is the client's\nfirst point of contact during\nsetup.\nClient Sponsor Jane j@acme.com\n2.2 Responsibilities\nWhat each party commits to. The schedule depends on both columns being met.\nThe client SonaMation\nProvide Super Admin (or equivalent) access to HubSpot and to\nevery system being integrated.\nDeliver every In Scope item up to its stated limit and acceptance\ncriteria.\nName one decision-maker who approves requirements, scope\nchanges and acceptance.\nBuild and test in a sandbox or controlled environment before\nchanging production.\nConfidential Page 9 of 15",
+  "SonaMation DRAFT Proposal + Statement of Work - HubSpot Implementation - Acme\nThe client SonaMation\nSupply source-data exports, field definitions and sample records\nfor any import or migration. Run internal QA before anything is handed to the client for UAT.\nMake subject-matter experts available and return feedback and\nUAT results within 5 business days. Report progress, risks and decisions needed every week.\nKeep the HubSpot subscription active at the tier this SOW\nassumes. Hand over documentation for everything delivered.\n2.3 Governance & Communication\nMeeting / Report Cadence Participants Purpose\nKickoff Once Both teams Confirm scope, roles, timeline, access\nStatus call Weekly Project leads Progress, blockers, decisions needed\nWritten status report Weekly Sponsor, project leads Progress against milestones, risks, open change\nrequests\nSteering review Per milestone Sponsors Milestone acceptance, scope and budget\ndecisions\n2.4 Schedule\nPhase / Milestone\nStart\nWeek\nDuration\n(Weeks)\nStart End Key Deliverables\nGo live 2026-12-01 1\nDemo 2026-10-01\n2.5 Risk Management\nRisk Likelihood Impact Mitigation Owner\nRisk: Dirty data Medium Medium\n2.6 Targeted KPIs\nPrimary KPIs are the value drivers tied to return on investment; secondary KPIs track operational improvement.\nNone specified.\nConfidential Page 10 of 15",
+  "SonaMation DRAFT Proposal + Statement of Work - HubSpot Implementation - Acme\n2.7 Acceptance Process\nEach milestone is complete when its deliverables meet the acceptance criteria in the scope table. The client has 5\nbusiness days after delivery to accept or to list specific deficiencies against those criteria; SonaMation will correct listed\ndeficiencies and resubmit. A deliverable not rejected in writing within that window is deemed accepted.\nConfidential Page 11 of 15",
+  "SonaMation DRAFT Proposal + Statement of Work - HubSpot Implementation - Acme\nVOLUME III\nCost & Pricing\nWhat the proposed work costs, when it is invoiced, and the price of anything beyond the agreed scope.\n3.1 Deliverables & Milestone Schedule\nMilestone Deliverables Start On or\nBefore\nDue On or\nBefore Fee\nM1 $11,500.00\nM2 $2,500.00\nTotal $14,000.00\n3.2 Optional Add-on Services Menu\nPre-priced services the client can add to this agreement at any time. Items marked Selected are included in the total below.\nService Includes Cost Billing Selected\nMarketing Automation Platform\nSetup Portal setup, domains, tracking code, email settings $5,000.00 One Time\nSupport $500.00 Monthly Selected\nSEO $2,500.50 One Time\n3.3 Rate Card\nUsed to price approved Change Requests that are not on the add-on menu.\nRole Hourly Rate\nSolutions Architect $175.00\nHubSpot Consultant $150.00\nDeveloper / Integrations $165.00\n3.4 Pricing Summary\nOne-time and recurring fees are totalled separately; they are never added together.\nItem Amount\nMilestone fees $14,000.00\nConfidential Page 12 of 15",
+  "SonaMation DRAFT Proposal + Statement of Work - HubSpot Implementation - Acme\nItem Amount\nDiscount (12.5%) -$1,750.00\nTotal one-time fee $12,250.00\nRecurring fees, monthly $500.00\n3.5 Payment Schedule\nTerm Detail\nDeposit None\nInvoicing To be agreed\nDue To be agreed\n3.6 Payment Terms\nAs complete and final payment for Services completed, delivered and accepted, the client shall pay SonaMation the\nfees in the milestone schedule. Invoices are issued on milestone acceptance and are due net 30 days. All amounts are\nin U.S. Dollars.\n3.7 Expenses\nSonaMation bears sole responsibility for all expenses incurred in performing the Services, unless otherwise agreed in\nwriting by the client. Third-party software licenses and subscriptions are the client's responsibility unless listed as an\nincluded add-on.\nConfidential Page 13 of 15",
+  "SonaMation DRAFT Proposal + Statement of Work - HubSpot Implementation - Acme\nConfidentiality\nThis document and all Services are confidential information of the parties and may not be shared outside the client's\norganization without SonaMation's written consent.\nTerms & Conditions\nIntellectual Property & Ownership of Deliverables\nOn full payment of the fees for a deliverable, ownership of that deliverable (the configuration, documentation and materials\ncreated specifically for Acme under this SOW) transfers to Acme. SonaMation keeps ownership of its pre-existing materials,\ntools, templates and know-how, including anything it uses across clients, and grants Acme a non-exclusive, perpetual licence\nto use them as part of the deliverables. Third-party software, including HubSpot, remains subject to its own licence terms.\nWarranty & Defect Correction\nSonaMation warrants that the Services will be performed in a professional manner consistent with generally accepted industry\nstandards. For [[warranty period, e.g. 30 days]] after acceptance of each milestone, SonaMation will correct at no additional\ncharge any defect where a deliverable does not meet its acceptance criteria, provided the defect is reported in writing within\nthat period and is not caused by changes made by Acme or third parties, or by changes to the HubSpot platform. Correction is\nAcme's sole remedy for defective Services. No other warranties, express or implied, are given.\nLimitation of Liability\nTo the extent permitted by law, neither party is liable for indirect, incidental, special or consequential damages, including lost\nprofits, revenue or data. Each party's total liability arising out of this SOW is limited to [[liability cap, e.g. the fees paid under\nthis SOW in the 12 months before the claim]]. These limits do not apply to [[exclusions, e.g. breach of confidentiality, gross\nnegligence, wilful misconduct or payment obligations]].\nTermination\nEither party may terminate this SOW for cause if the other party materially breaches it and does not cure the breach within\n[[cure period, e.g. 15 days]] of written notice. Either party may terminate for convenience with [[notice period, e.g. 30 days]]\nwritten notice. On termination for any reason, Acme pays for Services performed and expenses incurred up to the termination\ndate, with any milestone in progress charged in proportion to the work completed, plus [[termination fee, or 'no further fees']];\nSonaMation delivers all work completed to date.\nGoverning Law & Dispute Resolution\nThis SOW is governed by the laws of [[governing state or country]], without regard to its conflict-of-law rules. The parties will\nfirst try to resolve any dispute through good-faith negotiation between their executive sponsors for [[negotiation period, e.g. 30\ndays]]. A dispute not resolved that way will be decided by [[forum, e.g. the courts of a named county and state, or binding\narbitration under named rules]].\nData Protection & Personal Information\nAcme remains responsible for the personal data in its systems; SonaMation processes personal data only to perform the\nServices and on Acme's documented instructions. SonaMation will access only the data it needs, keep it confidential, protect it\nwith appropriate technical and organisational measures, and notify Acme within [[breach notification period, e.g. 72 hours]] of\nbecoming aware of a personal-data breach. For data migrations, data moves only through methods Acme approves, extracts\nand working copies are deleted within [[deletion period, e.g. 30 days]] of acceptance, and Acme confirms it has the right to\nmigrate the data. Where the law requires it, the parties will sign a data processing agreement.\nConfidential Page 14 of 15",
+  "SonaMation DRAFT Proposal + Statement of Work - HubSpot Implementation - Acme\nForce Majeure\nNeither party is liable for a delay or failure caused by events beyond its reasonable control, such as natural disasters,\nepidemics, war, government action, or failures of utilities, internet service or third-party platforms (including HubSpot outages).\nThe affected party will notify the other promptly and resume as soon as possible, and the dates in this SOW move by the\nlength of the delay. If the event lasts more than [[period, e.g. 30 days]], either party may end this SOW by written notice; fees\nfor work performed to date remain payable.\nNon-Solicitation\nDuring this SOW and for [[non-solicitation period, e.g. 12 months]] after it ends, neither party will directly solicit for employment\nany employee or contractor of the other party who worked on the Services, without the other party's written consent. General\njob advertisements not aimed at those people are not a breach.\nEntire Agreement & Order of Precedence\nThis SOW, including its schedules, is the entire agreement between the parties about its subject matter and replaces all prior\nproposals, discussions and understandings. It can be changed only by a written Change Request or amendment signed by\nboth parties. If documents conflict, they apply in this order: [[order of precedence, e.g. (1) the Master Services Agreement, (2)\nthis SOW, (3) approved Change Requests]].\nProposal Validity & Effective Date\nThis proposal is valid until [[proposal validity date]]. Once signed by both parties, this SOW takes effect on [[effective date]].\nAcceptance & Signatures\nBy signing below, the parties agree to this Proposal + Statement of Work, including the scope, exclusions, assumptions and\nfees described above, effective as of the effective date.\nAcme\nSignature\nName\nTitle\nDate\nSonaMation\nSignature\nName\nTitle\nDate\nConfidential Page 15 of 15"
  ],
  "pricing": {
   "discount": 1750.0,
@@ -458,9 +599,21 @@
   "recurring": {
    "Monthly": 500.0
   },
+  "recurring_term_total": 0.0,
   "selected_addons_one_time": 0.0,
   "subtotal": 14000.0,
-  "total": 12250.0
+  "total": 12250.0,
+  "workstreams": [
+   {
+    "fee": 14000.0,
+    "fee_basis": "",
+    "milestones": [
+     "M1",
+     "M2"
+    ],
+    "workstream": "General"
+   }
+  ]
  },
  "proposal": {
   "acceptance_process": "Each milestone is complete when its deliverables meet the acceptance criteria in the scope table. The client has 5 business days after delivery to accept or to list specific deficiencies against those criteria; SonaMation will correct listed deficiencies and resubmit. A deliverable not rejected in writing within that window is deemed accepted.",
@@ -505,6 +658,74 @@
    }
   ],
   "change_process": "Anything not listed as In Scope in this document is out of scope, even if it is related. To add or change scope, either party submits a written Change Request describing the need. SonaMation replies within 3 business days with the impact on schedule and cost (priced from the add-on menu or the rate card). Work starts only after the client approves the Change Request in writing; approved changes become part of this SOW.",
+  "clauses": [
+   {
+    "Body": "On full payment of the fees for a deliverable, ownership of that deliverable (the configuration, documentation and materials created specifically for {{client}} under this SOW) transfers to {{client}}. {{seller}} keeps ownership of its pre-existing materials, tools, templates and know-how, including anything it uses across clients, and grants {{client}} a non-exclusive, perpetual licence to use them as part of the deliverables. Third-party software, including HubSpot, remains subject to its own licence terms.",
+    "Include": true,
+    "Key": "ip_ownership",
+    "Title": "Intellectual Property & Ownership of Deliverables"
+   },
+   {
+    "Body": "{{seller}} warrants that the Services will be performed in a professional manner consistent with generally accepted industry standards. For [[warranty period, e.g. 30 days]] after acceptance of each milestone, {{seller}} will correct at no additional charge any defect where a deliverable does not meet its acceptance criteria, provided the defect is reported in writing within that period and is not caused by changes made by {{client}} or third parties, or by changes to the HubSpot platform. Correction is {{client}}'s sole remedy for defective Services. No other warranties, express or implied, are given.",
+    "Include": true,
+    "Key": "warranty",
+    "Title": "Warranty & Defect Correction"
+   },
+   {
+    "Body": "To the extent permitted by law, neither party is liable for indirect, incidental, special or consequential damages, including lost profits, revenue or data. Each party's total liability arising out of this SOW is limited to [[liability cap, e.g. the fees paid under this SOW in the 12 months before the claim]]. These limits do not apply to [[exclusions, e.g. breach of confidentiality, gross negligence, wilful misconduct or payment obligations]].",
+    "Include": true,
+    "Key": "liability",
+    "Title": "Limitation of Liability"
+   },
+   {
+    "Body": "Either party may terminate this SOW for cause if the other party materially breaches it and does not cure the breach within [[cure period, e.g. 15 days]] of written notice. Either party may terminate for convenience with [[notice period, e.g. 30 days]] written notice. On termination for any reason, {{client}} pays for Services performed and expenses incurred up to the termination date, with any milestone in progress charged in proportion to the work completed, plus [[termination fee, or 'no further fees']]; {{seller}} delivers all work completed to date.",
+    "Include": true,
+    "Key": "termination",
+    "Title": "Termination"
+   },
+   {
+    "Body": "This SOW is governed by the laws of [[governing state or country]], without regard to its conflict-of-law rules. The parties will first try to resolve any dispute through good-faith negotiation between their executive sponsors for [[negotiation period, e.g. 30 days]]. A dispute not resolved that way will be decided by [[forum, e.g. the courts of a named county and state, or binding arbitration under named rules]].",
+    "Include": true,
+    "Key": "governing_law",
+    "Title": "Governing Law & Dispute Resolution"
+   },
+   {
+    "Body": "{{client}} remains responsible for the personal data in its systems; {{seller}} processes personal data only to perform the Services and on {{client}}'s documented instructions. {{seller}} will access only the data it needs, keep it confidential, protect it with appropriate technical and organisational measures, and notify {{client}} within [[breach notification period, e.g. 72 hours]] of becoming aware of a personal-data breach. For data migrations, data moves only through methods {{client}} approves, extracts and working copies are deleted within [[deletion period, e.g. 30 days]] of acceptance, and {{client}} confirms it has the right to migrate the data. Where the law requires it, the parties will sign a data processing agreement.",
+    "Include": true,
+    "Key": "data_protection",
+    "Title": "Data Protection & Personal Information"
+   },
+   {
+    "Body": "Neither party is liable for a delay or failure caused by events beyond its reasonable control, such as natural disasters, epidemics, war, government action, or failures of utilities, internet service or third-party platforms (including HubSpot outages). The affected party will notify the other promptly and resume as soon as possible, and the dates in this SOW move by the length of the delay. If the event lasts more than [[period, e.g. 30 days]], either party may end this SOW by written notice; fees for work performed to date remain payable.",
+    "Include": true,
+    "Key": "force_majeure",
+    "Title": "Force Majeure"
+   },
+   {
+    "Body": "During this SOW and for [[non-solicitation period, e.g. 12 months]] after it ends, neither party will directly solicit for employment any employee or contractor of the other party who worked on the Services, without the other party's written consent. General job advertisements not aimed at those people are not a breach.",
+    "Include": true,
+    "Key": "non_solicitation",
+    "Title": "Non-Solicitation"
+   },
+   {
+    "Body": "This SOW, including its schedules, is the entire agreement between the parties about its subject matter and replaces all prior proposals, discussions and understandings. It can be changed only by a written Change Request or amendment signed by both parties. If documents conflict, they apply in this order: [[order of precedence, e.g. (1) the Master Services Agreement, (2) this SOW, (3) approved Change Requests]].",
+    "Include": true,
+    "Key": "entire_agreement",
+    "Title": "Entire Agreement & Order of Precedence"
+   },
+   {
+    "Body": "This SOW is issued under, and governed by, the Master Services Agreement between {{client}} and {{seller}} dated [[MSA date]]. Terms defined in that agreement have the same meaning in this SOW.",
+    "Include": false,
+    "Key": "msa_reference",
+    "Title": "Master Services Agreement"
+   },
+   {
+    "Body": "This proposal is valid until {{valid_until}}. Once signed by both parties, this SOW takes effect on {{effective_date}}.",
+    "Include": true,
+    "Key": "validity",
+    "Title": "Proposal Validity & Effective Date"
+   }
+  ],
   "client": {
    "address": "",
    "company": "Acme",
@@ -512,13 +733,39 @@
    "email": "",
    "phone": ""
   },
+  "client_responsibilities": [
+   {
+    "Responsibility": "Provide Super Admin (or equivalent) access to HubSpot and to every system being integrated."
+   },
+   {
+    "Responsibility": "Name one decision-maker who approves requirements, scope changes and acceptance."
+   },
+   {
+    "Responsibility": "Supply source-data exports, field definitions and sample records for any import or migration."
+   },
+   {
+    "Responsibility": "Make subject-matter experts available and return feedback and UAT results within 5 business days."
+   },
+   {
+    "Responsibility": "Keep the HubSpot subscription active at the tier this SOW assumes."
+   }
+  ],
   "company_overview": "SonaMation is a HubSpot Solutions Partner focused on revenue-operations architecture: CRM data models, sales and marketing automation, integrations, and the documentation that keeps them maintainable. Every engagement follows the same requirements-first method — requirements are written down and agreed before anything is built, and every deliverable is traced back to a requirement and signed off against written acceptance criteria.",
   "confidentiality": "This document and all Services are confidential information of the parties and may not be shared outside the client's organization without SonaMation's written consent.",
   "currency": "USD",
   "current_state": "",
+  "data_quality": [
+   {
+    "Issue": "",
+    "Owner": "Client",
+    "Risk if Not Resolved": ""
+   }
+  ],
   "discount_pct": 12.5,
   "document_type": "Proposal + Statement of Work",
   "effective_date": "",
+  "exec_dependencies": "",
+  "exec_key_risks": "",
   "executive_summary": "",
   "expenses": "SonaMation bears sole responsibility for all expenses incurred in performing the Services, unless otherwise agreed in writing by the client. Third-party software licenses and subscriptions are the client's responsibility unless listed as an included add-on.",
   "expiration_date": "",
@@ -554,6 +801,7 @@
     "Purpose": "Milestone acceptance, scope and budget decisions"
    }
   ],
+  "is_migration": null,
   "issue_date": "2026-09-01",
   "kpis": [
    {
@@ -592,25 +840,34 @@
   ],
   "milestones": [
    {
+    "Acceptance Evidence": "",
     "Deliverables": "",
     "Due On or Before": "",
     "Fee": 11500,
+    "Fee Basis": "",
     "Milestone": "M1",
-    "Start On or Before": ""
+    "Start On or Before": "",
+    "Workstream / Phase": ""
    },
    {
+    "Acceptance Evidence": "",
     "Deliverables": "",
     "Due On or Before": "",
     "Fee": "2,500",
+    "Fee Basis": "",
     "Milestone": "M2",
-    "Start On or Before": ""
+    "Start On or Before": "",
+    "Workstream / Phase": ""
    },
    {
+    "Acceptance Evidence": "",
     "Deliverables": "",
     "Due On or Before": "",
     "Fee": 999,
+    "Fee Basis": "",
     "Milestone": "",
-    "Start On or Before": ""
+    "Start On or Before": "",
+    "Workstream / Phase": ""
    }
   ],
   "objectives": [
@@ -619,6 +876,13 @@
     "Success Measure": ""
    }
   ],
+  "payment_schedule": {
+   "deposit_type": "Percent",
+   "deposit_value": 0.0,
+   "due_terms": "",
+   "invoicing": "",
+   "notes": ""
+  },
   "payment_terms": "As complete and final payment for Services completed, delivered and accepted, the client shall pay SonaMation the fees in the milestone schedule. Invoices are issued on milestone acceptance and are due net 30 days. All amounts are in U.S. Dollars.",
   "problem_statement": "Replace spreadsheets",
   "rate_card": [
@@ -635,6 +899,7 @@
     "Role": "Developer / Integrations"
    }
   ],
+  "recurring_fees": [],
   "reference_number": "",
   "requirements": [
    {
@@ -765,12 +1030,18 @@
   "sections": {
    "addons": true,
    "company_overview": true,
+   "data_quality": true,
    "executive_summary": true,
    "glossary": true,
    "kpis": true,
+   "milestone_acceptance": true,
    "rate_card": true,
+   "recurring_fees": true,
+   "responsibilities": true,
    "risks": true,
-   "signatures": true
+   "signatures": true,
+   "tier_assumption": true,
+   "timeline_chart": true
   },
   "seller": {
    "address": "",
@@ -780,6 +1051,7 @@
    "phone": ""
   },
   "solution_overview": "",
+  "status": "Draft",
   "team": [
    {
     "Email": "",
@@ -828,6 +1100,7 @@
     "Technique / Procedure": "Two-round testing (QA, then UAT)"
    }
   ],
+  "tier_assumption": "This design assumes the client's current HubSpot subscription: [[HubSpot hubs and tiers, e.g. Sales Hub Professional]]. Some features depend on the subscription tier. If a feature described in this SOW is not available on that tier, SonaMation will propose a revised design, or the client may change their subscription; either goes through the Change Request process and may affect the schedule and fees.",
   "timeline": [
    {
     "End": "2026-12-01",
@@ -842,6 +1115,8 @@
     "Start": ""
    }
   ],
+  "timeline_buffer_label": "Validation & buffer",
+  "timeline_buffer_weeks": 2.0,
   "title": "HubSpot Implementation",
   "tools": [
    {
@@ -865,7 +1140,24 @@
     "Tool / Platform": "Shared project workspace"
    }
   ],
-  "valid_until": ""
+  "valid_until": "",
+  "vendor_responsibilities": [
+   {
+    "Responsibility": "Deliver every In Scope item up to its stated limit and acceptance criteria."
+   },
+   {
+    "Responsibility": "Build and test in a sandbox or controlled environment before changing production."
+   },
+   {
+    "Responsibility": "Run internal QA before anything is handed to the client for UAT."
+   },
+   {
+    "Responsibility": "Report progress, risks and decisions needed every week."
+   },
+   {
+    "Responsibility": "Hand over documentation for everything delivered."
+   }
+  ]
  },
  "scope_by_status": {
   "Client Responsibility": [],
@@ -1007,6 +1299,74 @@
    }
   ],
   "change_process": "Anything not listed as In Scope in this document is out of scope, even if it is related. To add or change scope, either party submits a written Change Request describing the need. SonaMation replies within 3 business days with the impact on schedule and cost (priced from the add-on menu or the rate card). Work starts only after the client approves the Change Request in writing; approved changes become part of this SOW.",
+  "clauses": [
+   {
+    "Body": "On full payment of the fees for a deliverable, ownership of that deliverable (the configuration, documentation and materials created specifically for {{client}} under this SOW) transfers to {{client}}. {{seller}} keeps ownership of its pre-existing materials, tools, templates and know-how, including anything it uses across clients, and grants {{client}} a non-exclusive, perpetual licence to use them as part of the deliverables. Third-party software, including HubSpot, remains subject to its own licence terms.",
+    "Include": true,
+    "Key": "ip_ownership",
+    "Title": "Intellectual Property & Ownership of Deliverables"
+   },
+   {
+    "Body": "{{seller}} warrants that the Services will be performed in a professional manner consistent with generally accepted industry standards. For [[warranty period, e.g. 30 days]] after acceptance of each milestone, {{seller}} will correct at no additional charge any defect where a deliverable does not meet its acceptance criteria, provided the defect is reported in writing within that period and is not caused by changes made by {{client}} or third parties, or by changes to the HubSpot platform. Correction is {{client}}'s sole remedy for defective Services. No other warranties, express or implied, are given.",
+    "Include": true,
+    "Key": "warranty",
+    "Title": "Warranty & Defect Correction"
+   },
+   {
+    "Body": "To the extent permitted by law, neither party is liable for indirect, incidental, special or consequential damages, including lost profits, revenue or data. Each party's total liability arising out of this SOW is limited to [[liability cap, e.g. the fees paid under this SOW in the 12 months before the claim]]. These limits do not apply to [[exclusions, e.g. breach of confidentiality, gross negligence, wilful misconduct or payment obligations]].",
+    "Include": true,
+    "Key": "liability",
+    "Title": "Limitation of Liability"
+   },
+   {
+    "Body": "Either party may terminate this SOW for cause if the other party materially breaches it and does not cure the breach within [[cure period, e.g. 15 days]] of written notice. Either party may terminate for convenience with [[notice period, e.g. 30 days]] written notice. On termination for any reason, {{client}} pays for Services performed and expenses incurred up to the termination date, with any milestone in progress charged in proportion to the work completed, plus [[termination fee, or 'no further fees']]; {{seller}} delivers all work completed to date.",
+    "Include": true,
+    "Key": "termination",
+    "Title": "Termination"
+   },
+   {
+    "Body": "This SOW is governed by the laws of [[governing state or country]], without regard to its conflict-of-law rules. The parties will first try to resolve any dispute through good-faith negotiation between their executive sponsors for [[negotiation period, e.g. 30 days]]. A dispute not resolved that way will be decided by [[forum, e.g. the courts of a named county and state, or binding arbitration under named rules]].",
+    "Include": true,
+    "Key": "governing_law",
+    "Title": "Governing Law & Dispute Resolution"
+   },
+   {
+    "Body": "{{client}} remains responsible for the personal data in its systems; {{seller}} processes personal data only to perform the Services and on {{client}}'s documented instructions. {{seller}} will access only the data it needs, keep it confidential, protect it with appropriate technical and organisational measures, and notify {{client}} within [[breach notification period, e.g. 72 hours]] of becoming aware of a personal-data breach. For data migrations, data moves only through methods {{client}} approves, extracts and working copies are deleted within [[deletion period, e.g. 30 days]] of acceptance, and {{client}} confirms it has the right to migrate the data. Where the law requires it, the parties will sign a data processing agreement.",
+    "Include": true,
+    "Key": "data_protection",
+    "Title": "Data Protection & Personal Information"
+   },
+   {
+    "Body": "Neither party is liable for a delay or failure caused by events beyond its reasonable control, such as natural disasters, epidemics, war, government action, or failures of utilities, internet service or third-party platforms (including HubSpot outages). The affected party will notify the other promptly and resume as soon as possible, and the dates in this SOW move by the length of the delay. If the event lasts more than [[period, e.g. 30 days]], either party may end this SOW by written notice; fees for work performed to date remain payable.",
+    "Include": true,
+    "Key": "force_majeure",
+    "Title": "Force Majeure"
+   },
+   {
+    "Body": "During this SOW and for [[non-solicitation period, e.g. 12 months]] after it ends, neither party will directly solicit for employment any employee or contractor of the other party who worked on the Services, without the other party's written consent. General job advertisements not aimed at those people are not a breach.",
+    "Include": true,
+    "Key": "non_solicitation",
+    "Title": "Non-Solicitation"
+   },
+   {
+    "Body": "This SOW, including its schedules, is the entire agreement between the parties about its subject matter and replaces all prior proposals, discussions and understandings. It can be changed only by a written Change Request or amendment signed by both parties. If documents conflict, they apply in this order: [[order of precedence, e.g. (1) the Master Services Agreement, (2) this SOW, (3) approved Change Requests]].",
+    "Include": true,
+    "Key": "entire_agreement",
+    "Title": "Entire Agreement & Order of Precedence"
+   },
+   {
+    "Body": "This SOW is issued under, and governed by, the Master Services Agreement between {{client}} and {{seller}} dated [[MSA date]]. Terms defined in that agreement have the same meaning in this SOW.",
+    "Include": false,
+    "Key": "msa_reference",
+    "Title": "Master Services Agreement"
+   },
+   {
+    "Body": "This proposal is valid until {{valid_until}}. Once signed by both parties, this SOW takes effect on {{effective_date}}.",
+    "Include": true,
+    "Key": "validity",
+    "Title": "Proposal Validity & Effective Date"
+   }
+  ],
   "client": {
    "address": "",
    "company": "",
@@ -1014,13 +1374,39 @@
    "email": "",
    "phone": ""
   },
+  "client_responsibilities": [
+   {
+    "Responsibility": "Provide Super Admin (or equivalent) access to HubSpot and to every system being integrated."
+   },
+   {
+    "Responsibility": "Name one decision-maker who approves requirements, scope changes and acceptance."
+   },
+   {
+    "Responsibility": "Supply source-data exports, field definitions and sample records for any import or migration."
+   },
+   {
+    "Responsibility": "Make subject-matter experts available and return feedback and UAT results within 5 business days."
+   },
+   {
+    "Responsibility": "Keep the HubSpot subscription active at the tier this SOW assumes."
+   }
+  ],
   "company_overview": "SonaMation is a HubSpot Solutions Partner focused on revenue-operations architecture: CRM data models, sales and marketing automation, integrations, and the documentation that keeps them maintainable. Every engagement follows the same requirements-first method — requirements are written down and agreed before anything is built, and every deliverable is traced back to a requirement and signed off against written acceptance criteria.",
   "confidentiality": "This document and all Services are confidential information of the parties and may not be shared outside the client's organization without SonaMation's written consent.",
   "currency": "USD",
   "current_state": "",
+  "data_quality": [
+   {
+    "Issue": "",
+    "Owner": "Client",
+    "Risk if Not Resolved": ""
+   }
+  ],
   "discount_pct": 0.0,
   "document_type": "Proposal + Statement of Work",
   "effective_date": "",
+  "exec_dependencies": "",
+  "exec_key_risks": "",
   "executive_summary": "",
   "expenses": "SonaMation bears sole responsibility for all expenses incurred in performing the Services, unless otherwise agreed in writing by the client. Third-party software licenses and subscriptions are the client's responsibility unless listed as an included add-on.",
   "expiration_date": "",
@@ -1056,6 +1442,7 @@
     "Purpose": "Milestone acceptance, scope and budget decisions"
    }
   ],
+  "is_migration": null,
   "issue_date": "",
   "kpis": [
    {
@@ -1094,25 +1481,34 @@
   ],
   "milestones": [
    {
+    "Acceptance Evidence": "",
     "Deliverables": "",
     "Due On or Before": "",
     "Fee": 0.0,
+    "Fee Basis": "",
     "Milestone": "",
-    "Start On or Before": ""
+    "Start On or Before": "",
+    "Workstream / Phase": ""
    },
    {
+    "Acceptance Evidence": "",
     "Deliverables": "",
     "Due On or Before": "",
     "Fee": 0.0,
+    "Fee Basis": "",
     "Milestone": "",
-    "Start On or Before": ""
+    "Start On or Before": "",
+    "Workstream / Phase": ""
    },
    {
+    "Acceptance Evidence": "",
     "Deliverables": "",
     "Due On or Before": "",
     "Fee": 0.0,
+    "Fee Basis": "",
     "Milestone": "",
-    "Start On or Before": ""
+    "Start On or Before": "",
+    "Workstream / Phase": ""
    }
   ],
   "objectives": [
@@ -1125,6 +1521,13 @@
     "Success Measure": ""
    }
   ],
+  "payment_schedule": {
+   "deposit_type": "Percent",
+   "deposit_value": 0.0,
+   "due_terms": "",
+   "invoicing": "",
+   "notes": ""
+  },
   "payment_terms": "As complete and final payment for Services completed, delivered and accepted, the client shall pay SonaMation the fees in the milestone schedule. Invoices are issued on milestone acceptance and are due net 30 days. All amounts are in U.S. Dollars.",
   "problem_statement": "",
   "rate_card": [
@@ -1141,6 +1544,7 @@
     "Role": "Developer / Integrations"
    }
   ],
+  "recurring_fees": [],
   "reference_number": "",
   "requirements": [
    {
@@ -1210,12 +1614,18 @@
   "sections": {
    "addons": true,
    "company_overview": true,
+   "data_quality": true,
    "executive_summary": true,
    "glossary": true,
    "kpis": true,
+   "milestone_acceptance": true,
    "rate_card": true,
+   "recurring_fees": true,
+   "responsibilities": true,
    "risks": true,
-   "signatures": true
+   "signatures": true,
+   "tier_assumption": true,
+   "timeline_chart": true
   },
   "seller": {
    "address": "",
@@ -1225,6 +1635,7 @@
    "phone": ""
   },
   "solution_overview": "",
+  "status": "Draft",
   "team": [
    {
     "Email": "",
@@ -1273,26 +1684,35 @@
     "Technique / Procedure": "Two-round testing (QA, then UAT)"
    }
   ],
+  "tier_assumption": "This design assumes the client's current HubSpot subscription: [[HubSpot hubs and tiers, e.g. Sales Hub Professional]]. Some features depend on the subscription tier. If a feature described in this SOW is not available on that tier, SonaMation will propose a revised design, or the client may change their subscription; either goes through the Change Request process and may affect the schedule and fees.",
   "timeline": [
    {
+    "Duration (Weeks)": 0.0,
     "End": "",
     "Key Deliverables": "",
     "Phase / Milestone": "",
-    "Start": ""
+    "Start": "",
+    "Start Week": 0.0
    },
    {
+    "Duration (Weeks)": 0.0,
     "End": "",
     "Key Deliverables": "",
     "Phase / Milestone": "",
-    "Start": ""
+    "Start": "",
+    "Start Week": 0.0
    },
    {
+    "Duration (Weeks)": 0.0,
     "End": "",
     "Key Deliverables": "",
     "Phase / Milestone": "",
-    "Start": ""
+    "Start": "",
+    "Start Week": 0.0
    }
   ],
+  "timeline_buffer_label": "Validation & buffer",
+  "timeline_buffer_weeks": 2.0,
   "title": "HubSpot Implementation",
   "tools": [
    {
@@ -1316,7 +1736,24 @@
     "Tool / Platform": "Shared project workspace"
    }
   ],
-  "valid_until": ""
+  "valid_until": "",
+  "vendor_responsibilities": [
+   {
+    "Responsibility": "Deliver every In Scope item up to its stated limit and acceptance criteria."
+   },
+   {
+    "Responsibility": "Build and test in a sandbox or controlled environment before changing production."
+   },
+   {
+    "Responsibility": "Run internal QA before anything is handed to the client for UAT."
+   },
+   {
+    "Responsibility": "Report progress, risks and decisions needed every week."
+   },
+   {
+    "Responsibility": "Hand over documentation for everything delivered."
+   }
+  ]
  },
  "to_float": [
   1234.5,
@@ -1329,7 +1766,9 @@
  ],
  "validate": [
   "Technical volume: 'Proposed solution' is blank.",
-  "Scope: In Scope items without acceptance criteria: S-5, S-6, S-7, S-8."
+  "Scope: In Scope items without acceptance criteria: S-5, S-6, S-7, S-8.",
+  "Schedule: phases without a duration in weeks aren't on the timeline chart: Go live, Demo.",
+  "Milestones without acceptance evidence: M1, M2."
  ],
  "validate_default": [
   "Client company name is blank.",

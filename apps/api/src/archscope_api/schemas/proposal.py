@@ -25,6 +25,10 @@ Billing = Literal["One Time", "Monthly", "Per Unit", "Per Year", "Hourly"]
 KpiType = Literal["Primary", "Secondary"]
 DocumentType = Literal["Proposal + Statement of Work", "Proposal", "Statement of Work"]
 Coverage = Literal["Covered", "Not covered", "Available as add-on", "Client responsibility", "Excluded"]
+Cadence = Literal["Monthly", "Quarterly", "Per Year"]
+DataQualityOwner = Literal["Client", "SonaMation"]
+Status = Literal["Draft", "Ready to send"]
+PrefillPart = Literal["responsibilities", "timeline", "data_quality"]
 
 
 class TableRow(ApiModel):
@@ -102,6 +106,10 @@ class GovernanceRow(TableRow):
 
 class TimelineRow(TableRow):
     phase: str = Field("", title="Phase / Milestone")
+    start_week: float = Field(
+        0.0, ge=0, title="Start Week", description="Week the phase starts (1 = first week); 0 = right after the phases before it."
+    )
+    duration_weeks: float = Field(0.0, ge=0, title="Duration (Weeks)", description="0 = not on the timeline chart.")
     start: str = Field("", title="Start")
     end: str = Field("", title="End")
     key_deliverables: str = Field("", title="Key Deliverables")
@@ -124,10 +132,36 @@ class KpiRow(TableRow):
 
 class MilestoneRow(TableRow):
     milestone: str = Field("", title="Milestone")
+    workstream: str = Field("", title="Workstream / Phase", description="Fees are grouped and subtotalled by this.")
     deliverables: str = Field("", title="Deliverables")
+    fee_basis: str = Field(
+        "", title="Fee Basis", description="What the fee covers (e.g. 'Fixed fee: 2 pipelines, 10 workflows')."
+    )
     start_on_or_before: str = Field("", title="Start On or Before")
     due_on_or_before: str = Field("", title="Due On or Before")
     fee: float = Field(0.0, ge=0, title="Fee")
+    acceptance_evidence: str = Field(
+        "", title="Acceptance Evidence", description="What the client receives to accept the milestone."
+    )
+
+
+class RecurringFeeRow(TableRow):
+    service: str = Field("", title="Service")
+    includes: str = Field("", title="Includes")
+    amount: float = Field(0.0, ge=0, title="Amount", description="Per billing period.")
+    cadence: Cadence = Field("Monthly", title="Cadence")
+    term_months: float = Field(12.0, ge=0, title="Term (Months)")
+    starts: str = Field("", title="Starts")
+
+
+class ResponsibilityRow(TableRow):
+    responsibility: str = Field("", title="Responsibility")
+
+
+class DataQualityRow(TableRow):
+    issue: str = Field("", title="Issue")
+    risk_if_not_resolved: str = Field("", title="Risk if Not Resolved")
+    owner: DataQualityOwner = Field("Client", title="Owner")
 
 
 class AddonRow(TableRow):
@@ -145,6 +179,54 @@ class RateCardRow(TableRow):
 
 class AssumptionRow(TableRow):
     assumption: str = Field("", title="Assumption")
+
+
+class PaymentSchedule(ApiModel):
+    deposit_type: Literal["Percent", "Amount"] = "Percent"
+    deposit_value: float = Field(0.0, ge=0, description="Percent of the one-time total, or an amount; 0 = no deposit.")
+    invoicing: str = Field("", description="What triggers invoices, e.g. 'Per milestone, on acceptance'.")
+    due_terms: str = Field("", description="e.g. 'Net 30'.")
+    notes: str = ""
+
+
+class ClauseRow(TableRow):
+    """One clause of this SOW's terms (a copy of the firm's library clause, editable here)."""
+
+    key: str = Field("", title="Key", description="The library clause it came from; empty for a clause added to this SOW only.")
+    title: str = Field("", title="Title")
+    body: str = Field(
+        "",
+        title="Body",
+        description="[[blanks]] are filled per SOW; {{client}}, {{seller}}, {{valid_until}}, {{effective_date}} fill in automatically.",
+    )
+    include: bool = Field(True, title="Include")
+
+
+class LibraryClause(ApiModel):
+    """A clause of the workspace's standard SOW terms."""
+
+    id: str
+    key: str
+    title: str
+    body: str
+    include_by_default: bool
+
+
+class LibraryClauseIn(ApiModel):
+    id: str | None = Field(None, description="Omit for a new clause.")
+    key: str = Field(
+        "",
+        max_length=80,
+        pattern=r"^[a-z0-9_]*$",
+        description="Kept stable so SOW copies keep matching; made from the title when empty.",
+    )
+    title: str = Field(min_length=1, max_length=200)
+    body: str = Field(min_length=1, max_length=10000)
+    include_by_default: bool = True
+
+
+class LibraryClausesSave(ApiModel):
+    clauses: list[LibraryClauseIn] = Field(max_length=100)
 
 
 class Party(ApiModel):
@@ -175,9 +257,16 @@ class ProposalDocument(ApiModel):
         "milestones": MilestoneRow,
         "addons": AddonRow,
         "rate_card": RateCardRow,
+        "recurring_fees": RecurringFeeRow,
+        "client_responsibilities": ResponsibilityRow,
+        "vendor_responsibilities": ResponsibilityRow,
+        "data_quality": DataQualityRow,
+        "clauses": ClauseRow,
     }
 
     schema_version: int = dp.SCHEMA_VERSION
+    status: Status = Field("Draft", description='"Ready to send" only when the readiness checks pass.')
+    is_migration: bool | None = Field(None, description="None = suggested from the scope (a migration / import item).")
     document_type: DocumentType = "Proposal + Statement of Work"
     title: str = ""
     reference_number: str = ""
@@ -187,7 +276,9 @@ class ProposalDocument(ApiModel):
     valid_until: str = ""
     client: Party = Field(default_factory=Party)
     seller: Party = Field(default_factory=Party)
-    executive_summary: str = ""
+    executive_summary: str = Field("", description="Plain-language overview: what is being done.")
+    exec_key_risks: str = ""
+    exec_dependencies: str = Field("", description="What delivery depends on.")
     company_overview: str = ""
     problem_statement: str = ""
     current_state: str = ""
@@ -200,21 +291,30 @@ class ProposalDocument(ApiModel):
     glossary: list[GlossaryRow] = Field(default_factory=list)
     scope: list[ScopeRow] = Field(default_factory=list)
     assumptions: list[AssumptionRow] = Field(default_factory=list)
+    tier_assumption: str = ""
+    data_quality: list[DataQualityRow] = Field(default_factory=list)
     change_process: str = ""
     team: list[TeamRow] = Field(default_factory=list)
+    client_responsibilities: list[ResponsibilityRow] = Field(default_factory=list)
+    vendor_responsibilities: list[ResponsibilityRow] = Field(default_factory=list)
     governance: list[GovernanceRow] = Field(default_factory=list)
     timeline: list[TimelineRow] = Field(default_factory=list)
+    timeline_buffer_weeks: float = Field(0.0, ge=0, description="Validation / buffer period after the last phase.")
+    timeline_buffer_label: str = "Validation & buffer"
     risks: list[RiskRow] = Field(default_factory=list)
     kpis: list[KpiRow] = Field(default_factory=list)
     acceptance_process: str = ""
     currency: str = Field("USD", min_length=3, max_length=3)
     milestones: list[MilestoneRow] = Field(default_factory=list)
+    recurring_fees: list[RecurringFeeRow] = Field(default_factory=list)
     addons: list[AddonRow] = Field(default_factory=list)
     rate_card: list[RateCardRow] = Field(default_factory=list)
     discount_pct: float = Field(0.0, ge=0, le=100)
+    payment_schedule: PaymentSchedule = Field(default_factory=PaymentSchedule)
     payment_terms: str = ""
     expenses: str = ""
     confidentiality: str = ""
+    clauses: list[ClauseRow] = Field(default_factory=list, description="This SOW's terms, copied from the firm's clause library.")
     sections: dict[str, bool] = Field(
         default_factory=dict, description=f"Optional sections to include: {', '.join(dp.OPTIONAL_SECTIONS)}."
     )
@@ -253,14 +353,35 @@ class ProposalRequest(ApiModel):
     proposal: ProposalDocument
 
 
+class WorkstreamFee(ApiModel):
+    workstream: str
+    fee: float
+    fee_basis: str
+    milestones: list[str]
+
+
 class PricingSummary(ApiModel):
     milestone_total: float
     selected_addons_one_time: float
     subtotal: float
     discount_pct: float
     discount: float
-    total: float
-    recurring: dict[str, float] = Field(description="Recurring add-on totals keyed by billing period.")
+    total: float = Field(description="The one-time total.")
+    recurring: dict[str, float] = Field(description="Recurring fees and selected recurring add-ons, keyed by billing period.")
+    recurring_term_total: float = Field(description="What the recurring fees come to over their terms.")
+    workstreams: list[WorkstreamFee]
+
+
+class TimelineBar(ApiModel):
+    phase: str
+    start: float = Field(description="First week (1-based).")
+    weeks: float
+    buffer: bool
+
+
+class TimelineChart(ApiModel):
+    bars: list[TimelineBar]
+    total_weeks: float
 
 
 class CoverageRow(ApiModel):
@@ -283,6 +404,18 @@ class ProposalAnalysis(ApiModel):
     coverage: list[CoverageRow]
     scope_by_status: dict[ScopeStatus, list[ScopeRow]]
     warnings: list[str] = Field(description="Gaps a client would ask about. Advisory; they never block generation.")
+    readiness: list[str] = Field(description='What stops the SOW from being marked "Ready to send". Empty = it can be.')
+    is_migration: bool = Field(description="Whether this counts as a migration project (set by hand, or from the scope).")
+    migration_items: list[str] = Field(description="IDs of scope items that mention a migration or import.")
+    timeline: TimelineChart
+
+
+class PrefillRequest(ApiModel):
+    proposal: ProposalDocument
+    parts: list[PrefillPart] = Field(min_length=1)
+    findings: list[dict[str, Any]] = Field(
+        default_factory=list, description="Portal Auditor findings (severity, description), for the data_quality part."
+    )
 
 
 class WrdImportRequest(ApiModel):

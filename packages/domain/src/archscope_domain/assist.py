@@ -179,7 +179,9 @@ _ARCH_SHAPE = {
 }
 
 _PROPOSAL_SHAPE = {
-    "executive_summary": "2-3 sentences: the client's problem, what SonaMation delivers, the outcome",
+    "executive_summary": "2-3 plain-language sentences a non-technical approver reads first: what is being done and the outcome",
+    "exec_key_risks": "1-2 sentences: the main risks to the project",
+    "exec_dependencies": "1-2 sentences: what delivery depends on from the client",
     "problem_statement": "The client's problem and why it matters; lines may start with '- ' for bullets",
     "current_state": "Their systems and process today",
     "solution_overview": "How the requirements will be met in HubSpot; lines may start with '- '",
@@ -197,6 +199,12 @@ _PROPOSAL_SHAPE = {
     "assumptions": ["..."],
     "risks": [{"risk": "", "likelihood": "Low | Medium | High", "impact": "Low | Medium | High", "mitigation": ""}],
     "kpis": [{"type": "Primary | Secondary", "kpi": "", "definition": "", "target": ""}],
+    "client_responsibilities": ["What the client must do or provide"],
+    "vendor_responsibilities": ["What SonaMation commits to"],
+    "data_quality": [
+        {"issue": "A known data problem from the context", "risk_if_not_resolved": "", "owner": "Client | SonaMation"}
+    ],
+    "timeline": [{"phase": "", "start_week": 1, "duration_weeks": 2, "key_deliverables": ""}],
 }
 
 
@@ -268,6 +276,9 @@ def instructions(task: str, current: Any) -> str:
             "risks and KPIs. Scope items must be concrete deliverables with a quantity limit and acceptance "
             "criteria; cite the requirement IDs from CURRENT_PROPOSAL.requirements that each one delivers, and "
             "list common requests that are not included as Out of Scope.\n"
+            "Also propose each party's responsibilities, an indicative timeline in weeks (phases may overlap: "
+            "start_week is the week a phase begins, from 1), and data_quality rows only for data problems the "
+            "context actually mentions (portal audit findings, duplicates, missing fields, messy source data).\n"
             f"CURRENT_PROPOSAL: {json.dumps(current, ensure_ascii=False)}\n"
             f"Return JSON shaped like: {json.dumps(_PROPOSAL_SHAPE, ensure_ascii=False)}"
         )
@@ -545,7 +556,14 @@ def merge_architecture(current: dict[str, Any], suggested: dict[str, Any]) -> tu
     return merged, added
 
 
-_PROPOSAL_TEXTS = ("executive_summary", "problem_statement", "current_state", "solution_overview")
+_PROPOSAL_TEXTS = (
+    "executive_summary",
+    "exec_key_risks",
+    "exec_dependencies",
+    "problem_statement",
+    "current_state",
+    "solution_overview",
+)
 _LEVELS = {"low": "Low", "medium": "Medium", "high": "High"}
 
 
@@ -648,6 +666,52 @@ def merge_proposal(proposal: dict[str, Any], suggested: dict[str, Any]) -> tuple
                 ),
             ),
             ("Item",),
+        ),
+        "client_responsibilities": (
+            rows(
+                "client_responsibilities",
+                lambda r: {"Responsibility": _clean(r.get("value"))} if _clean(r.get("value")) else None,
+            ),
+            ("Responsibility",),
+        ),
+        "vendor_responsibilities": (
+            rows(
+                "vendor_responsibilities",
+                lambda r: {"Responsibility": _clean(r.get("value"))} if _clean(r.get("value")) else None,
+            ),
+            ("Responsibility",),
+        ),
+        "data_quality": (
+            rows(
+                "data_quality",
+                lambda d: (
+                    {
+                        "Issue": _clean(d.get("issue")),
+                        "Risk if Not Resolved": _clean(d.get("risk_if_not_resolved")),
+                        "Owner": _choice(d.get("owner"), pp.DATA_QUALITY_OWNERS, "Client"),
+                    }
+                    if _clean(d.get("issue"))
+                    else None
+                ),
+            ),
+            ("Issue",),
+        ),
+        "timeline": (
+            rows(
+                "timeline",
+                lambda t: (
+                    {
+                        **pp.BLANK_ROWS["timeline"],
+                        "Phase / Milestone": _clean(t.get("phase")),
+                        "Start Week": max(0.0, pp.to_float(t.get("start_week"))),
+                        "Duration (Weeks)": max(0.0, pp.to_float(t.get("duration_weeks"))),
+                        "Key Deliverables": _clean(t.get("key_deliverables")),
+                    }
+                    if _clean(t.get("phase"))
+                    else None
+                ),
+            ),
+            ("Phase / Milestone",),
         ),
     }
     for key, (new_rows, columns) in tables.items():

@@ -8,8 +8,19 @@ from typing import Annotated
 from fastapi import APIRouter, Query, Request, Response
 
 from ...persistence.models import Project as ProjectRow
+from ...schemas.insights import (
+    ActivityItem,
+    Completion,
+    Contributor,
+    DashboardPerson,
+    PortalHealth,
+    ProjectDashboard,
+    ProjectInsight,
+    StageDocuments,
+    Workstream,
+)
 from ...schemas.workspace import Document, ModuleState, ModuleStateSave, Person, Project, ProjectCreate, ProjectUpdate
-from ...services import projects
+from ...services import project_insights, projects
 from ...services.auth import Principal
 from ...services.errors import Conflict
 from ..deps import BlobStoreDep, DbDep, PrincipalDep, offload
@@ -44,12 +55,91 @@ def list_projects(principal: PrincipalDep, db: DbDep, include_archived: bool = F
     return [_project(s, principal) for s in projects.list_projects(db, principal, include_archived=include_archived)]
 
 
+def _insight(pid: str, i: project_insights.Insight) -> ProjectInsight:
+    return ProjectInsight(
+        project_id=pid,
+        stage=i.stage,
+        progress=i.progress,
+        tools_started=i.tools_started,
+        tools_total=i.tools_total,
+        open_tasks=i.open_tasks,
+        health=PortalHealth.model_validate(i.health),
+    )
+
+
+@router.get(
+    "/insights",
+    response_model=list[ProjectInsight],
+    summary="Where each project stands: stage, progress, portal health, open tasks",
+)
+def list_insights(principal: PrincipalDep, db: DbDep) -> list[ProjectInsight]:
+    return [_insight(pid, i) for pid, i in project_insights.workspace_insights(db, principal.workspace_id).items()]
+
+
 @router.post("", response_model=Project, status_code=201, summary="Create a project")
 def create_project(body: ProjectCreate, principal: PrincipalDep, db: DbDep) -> Project:
     project = projects.create_project(
         db, principal, name=body.name, client_name=body.client_name, folder=body.folder, lead_user_id=body.lead_user_id
     )
     return _one(db, principal, project)
+
+
+@router.get("/{project_id}/dashboard", response_model=ProjectDashboard, summary="Everything the project dashboard shows")
+def get_dashboard(project_id: str, principal: PrincipalDep, db: DbDep) -> ProjectDashboard:
+    project = projects.get_project(db, principal, project_id)
+    d = project_insights.dashboard(db, principal.workspace_id, project)
+    ids = (
+        {c.user_id for c in d.contributors}
+        | {w.owner_id for w in d.workstreams}
+        | {a.by for a in d.activity if a.kind in ("document", "edit")}
+    )
+    people = projects.people(db, ids)
+    roles = projects.roles(db, principal.workspace_id)
+
+    def name(uid: str) -> str:
+        return people[uid].name if uid in people else "Former member"
+
+    def crew(w: project_insights.Workstream) -> list[DashboardPerson]:
+        out = [DashboardPerson(id=w.owner_id, name=name(w.owner_id))] if w.owner_id else []
+        return out + [DashboardPerson(name=n) for n in w.people if not any(p.name == n for p in out)]
+
+    contributors = [
+        Contributor(
+            id=c.user_id,
+            name=name(c.user_id),
+            role="In charge" if c.in_charge else roles.get(c.user_id, "member").capitalize(),
+            documents=c.documents,
+            edits=c.edits,
+        )
+        for c in d.contributors
+    ]
+    team = sorted(contributors, key=lambda c: c.role != "In charge")
+    return ProjectDashboard(
+        project_id=project.id,
+        insight=_insight(project.id, d.insight),
+        continue_page=d.continue_page,
+        continue_label=d.continue_label,
+        team=[DashboardPerson(id=c.id, name=c.name) for c in team],
+        workstreams=[Workstream(stage=w.stage, title=w.title, people=crew(w), done=w.done, total=w.total) for w in d.workstreams],
+        completion=Completion.model_validate(d.completion),
+        documents_by_stage=[
+            StageDocuments(
+                stage=s.stage, generated=s.generated, outstanding=s.outstanding, outstanding_names=list(s.deliverables)
+            )
+            for s in d.documents_by_stage
+        ],
+        contributors=contributors,
+        activity=[
+            ActivityItem(
+                kind=a.kind,
+                title=a.title,
+                at=project_insights.iso(a.at),
+                by=(name(a.by) if a.by else None) if a.kind in ("document", "edit") else a.by,
+            )
+            for a in d.activity
+        ],
+        documents=d.documents,
+    )
 
 
 @router.get("/{project_id}", response_model=Project, summary="One project")

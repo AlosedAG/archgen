@@ -29,6 +29,8 @@ export type LibraryDocument = Schemas["Document"];
 export type SecretStatus = Schemas["SecretStatus"];
 export type PlannedStage = Schemas["PlannedStage"];
 export type StagePlannerImport = Schemas["StagePlannerImport"];
+export type ProjectInsight = Schemas["ProjectInsight"];
+export type ProjectDashboard = Schemas["ProjectDashboard"];
 export type HubzyTopic = Schemas["HubzyTopic"];
 export type HubzyTopicIn = Schemas["HubzyTopicIn"];
 
@@ -149,6 +151,10 @@ export const confirmPasswordReset = (email: string, code: string, password: stri
 
 export const listProjects = (includeArchived = false) =>
   json<Project[]>(`/projects${includeArchived ? "?include_archived=true" : ""}`);
+/** Where each project stands: stage, scoping progress, portal health, open tasks. */
+export const listProjectInsights = () => json<ProjectInsight[]>("/projects/insights");
+/** Everything a project's dashboard shows, derived from its saved work. */
+export const getProjectDashboard = (projectId: string) => json<ProjectDashboard>(`/projects/${projectId}/dashboard`);
 export const createProject = (name: string, extra: { client_name?: string; folder?: string; lead_user_id?: string | null } = {}) =>
   post<Project>("/projects", { name, client_name: "", ...extra });
 export const getProject = (id: string) => json<Project>(`/projects/${id}`);
@@ -337,6 +343,17 @@ export const addLibraryAddons = (proposal: ProposalDocument, services: string[])
 export const draftScopeFromRequirements = (proposal: ProposalDocument) =>
   post<ProposalDocument>("/proposals/scope/from-requirements", { proposal });
 export const proposalTemplate = (proposal: ProposalDocument) => post<ProposalDocument>("/proposals/template", { proposal });
+export type LibraryClause = Schemas["LibraryClause"];
+export type LibraryClauseIn = Schemas["LibraryClauseIn"];
+/** The firm's standard SOW clauses (seeded with placeholder templates on first use). */
+export const listSowClauses = () => json<LibraryClause[]>("/proposals/clauses");
+/** Replace the firm's standard clauses (admins only). */
+export const saveSowClauses = (clauses: LibraryClauseIn[]) =>
+  json<LibraryClause[]>("/proposals/clauses", { method: "PUT", body: JSON.stringify({ clauses }) });
+export type ProposalPrefillPart = Schemas["PrefillRequest"]["parts"][number];
+/** Fill sections from earlier steps: responsibilities from scope, schedule from methodology, data issues from audit findings. */
+export const prefillProposal = (proposal: ProposalDocument, parts: ProposalPrefillPart[], findings: Record<string, unknown>[] = []) =>
+  post<ProposalDocument>("/proposals/prefill", { proposal, parts, findings });
 // Shared templates: a filled-in proposal saved (client details cleared) for similar clients.
 export type ProposalTemplateSummary = Schemas["ProposalTemplateSummary"];
 export const listProposalTemplates = () => json<ProposalTemplateSummary[]>("/proposals/templates");

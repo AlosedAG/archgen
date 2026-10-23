@@ -59,6 +59,19 @@ export const GUIDE_PAGES: GuidePage[] = [
     ],
   },
   {
+    key: "clauses",
+    title: "SOW Clause Library",
+    step: "Start here",
+    summary: "The firm's standard SOW terms, copied into every new Proposal & SOW. Admins only; have your legal team review them.",
+    steps: [
+      "Each clause is a placeholder template, not legal advice: have your firm's counsel review and approve the text before it's used.",
+      "Write what each SOW must fill in as [[a blank]], e.g. [[liability cap]] or [[governing state]]. A SOW can't be marked ready to send while a switched-on clause still has one.",
+      "{{client}}, {{seller}}, {{valid_until}} and {{effective_date}} fill in from each SOW automatically.",
+      "\"Included in new SOWs\" decides whether a clause starts switched on. Each SOW can still switch clauses on or off and edit them in its Terms tab.",
+      "Existing SOWs keep their copy; they can pull in clauses added here with \"Add the firm's missing clauses\".",
+    ],
+  },
+  {
     key: "account",
     title: "Profile & account",
     step: "Account",

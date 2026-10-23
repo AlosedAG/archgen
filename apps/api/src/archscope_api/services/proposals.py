@@ -18,6 +18,10 @@ class ProposalAnalysis:
     coverage: list[dict[str, str]]
     scope_by_status: dict[str, list[dict[str, Any]]]
     warnings: list[str]
+    readiness: list[str]
+    is_migration: bool
+    migration_items: list[str]
+    timeline: dict[str, Any]
 
 
 def default_proposal() -> Proposal:
@@ -32,7 +36,24 @@ def analyse(proposal: Proposal) -> ProposalAnalysis:
         coverage=dp.requirement_coverage(proposal),
         scope_by_status=dp.scope_by_status(proposal),
         warnings=dp.validate(proposal),
+        readiness=dp.readiness_issues(proposal),
+        is_migration=dp.is_migration(proposal),
+        migration_items=dp.migration_scope_items(proposal),
+        timeline=dp.timeline_chart(proposal),
     )
+
+
+def prefill(proposal: Proposal, parts: list[str], findings: list[dict[str, Any]]) -> Proposal:
+    """Fill sections from earlier steps: client responsibilities from the
+    scope, the schedule from the methodology, data-quality issues from the
+    portal audit's findings."""
+    if "responsibilities" in parts:
+        proposal = dp.responsibilities_from_scope(proposal)
+    if "timeline" in parts:
+        proposal = dp.timeline_from_methodology(proposal)
+    if "data_quality" in parts:
+        proposal = dp.data_quality_from_findings(proposal, findings)
+    return proposal
 
 
 def import_wrd(proposal: Proposal, wrd: dict[str, list[dict[str, str]]]) -> Proposal:
