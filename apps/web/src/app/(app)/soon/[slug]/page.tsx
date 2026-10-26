@@ -7,7 +7,7 @@ import { useParams } from "next/navigation";
 
 import { NavIcon } from "@/components/NavIcons";
 import { PageHeader } from "@/components/PageHeader";
-import { NAV, SOON_COPY, itemsOf } from "@/lib/nav";
+import { NAV, itemsOf } from "@/lib/nav";
 
 export default function ComingSoonPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -29,7 +29,7 @@ export default function ComingSoonPage() {
             <NavIcon name={item?.icon ?? "hammer"} size={26} />
           </span>
           <h2 className="t-card-title">{title} is coming soon</h2>
-          <p className="t-description">{SOON_COPY[slug] ?? "This part of The Hub Zone is still being built."}</p>
+          <p className="t-description">This part of The Hub Zone is still being built.</p>
           <Link href="/projects" className="btn btn-secondary" style={{ width: "fit-content" }}>
             Back to projects
           </Link>

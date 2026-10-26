@@ -79,9 +79,9 @@ export const NAV: NavSection[] = [
           { label: "Projects", icon: "grid", href: "/projects" },
           { label: "Tasks", icon: "check", page: "tasks" },
           { label: "Project Library", icon: "files", page: "library" },
-          { label: "Dashboard", icon: "layout", soon: "implementation-dashboard" },
-          { label: "Schedule", icon: "cal", soon: "schedule" },
-          { label: "Review & Feedback", icon: "chat", soon: "review-feedback" },
+          { label: "Dashboard", icon: "layout", href: "/tools/implementation-dashboard" },
+          { label: "Schedule", icon: "cal", href: "/tools/schedule" },
+          { label: "Review & Feedback", icon: "chat", href: "/tools/review-feedback" },
         ],
       },
     ],
@@ -94,10 +94,10 @@ export const NAV: NavSection[] = [
       {
         label: "",
         items: [
-          { label: "Database", icon: "db", soon: "database" },
-          { label: "Data Documentation", icon: "files", soon: "data-documentation" },
-          { label: "AI Guide", icon: "spark", soon: "ai-guide" },
-          { label: "Management", icon: "sliders", soon: "data-management" },
+          { label: "Database", icon: "db", href: "/tools/database" },
+          { label: "Data Documentation", icon: "files", href: "/tools/data-documentation" },
+          { label: "AI Guide", icon: "spark", href: "/tools/ai-guide" },
+          { label: "Management", icon: "sliders", href: "/tools/data-management" },
         ],
       },
     ],
@@ -110,9 +110,9 @@ export const NAV: NavSection[] = [
       {
         label: "",
         items: [
-          { label: "Customer Success", icon: "heart", soon: "customer-success" },
-          { label: "Knowledge Base", icon: "book", soon: "knowledge-base" },
-          { label: "Subscriptions & Memberships", icon: "card", soon: "subscriptions" },
+          { label: "Customer Success", icon: "heart", href: "/tools/customer-success" },
+          { label: "Knowledge Base", icon: "book", href: "/tools/knowledge-base" },
+          { label: "Subscriptions & Memberships", icon: "card", href: "/tools/subscriptions" },
         ],
       },
     ],
@@ -125,10 +125,10 @@ export const NAV: NavSection[] = [
       {
         label: "",
         items: [
-          { label: "Marketing Dashboard", icon: "layout", soon: "marketing-dashboard" },
-          { label: "Leads", icon: "userplus", soon: "leads" },
-          { label: "Studio", icon: "wand", soon: "studio" },
-          { label: "Social", icon: "share", soon: "social" },
+          { label: "Marketing Dashboard", icon: "layout", href: "/tools/marketing-dashboard" },
+          { label: "Leads", icon: "userplus", href: "/tools/leads" },
+          { label: "Studio", icon: "wand", href: "/tools/studio" },
+          { label: "Social", icon: "share", href: "/tools/social" },
         ],
       },
     ],
@@ -142,9 +142,9 @@ export const NAV: NavSection[] = [
         label: "",
         items: [
           { label: "API Keys", icon: "key", href: "/settings" },
-          { label: "Integrations", icon: "plug", soon: "integrations" },
-          { label: "Webhooks", icon: "share", soon: "webhooks" },
-          { label: "Logs", icon: "term", soon: "logs" },
+          { label: "Integrations", icon: "plug", href: "/tools/integrations" },
+          { label: "Webhooks", icon: "share", href: "/tools/webhooks" },
+          { label: "Logs", icon: "term", href: "/tools/logs" },
         ],
       },
     ],
@@ -168,27 +168,6 @@ export const HELP: NavSection = {
       ],
     },
   ],
-};
-
-/** Copy for each "Coming soon" page, keyed by the item's `soon` slug. */
-export const SOON_COPY: Record<string, string> = {
-  "implementation-dashboard": "One view of every implementation: progress, blockers and what's due next.",
-  schedule: "A calendar of every project's milestones and sessions.",
-  "review-feedback": "Collect client reviews and sign-offs on deliverables in one place.",
-  database: "Browse the HubSpot objects and records captured in your read-only snapshots.",
-  "data-documentation": "A living data dictionary for each portal's objects, properties and associations.",
-  "ai-guide": "Ask questions about a portal's data model and get guided answers.",
-  "data-management": "Track data-quality issues and clean-up plans across portals.",
-  "customer-success": "Health scores, renewals and success plans for each client.",
-  "knowledge-base": "Your team's reusable articles, playbooks and how-tos.",
-  subscriptions: "Manage client retainers, subscriptions and memberships.",
-  "marketing-dashboard": "Marketing performance across your clients at a glance.",
-  leads: "Lead sources, routing and qualification for your pipeline.",
-  studio: "Draft campaign assets and content with AI.",
-  social: "Plan and review social content.",
-  integrations: "Connect the other tools your clients use, alongside HubSpot.",
-  webhooks: "Get notified in other tools when something changes here.",
-  logs: "A record of API calls and background jobs.",
 };
 
 const ALL: NavSection[] = [...NAV, HELP];

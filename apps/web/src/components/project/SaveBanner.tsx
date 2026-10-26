@@ -8,8 +8,11 @@ import { Callout } from "../ui";
 
 export function SaveBanner({
   store,
+  scope = "this project",
 }: {
   store: { status: SaveStatus; error: string | null; savedAt: Date | null; reload: () => Promise<void> | void };
+  /** Where the changes are saved, e.g. "your workspace". */
+  scope?: string;
 }) {
   if (store.status === "conflict") {
     return (
@@ -29,8 +32,8 @@ export function SaveBanner({
       : store.status === "error"
         ? `Couldn't save — retrying on your next change. ${store.error ?? ""}`
         : store.savedAt
-          ? `Saved to this project · ${store.savedAt.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}`
-          : "Changes save to this project automatically";
+          ? `Saved to ${scope} · ${store.savedAt.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}`
+          : `Changes save to ${scope} automatically`;
   return (
     <span className="save-indicator" role="status" aria-live="polite">
       <span className="save-dot" data-state={store.status} />

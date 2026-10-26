@@ -218,6 +218,10 @@ export const getModuleState = (projectId: string, module: string) =>
   json<ModuleState>(`/projects/${projectId}/state/${module}`);
 export const saveModuleState = (projectId: string, module: string, data: object, version: number) =>
   json<ModuleState>(`/projects/${projectId}/state/${module}`, { method: "PUT", body: JSON.stringify({ data, version }) });
+// Workspace-wide tools (not tied to a project): same versioned save as module state.
+export const getWorkspaceState = (module: string) => json<ModuleState>(`/workspace/state/${module}`);
+export const saveWorkspaceState = (module: string, data: object, version: number) =>
+  json<ModuleState>(`/workspace/state/${module}`, { method: "PUT", body: JSON.stringify({ data, version }) });
 
 export const listDocuments = (projectId: string) => json<LibraryDocument[]>(`/projects/${projectId}/documents`);
 export async function deleteDocument(projectId: string, documentId: string): Promise<void> {

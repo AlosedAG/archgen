@@ -14,7 +14,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { ApiError, getModuleState, saveModuleState } from "./api";
+import { ApiError, getModuleState, getWorkspaceState, saveModuleState, saveWorkspaceState } from "./api";
 
 export type SaveStatus = "loading" | "saved" | "saving" | "error" | "conflict";
 
@@ -25,6 +25,8 @@ export function useModuleState<T extends object>(
   module: string,
   /** Turn stored data (or null when nothing is saved yet) into a full state. */
   normalize: (raw: unknown) => T,
+  /** A workspace-wide tool's state instead of a project's (projectId is ignored). */
+  { workspace = false }: { workspace?: boolean } = {},
 ) {
   const [state, setState] = useState<T>(() => normalize(null));
   const [loaded, setLoaded] = useState(false);
@@ -49,7 +51,7 @@ export function useModuleState<T extends object>(
     setStatus("loading");
     setError(null);
     try {
-      const saved = await getModuleState(projectId, module);
+      const saved = await (workspace ? getWorkspaceState(module) : getModuleState(projectId, module));
       setVersion(saved.version ?? 0);
       setState(normalizeRef.current(saved.data && Object.keys(saved.data).length ? saved.data : null));
       setSavedAt(saved.updated_at ? new Date(saved.updated_at) : null);
@@ -60,7 +62,7 @@ export function useModuleState<T extends object>(
       setError(e instanceof ApiError ? e.message : "Couldn't load this project's data.");
       setStatus("error");
     }
-  }, [projectId, module]);
+  }, [projectId, module, workspace]);
 
   useEffect(() => {
     void load();
@@ -72,7 +74,9 @@ export function useModuleState<T extends object>(
     dirty.current = false;
     setStatus("saving");
     try {
-      const saved = await saveModuleState(projectId, module, latest.current, versionRef.current);
+      const saved = await (workspace
+        ? saveWorkspaceState(module, latest.current, versionRef.current)
+        : saveModuleState(projectId, module, latest.current, versionRef.current));
       setVersion(saved.version ?? versionRef.current + 1);
       setSavedAt(new Date());
       setStatus(dirty.current ? "saving" : "saved");
@@ -91,7 +95,7 @@ export function useModuleState<T extends object>(
     }
     saving.current = false;
     if (dirty.current) void flush();
-  }, [projectId, module]);
+  }, [projectId, module, workspace]);
 
   useEffect(() => {
     if (!loaded || status === "conflict" || !dirty.current) return;
