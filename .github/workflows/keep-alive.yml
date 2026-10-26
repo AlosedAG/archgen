@@ -1,0 +1,35 @@
+# Keeps the free Render services awake during working hours. A free service
+# sleeps after ~15 idle minutes and takes a minute or more to wake; this pings
+# the web app's /healthz (which passes through to the API, so one request
+# wakes both) every 10 minutes, and retries until both answer.
+#
+# Window: 7:00-17:59 Mexico City (UTC-6) = 13:00-23:59 UTC, every day. Two
+# services awake 11 h/day use ~680 of Render's 750 free instance hours a
+# month; a wider window runs out of hours. GitHub may start scheduled runs a
+# few minutes late.
+name: Keep Render awake
+
+on:
+  schedule:
+    - cron: "*/10 13-23 * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Wake and check the web app and API
+        run: |
+          for url in https://archscope-web.onrender.com/healthz https://archscope-api.onrender.com/healthz; do
+            for attempt in $(seq 1 15); do
+              code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 60 "$url" || true)
+              echo "$url attempt $attempt: HTTP $code"
+              if [ "$code" = "200" ]; then break; fi
+              sleep 20
+            done
+            if [ "$code" != "200" ]; then
+              echo "::error::$url did not come up after 15 attempts"
+              exit 1
+            fi
+          done
