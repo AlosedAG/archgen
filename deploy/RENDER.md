@@ -95,14 +95,20 @@ by hand, turn off **Auto-Deploy** in each service's settings and use
 ## Limits
 
 - **Sleeps when idle.** After about 15 minutes with no visits, each service
-  shuts down. The next visit wakes it in about a minute. Warn testers that
-  the first page can be slow.
+  shuts down. The next visit wakes it in about a minute (the web app, then
+  the API it calls). The **Keep Render awake** GitHub workflow
+  (`.github/workflows/keep-alive.yml`) pings `https://<web>/healthz` every
+  10 minutes from 7:00 to 17:59 Mexico City time, which wakes and keeps both
+  services up, and retries until they answer. Change its schedule there; run
+  it by hand from the repository's Actions tab.
 - **No email.** No sign-up codes, password-reset emails or Feedback-button
   emails (see step 6). Paid Render instances allow ports 465/587, and so does
   the Cloud Run setup.
 - **Free hours.** Render's free plan includes a monthly allowance of
-  instance hours shared by all free services. Both services sleeping when
-  idle keeps light testing well inside it.
+  instance hours (750) shared by all free services. Keeping both services
+  awake 11 hours a day uses about 680 a month; widening the keep-alive window
+  much further runs out of hours, and Render then suspends the services until
+  the next month.
 - **Neon free storage** is a fraction of a GB. Library files are stored in
   the database, so large uploads use it up faster.
 

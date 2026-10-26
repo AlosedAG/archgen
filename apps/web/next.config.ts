@@ -56,7 +56,12 @@ const nextConfig: NextConfig = {
     proxyTimeout: 300_000,
   },
   async rewrites() {
-    return [{ source: "/api/:path*", destination: `${API_URL}/api/:path*` }];
+    return [
+      { source: "/api/:path*", destination: `${API_URL}/api/:path*` },
+      // One small health check for both services: hitting it wakes this app
+      // and, through it, the API (what the keep-alive job pings).
+      { source: "/healthz", destination: `${API_URL}/healthz` },
+    ];
   },
   async headers() {
     return [{ source: "/:path*", headers: SECURITY_HEADERS }];
