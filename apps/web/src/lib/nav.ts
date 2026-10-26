@@ -96,6 +96,7 @@ export const NAV: NavSection[] = [
         items: [
           { label: "Database", icon: "db", href: "/tools/database" },
           { label: "Data Documentation", icon: "files", href: "/tools/data-documentation" },
+          { label: "Data Migration", icon: "upload", href: "/tools/data-migration" },
           { label: "AI Guide", icon: "spark", href: "/tools/ai-guide" },
           { label: "Management", icon: "sliders", href: "/tools/data-management" },
         ],

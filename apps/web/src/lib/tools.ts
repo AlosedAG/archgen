@@ -20,7 +20,7 @@ export type Tool = {
   icon: NavIconName;
   description: string;
   /** Read-only pages over real project data, with their own component. */
-  dataPage?: "implementation-dashboard" | "database" | "data-documentation";
+  dataPage?: "implementation-dashboard" | "database" | "data-documentation" | "data-migration";
   columns?: Column[];
   /** Singular name for the "+ Add …" button. */
   noun?: string;
@@ -112,6 +112,15 @@ export const TOOLS: Tool[] = [
     icon: "files",
     description: "A data dictionary for each portal: every property of an object with its label, internal name, type and group.",
     dataPage: "data-documentation",
+  },
+  {
+    slug: "data-migration",
+    title: "Data Migration",
+    section: "Data",
+    icon: "upload",
+    description:
+      "Clean a client's CSV or Excel export for a HubSpot import: pick each column's format, and get back a CSV that imports without errors.",
+    dataPage: "data-migration",
   },
   {
     slug: "ai-guide",

@@ -4707,6 +4707,112 @@ textarea {
   color: #fff;
 }
 
+/* ---- Data Migration (tools/DataMigration.tsx) ---------------------------------- */
+.dm-drop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  padding: 22px;
+  border: 2px dashed var(--line-strong);
+  border-radius: var(--radius-card);
+  background: var(--field);
+  color: var(--muted);
+  transition: border-color var(--motion-fast) ease, background var(--motion-fast) ease;
+}
+
+.dm-drop > div {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 220px;
+}
+
+.dm-drop b {
+  color: var(--ink);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.dm-drop-over {
+  border-color: var(--indigo);
+  background: var(--indigo-tint);
+}
+
+.dm-columns {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dm-col {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.2fr) minmax(160px, 1fr) minmax(200px, 1.2fr) minmax(150px, 0.8fr);
+  align-items: start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+}
+
+.dm-col-skip {
+  background: var(--field);
+  opacity: 0.75;
+}
+
+.dm-col-main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.dm-col-source {
+  overflow: hidden;
+  color: var(--ink);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dm-col-samples {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dm-col-result {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding-top: 22px;
+}
+
+.dm-col-options {
+  grid-column: 1 / -1;
+}
+
+.dm-changed {
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--status-review);
+  color: var(--review-text);
+}
+
+@media (max-width: 900px) {
+  .dm-col {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dm-col-result {
+    padding-top: 0;
+  }
+}
+
 /* ---- SOW clauses (builder Terms tab and the admin library) -------------------- */
 .visually-hidden {
   position: absolute;

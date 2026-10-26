@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 
 import { PageHeader } from "@/components/PageHeader";
 import { ImplementationDashboard } from "@/components/tools/ImplementationDashboard";
+import { DataMigration } from "@/components/tools/DataMigration";
 import { DataDocumentationTool, DatabaseTool } from "@/components/tools/PortalData";
 import { TrackerTool } from "@/components/tools/TrackerTool";
 import { Callout } from "@/components/ui";
@@ -41,6 +42,8 @@ export default function ToolPage() {
           <DatabaseTool />
         ) : tool.dataPage === "data-documentation" ? (
           <DataDocumentationTool />
+        ) : tool.dataPage === "data-migration" ? (
+          <DataMigration />
         ) : (
           <TrackerTool key={tool.slug} tool={tool} />
         )}
