@@ -10,6 +10,8 @@ services:
   - type: web
     name: archscope-api
     runtime: docker
+    # Free: sleeps after ~15 idle minutes (the keep-alive workflow wakes it in
+    # working hours). Change to `starter` ($7/month) so it never sleeps.
     plan: free
     region: oregon
     dockerfilePath: ./Dockerfile
@@ -38,7 +40,8 @@ services:
   - type: web
     name: archscope-web
     runtime: docker
-    plan: free
+    # Paid (0.5 CPU / 512 MB, $7/month): never sleeps.
+    plan: starter
     region: oregon
     dockerfilePath: ./apps/web/Dockerfile
     dockerContext: ./apps/web
