@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { useAppSession } from "@/components/AppSession";
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 import { NavIcon, type NavIconName } from "@/components/NavIcons";
 import { PageHeader } from "@/components/PageHeader";
 import { Glyph } from "@/components/icons";
@@ -219,10 +220,10 @@ function ProjectCard({
   return (
     <motion.div
       layout
-      className={`project-card${mode === "view" ? " proj" : ""}`}
+      className={`project-card${mode !== "edit" ? " proj" : ""}`}
       variants={fadeInUp}
       exit={{ opacity: 0, scale: 0.98, transition: tween.fast }}
-      whileHover={mode === "view" ? lift : undefined}
+      whileHover={mode !== "edit" ? lift : undefined}
       transition={{ layout: springs.snappy }}
     >
       {mode === "edit" ? (
@@ -330,39 +331,49 @@ function ProjectCard({
               {project.last_edited_by ? ` by ${project.last_edited_by.name}` : ""}
             </span>
           </div>
-          {mode === "delete" ? (
-            <div className="project-confirm" role="alert">
-              <span>
-                Delete <b>{title}</b>
-                {project.document_count ? ` and its ${project.document_count} saved document${project.document_count === 1 ? "" : "s"}` : ""}? This can&apos;t be undone.
-              </span>
-              <div className="row">
-                <button type="button" className="btn btn-danger" disabled={busy} onClick={() => void remove()}>
-                  {busy ? "Deleting…" : "Delete project"}
-                </button>
-                <button type="button" className="btn-link" disabled={busy} onClick={() => setMode("view")}>
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="project-actions">
-              <Link href={href} className="btn-link" tabIndex={-1} onClick={(e) => e.stopPropagation()}>
-                Open
-              </Link>
-              <button type="button" className="btn-link" onClick={own(startEdit)}>
-                Edit
+          <div className="project-actions">
+            <Link href={href} className="btn-link" tabIndex={-1} onClick={(e) => e.stopPropagation()}>
+              Open
+            </Link>
+            <button type="button" className="btn-link" onClick={own(startEdit)}>
+              Edit
+            </button>
+            {project.can_delete && (
+              <button
+                type="button"
+                className="btn-link btn-link-danger"
+                onClick={own(() => {
+                  setError(null);
+                  setMode("delete");
+                })}
+              >
+                Delete
               </button>
-              {project.can_delete && (
-                <button type="button" className="btn-link btn-link-danger" onClick={own(() => setMode("delete"))}>
-                  Delete
-                </button>
-              )}
-            </div>
-          )}
+            )}
+          </div>
+          <ConfirmDeleteDialog
+            open={mode === "delete"}
+            name={title}
+            what="project"
+            details={
+              <>
+                {project.document_count
+                  ? `The project, its saved work in every module and its ${project.document_count} saved document${project.document_count === 1 ? "" : "s"}`
+                  : "The project and its saved work in every module"}{" "}
+                will be deleted for everyone in the workspace.
+              </>
+            }
+            busy={busy}
+            error={error}
+            onConfirm={() => void remove()}
+            onCancel={() => {
+              setMode("view");
+              setError(null);
+            }}
+          />
         </>
       )}
-      {error && (
+      {error && mode !== "delete" && (
         <Callout tone="error" title="That didn't work">
           {error}
         </Callout>
