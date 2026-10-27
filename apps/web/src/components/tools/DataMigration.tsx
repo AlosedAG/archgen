@@ -3,15 +3,20 @@
 /**
  * Data Migration: one page to turn a client's export into a CSV HubSpot
  * imports cleanly. 1) Drop a .csv or .xlsx file; 2) each column's HubSpot
- * format is suggested and can be changed (and renamed); 3) the cleaned file
- * and a report of every fix and every value left blank update as you go,
- * ready to download. All processing happens in the browser (lib/data-cleaner),
- * so the client's data is never uploaded.
+ * format is suggested and can be changed (and renamed); 3) the values that
+ * need a judgement call are listed once each with a recommended fix, to
+ * accept, replace or ignore (DataReview); 4) records entered more than once
+ * are grouped to merge or keep apart (DataDuplicates); 5) the cleaned file, a
+ * report of every change and a short summary (PDF or Word) update as you go,
+ * ready to download. All processing happens in the browser (lib/data-*), so
+ * the client's data is never uploaded.
  */
 
 import { useDeferredValue, useMemo, useRef, useState } from "react";
 
 import { DataTable } from "@/components/project/DataTable";
+import { DataDuplicates } from "@/components/tools/DataDuplicates";
+import { DataReview } from "@/components/tools/DataReview";
 import { Stats } from "@/components/project/Stats";
 import { NavIcon } from "@/components/NavIcons";
 import { Callout, Checkbox } from "@/components/ui";
@@ -28,6 +33,9 @@ import {
   type FormatId,
   type Table,
 } from "@/lib/data-cleaner";
+import { applyDuplicates, findDuplicates, notesColumns, suggestKeys, type DupDecision } from "@/lib/data-duplicates";
+import { buildReport, reportDocx, reportPdf } from "@/lib/data-report";
+import { findItems, overridesFor, type Decision } from "@/lib/data-review";
 
 type Loaded = { fileName: string; sheets: { name: string; table: Table }[]; sheet: number };
 
@@ -58,16 +66,39 @@ function specsFor(table: Table): ColumnSpec[] {
 
 const stem = (fileName: string) => fileName.replace(/\.[^.]+$/, "");
 
+/** Applies ``changes`` to a decisions map; null removes a decision. */
+function patch<T>(all: Record<string, T>, changes: Record<string, T | null>): Record<string, T> {
+  const next = { ...all };
+  for (const [key, d] of Object.entries(changes)) {
+    if (d) next[key] = d;
+    else delete next[key];
+  }
+  return next;
+}
+
 export function DataMigration() {
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [specs, setSpecs] = useState<ColumnSpec[]>([]);
   const [options, setOptions] = useState<CleanOptions>({ dateOrder: "auto", countryCode: "", removeDuplicates: true });
+  const [decisions, setDecisions] = useState<Record<string, Decision>>({});
+  /** Columns duplicates are matched on; null until changed, which means the suggested ones. */
+  const [dupKeys, setDupKeys] = useState<string[] | null>(null);
+  const [dupDecisions, setDupDecisions] = useState<Record<string, DupDecision>>({});
+  const [reporting, setReporting] = useState<"pdf" | "docx" | null>(null);
+  const [reportError, setReportError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reading, setReading] = useState(false);
   const [dragging, setDragging] = useState(false);
   const input = useRef<HTMLInputElement>(null);
 
   const table = loaded?.sheets[loaded.sheet]?.table ?? null;
+
+  const startOver = () => {
+    setDecisions({});
+    setDupKeys(null);
+    setDupDecisions({});
+    setReportError(null);
+  };
 
   const open = async (file: File | undefined) => {
     if (!file) return;
@@ -79,19 +110,66 @@ export function DataMigration() {
       if (!t || !t.headers.length) throw new Error("That file has no rows to clean.");
       setLoaded(next);
       setSpecs(specsFor(t));
+      startOver();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't read that file.");
     }
     setReading(false);
   };
 
-  // Re-cleaning runs as you change formats; deferred so typing stays smooth on big files.
+  // Re-cleaning runs as you change formats and decide values; deferred so typing stays smooth on big files.
   const deferredSpecs = useDeferredValue(specs);
   const deferredOptions = useDeferredValue(options);
+  const deferredDecisions = useDeferredValue(decisions);
+  const ready = Boolean(table && deferredSpecs.length === table.headers.length);
+  const items = useMemo(() => (table && ready ? findItems(table, deferredSpecs, deferredOptions) : []), [table, ready, deferredSpecs, deferredOptions]);
+  const overrides = useMemo(() => overridesFor(items, deferredDecisions), [items, deferredDecisions]);
   const result = useMemo(
-    () => (table && deferredSpecs.length === table.headers.length ? cleanTable(table, deferredSpecs, deferredOptions) : null),
-    [table, deferredSpecs, deferredOptions],
+    () => (table && ready ? cleanTable(table, deferredSpecs, deferredOptions, overrides) : null),
+    [table, ready, deferredSpecs, deferredOptions, overrides],
   );
+  const pending = items.filter((i) => i.review && !decisions[i.key]).length;
+  const decide = (changes: Record<string, Decision | null>) => setDecisions((all) => patch(all, changes));
+
+  // Duplicates are found on the cleaned values, after the decisions above.
+  const keys = result ? (dupKeys ?? suggestKeys(result)).filter((k) => result.headers.includes(k)) : [];
+  const keysKey = keys.join("\u0001");
+  const groups = useMemo(
+    () => (result && keysKey ? findDuplicates(result, keysKey.split("\u0001").map((k) => result.headers.indexOf(k))) : []),
+    [result, keysKey],
+  );
+  const notes = useMemo(() => (result ? notesColumns(result) : []), [result]);
+  const deferredDupDecisions = useDeferredValue(dupDecisions);
+  const final = useMemo(
+    () => (result ? applyDuplicates(result, groups, deferredDupDecisions, notes) : null),
+    [result, groups, deferredDupDecisions, notes],
+  );
+  const pendingDups = groups.filter((g) => !dupDecisions[g.key]).length;
+
+  const downloadReport = async (format: "pdf" | "docx") => {
+    if (!loaded || !result || !final) return;
+    setReporting(format);
+    setReportError(null);
+    try {
+      const report = buildReport({
+        fileName: loaded.fileName,
+        sheet: loaded.sheets.length > 1 ? loaded.sheets[loaded.sheet]?.name : undefined,
+        rowsIn: result.stats.rowsIn,
+        cleaned: result,
+        final,
+        items,
+        decisions,
+        groups,
+        keys,
+        skipped: specs.filter((s) => s.format === "skip").map((s) => s.name),
+      });
+      const blob = format === "pdf" ? await reportPdf(report) : await reportDocx(report);
+      downloadFile({ blob, filename: `${stem(loaded.fileName)}_cleanup_report.${format}` });
+    } catch {
+      setReportError("Couldn't create the report. Try again, or download the change report (CSV) instead.");
+    }
+    setReporting(null);
+  };
   // Each column's result, by its position in the file (skipped columns have none).
   const reports = new Map<number, NonNullable<typeof result>["columns"][number]>();
   let kept = 0;
@@ -156,6 +234,7 @@ export function DataMigration() {
                 const sheet = Number(e.target.value);
                 setLoaded({ ...loaded, sheet });
                 setSpecs(specsFor(loaded.sheets[sheet]!.table));
+                startOver();
               }}
             >
               {loaded.sheets.map((s, i) => (
@@ -195,7 +274,7 @@ export function DataMigration() {
               </label>
               <div className="field" style={{ justifyContent: "end" }}>
                 <Checkbox checked={options.removeDuplicates} onChange={(on) => setOptions({ ...options, removeDuplicates: on })}>
-                  Remove duplicate rows
+                  Remove rows that are exact copies
                 </Checkbox>
               </div>
             </div>
@@ -256,32 +335,51 @@ export function DataMigration() {
             </ol>
           </section>
 
-          {/* 3 · Results */}
+          {/* 3 · Review */}
+          {ready && <DataReview items={items} decisions={decisions} onDecide={decide} />}
+
+          {/* 4 · Duplicates */}
           {result && (
-            <section className="card stack" style={{ gap: 14 }} aria-labelledby="dm-3">
+            <DataDuplicates
+              result={result}
+              keys={keys}
+              onKeys={(next) => {
+                setDupKeys(next);
+                setDupDecisions({});
+              }}
+              groups={groups}
+              decisions={dupDecisions}
+              onDecide={(changes) => setDupDecisions((all) => patch(all, changes))}
+              notes={notes}
+            />
+          )}
+
+          {/* 5 · Results */}
+          {final && (
+            <section className="card stack" style={{ gap: 14 }} aria-labelledby="dm-5">
               <div className="heading-row" style={{ flexWrap: "wrap" }}>
-                <h2 id="dm-3" className="t-section">
-                  3 · Download the cleaned file
+                <h2 id="dm-5" className="t-section">
+                  5 · Download the cleaned file
                 </h2>
                 <div className="row" style={{ flexWrap: "wrap" }}>
                   <button
                     type="button"
                     className="btn btn-primary"
-                    disabled={!result.headers.length}
-                    onClick={() => downloadFile(textFile(toCsv(result.headers, result.rows), `${stem(loaded!.fileName)}_hubspot.csv`, "text/csv"))}
+                    disabled={!final.headers.length}
+                    onClick={() => downloadFile(textFile(toCsv(final.headers, final.rows), `${stem(loaded!.fileName)}_hubspot.csv`, "text/csv"))}
                   >
                     Download cleaned CSV
                   </button>
                   <button
                     type="button"
                     className="btn btn-secondary"
-                    disabled={!result.issues.length}
+                    disabled={!final.issues.length}
                     onClick={() =>
                       downloadFile(
                         textFile(
                           toCsv(
-                            ["Row in your file", "Column", "Original value", "Cleaned value", "What happened"],
-                            result.issues.map((x) => [String(x.row), x.column, x.original, x.result, x.note]),
+                            ["Row in your file", "Column", "Original value", "Cleaned value", "What happened and why"],
+                            final.issues.map((x) => [String(x.row), x.column, x.original, x.result, x.note]),
                           ),
                           `${stem(loaded!.fileName)}_changes.csv`,
                           "text/csv",
@@ -293,34 +391,62 @@ export function DataMigration() {
                   </button>
                 </div>
               </div>
+              <div className="dm-report">
+                <div className="dm-found">
+                  <b className="dm-cell-strong">Summary report</b>
+                  <span className="t-caption">
+                    A page or two for the client or the team: what was found, what was corrected and what is still to check.
+                  </span>
+                </div>
+                <div className="row" style={{ flexWrap: "wrap" }}>
+                  <button type="button" className="btn btn-secondary" disabled={reporting !== null} onClick={() => void downloadReport("pdf")}>
+                    {reporting === "pdf" ? "Creating…" : "Download PDF"}
+                  </button>
+                  <button type="button" className="btn btn-secondary" disabled={reporting !== null} onClick={() => void downloadReport("docx")}>
+                    {reporting === "docx" ? "Creating…" : "Download Word"}
+                  </button>
+                </div>
+              </div>
+              {reportError && <Callout tone="error" title="The report wasn't created">{reportError}</Callout>}
               <Stats
                 items={[
-                  ["Rows ready to import", result.stats.rowsOut.toLocaleString()],
-                  ["Cells fixed", result.stats.fixed.toLocaleString()],
-                  ["Values left blank", result.stats.blanked.toLocaleString()],
-                  ["Duplicate rows removed", result.stats.duplicates.toLocaleString()],
-                  ["Empty rows removed", result.stats.emptyRows.toLocaleString()],
+                  ["Rows ready to import", final.stats.rowsOut.toLocaleString()],
+                  ["Cells fixed", final.stats.fixed.toLocaleString()],
+                  ["Values left blank", final.stats.blanked.toLocaleString()],
+                  ["Duplicate rows merged or removed", (final.stats.duplicates + final.dups.merged + final.dups.removed).toLocaleString()],
+                  ["Empty rows removed", final.stats.emptyRows.toLocaleString()],
                 ]}
               />
-              {result.stats.blanked > 0 && (
-                <Callout tone="warning" title="Some values couldn't be fixed and were left blank">
-                  HubSpot rejects a row with an invalid value, so these cells are emptied instead; the rest of each row still imports.
-                  Check the change report to fill them in by hand if they matter.
+              {pending > 0 && (
+                <Callout tone="warning" title={`${pending} ${pending === 1 ? "value hasn't" : "values haven't"} been reviewed`}>
+                  They keep their original value in the download, which HubSpot may reject or read wrongly. Review them in step 3, or
+                  accept the recommendations there in one click.
                 </Callout>
               )}
-              <h3 className="t-card-title">Preview (first {Math.min(PREVIEW_ROWS, result.rows.length)} rows; changed cells highlighted)</h3>
+              {pendingDups > 0 && (
+                <Callout tone="warning" title={`${pendingDups} possible ${pendingDups === 1 ? "duplicate hasn't" : "duplicates haven't"} been reviewed`}>
+                  Their rows all stay in the download, so HubSpot would update the same record with each. Decide them in step 4.
+                </Callout>
+              )}
+              {final.stats.blanked > 0 && (
+                <Callout tone="info" title="Some values are left blank">
+                  Placeholders and values HubSpot would reject are emptied, so the rest of each row still imports. The change report
+                  lists every one.
+                </Callout>
+              )}
+              <h3 className="t-card-title">Preview (first {Math.min(PREVIEW_ROWS, final.rows.length)} rows; changed cells highlighted)</h3>
               <DataTable
                 label="Cleaned preview"
                 empty="No rows left after cleaning."
-                columns={result.headers.map((h, k) => ({ key: String(k), label: h, width: "minmax(140px, 1fr)" }))}
-                rows={result.rows.slice(0, PREVIEW_ROWS).map((r, ri) =>
-                  Object.fromEntries(r.map((v, k) => [String(k), result.changed[ri]?.[k] ? <mark className="dm-changed">{v || "(blank)"}</mark> : v])),
+                columns={final.headers.map((h, k) => ({ key: String(k), label: h, width: "minmax(140px, 1fr)" }))}
+                rows={final.rows.slice(0, PREVIEW_ROWS).map((r, ri) =>
+                  Object.fromEntries(r.map((v, k) => [String(k), final.changed[ri]?.[k] ? <mark className="dm-changed">{v || "(blank)"}</mark> : v])),
                 )}
               />
               <h3 className="t-card-title">
                 Changes and problems{" "}
                 <span className="t-caption">
-                  {result.issues.length > ISSUE_ROWS ? `(first ${ISSUE_ROWS} of ${result.issues.length.toLocaleString()}; all are in the report)` : `(${result.issues.length})`}
+                  {final.issues.length > ISSUE_ROWS ? `(first ${ISSUE_ROWS} of ${final.issues.length.toLocaleString()}; all are in the report)` : `(${final.issues.length})`}
                 </span>
               </h3>
               <DataTable
@@ -333,7 +459,7 @@ export function DataMigration() {
                   { key: "result", label: "Cleaned", width: "minmax(160px, 1.3fr)" },
                   { key: "note", label: "What happened", width: "minmax(200px, 1.6fr)" },
                 ]}
-                rows={result.issues.slice(0, ISSUE_ROWS).map((x) => ({ ...x, row: x.row, result: x.result || "(blank)" }))}
+                rows={final.issues.slice(0, ISSUE_ROWS).map((x) => ({ ...x, row: x.row, result: x.result || "(blank)" }))}
               />
             </section>
           )}

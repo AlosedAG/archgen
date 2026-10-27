@@ -81,6 +81,8 @@ export type CleanResult = {
   rows: string[][];
   /** For each output row, which cells changed (same shape as rows). */
   changed: boolean[][];
+  /** For each output row, its row number in the file (the header is row 1). */
+  sources: number[];
   columns: ColumnReport[];
   issues: Issue[];
   stats: { rowsIn: number; rowsOut: number; emptyRows: number; duplicates: number; fixed: number; blanked: number };
@@ -168,11 +170,13 @@ const NULLS = new Set([
   "email@email.com", "correo@correo.com", "xxx", "xxxx", "aaa",
 ]);
 
-const isPlaceholder = (v: string) => NULLS.has(v.trim().toLowerCase());
+export const isPlaceholder = (v: string) => NULLS.has(v.trim().toLowerCase());
 
 // ---- Format suggestions ---------------------------------------------------------------------
 
 const has = (header: string, ...words: string[]) => words.some((w) => header.includes(w));
+/** A word in the header that starts with one of ``words``: "count" in "Guest Count", not in "Account". */
+const hasWord = (header: string, ...words: string[]) => words.some((w) => new RegExp(`(^|[^\\p{L}])${w}`, "u").test(header));
 
 /** The format a column most likely needs, from its header and up to 200 of its values. */
 export function suggestFormat(header: string, values: string[]): FormatId {
@@ -191,7 +195,9 @@ export function suggestFormat(header: string, values: string[]): FormatId {
   if (share((v) => parseDate(v, "auto") !== null && /[/\-.]/.test(v)) > 0.8) return "date";
   if (share((v) => /^(true|false|yes|no|y|n|s[ií]|0|1)$/i.test(v)) > 0.9 && new Set(sample.map((v) => v.toLowerCase())).size <= 4)
     return "boolean";
-  if (has(h, "amount", "revenue", "price", "total", "count", "number of", "employees", "monto", "precio", "cantidad", "ingresos"))
+  // Invoice numbers, IDs and codes are text even when they look like numbers.
+  if (has(h, "invoice", "folio", " no", "no.", " id", "sku", "zip", "postal", "code", "código")) return "text";
+  if (hasWord(h, "amount", "revenue", "price", "total", "count", "number of", "employees", "monto", "precio", "cantidad", "ingresos"))
     return "number";
   if (share((v) => /^[\s$€£(+-]*[\d.,]+\s*%?\)?$/.test(v)) > 0.8 && !has(h, "zip", "postal", "id", "code", "código", "cp")) return "number";
   if (sample.length >= 20 && new Set(sample.map((v) => v.toLowerCase())).size <= Math.max(3, sample.length / 10)) return "dropdown";
@@ -200,9 +206,9 @@ export function suggestFormat(header: string, values: string[]): FormatId {
 
 // ---- Cleaning one value ---------------------------------------------------------------------
 
-type Outcome = { value: string; note?: string; invalid?: boolean };
+export type Outcome = { value: string; note?: string; invalid?: boolean };
 
-const collapse = (v: string) => v.replace(/[\u0000-\u001F\u007F ​-‍﻿]/g, " ").replace(/\s+/g, " ").trim();
+export const collapse = (v: string) => v.replace(/[\u0000-\u001F\u007F ​-‍﻿]/g, " ").replace(/\s+/g, " ").trim();
 
 export function cleanNumber(raw: string): Outcome {
   let v = collapse(raw);
@@ -232,7 +238,7 @@ export function cleanNumber(raw: string): Outcome {
   return { value, note: removed ? `Removed “${removed.slice(0, 20)}”` : undefined };
 }
 
-const MONTHS: Record<string, number> = {
+export const MONTHS: Record<string, number> = {
   jan: 1, january: 1, ene: 1, enero: 1, feb: 2, february: 2, febrero: 2, mar: 3, march: 3, marzo: 3,
   apr: 4, april: 4, abr: 4, abril: 4, may: 5, mayo: 5, jun: 6, june: 6, junio: 6, jul: 7, july: 7, julio: 7,
   aug: 8, august: 8, ago: 8, agosto: 8, sep: 9, sept: 9, september: 9, set: 9, septiembre: 9, setiembre: 9,
@@ -241,7 +247,7 @@ const MONTHS: Record<string, number> = {
 
 type DateParts = { y: number; m: number; d: number; hh?: number; mm?: number };
 
-const year4 = (y: number) => (y < 100 ? (y < 50 ? 2000 + y : 1900 + y) : y);
+export const year4 = (y: number) => (y < 100 ? (y < 50 ? 2000 + y : 1900 + y) : y);
 const real = (p: DateParts): DateParts | null => {
   const t = new Date(Date.UTC(p.y, p.m - 1, p.d));
   return p.y >= 1900 && p.y <= 2100 && t.getUTCMonth() === p.m - 1 && t.getUTCDate() === p.d ? p : null;
@@ -299,7 +305,7 @@ export function detectDateOrder(values: string[]): "dmy" | "mdy" {
   return dayFirst > monthFirst ? "dmy" : "mdy";
 }
 
-const pad = (n: number) => String(n).padStart(2, "0");
+export const pad = (n: number) => String(n).padStart(2, "0");
 
 const EMAIL_RE = /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)*\.[a-z]{2,}$/;
 const DOMAIN_TYPOS: Record<string, string> = {
@@ -308,19 +314,25 @@ const DOMAIN_TYPOS: Record<string, string> = {
   "yahoo.con": "yahoo.com", "outlook.con": "outlook.com", "outlok.com": "outlook.com",
 };
 
-const fold = (v: string) => v.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
-const splitOptions = (options: string) => options.split(/[\n,;]/).map((o) => o.trim()).filter(Boolean);
+export const fold = (v: string) => v.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+export const splitOptions = (options: string) => options.split(/[\n,;]/).map((o) => o.trim()).filter(Boolean);
 
 function matchOption(value: string, allowed: string[]): string | null {
   const key = fold(value);
   return allowed.find((o) => fold(o) === key) ?? allowed.find((o) => fold(o).replace(/[^a-z0-9]/g, "") === key.replace(/[^a-z0-9]/g, "")) ?? null;
 }
 
-/** Every word starts with a capital and none is shouting (keeps "McDonald", "O'Neil"). */
-const properlyCased = (v: string) =>
-  v.split(/\s+/).every((w) => /^\p{Lu}/u.test(w) && !(/\p{L}{2}/u.test(w) && w === w.toLocaleUpperCase()));
+const CONNECTORS = new Set(["at", "of", "the", "and", "for", "on", "in", "de", "del", "la", "las", "los", "el", "y", "e", "da", "do", "dos", "di", "du", "van", "von", "der", "le"]);
 
-const titleCase = (v: string) =>
+/**
+ * Every word starts with a capital (or is a connector like "de", "at") and none is
+ * shouting: keeps "McDonald", "O'Neil", "María de la Cruz", "Poway HS".
+ */
+export const properlyCased = (v: string) =>
+  !(/\p{L}{2}/u.test(v) && v === v.toLocaleUpperCase()) &&
+  v.split(/\s+/).every((w, i) => (i > 0 && CONNECTORS.has(w)) || (/^\p{Lu}/u.test(w) && !(/\p{L}{4}/u.test(w) && w === w.toLocaleUpperCase())));
+
+export const titleCase = (v: string) =>
   v.toLocaleLowerCase().replace(/(^|[\s\-'’])(\p{L})/gu, (_m, sep: string, ch: string) => sep + ch.toLocaleUpperCase());
 
 /** One cell cleaned to ``format``. ``order`` is the column's date order. */
@@ -413,7 +425,10 @@ export function cleanValue(format: FormatId, raw: string, spec: ColumnSpec, opti
 
 // ---- Cleaning the whole table ---------------------------------------------------------------
 
-export function cleanTable(table: Table, specs: ColumnSpec[], options: CleanOptions): CleanResult {
+/** A value the user decided in the review (lib/data-review), keyed by ``${column}${value}``. */
+export type Override = { value: string; how: string };
+
+export function cleanTable(table: Table, specs: ColumnSpec[], options: CleanOptions, overrides?: Map<string, Override>): CleanResult {
   const keep = specs.map((s, i) => ({ s, i })).filter(({ s }) => s.format !== "skip");
   const orders = specs.map((s, i) => (s.format === "date" || s.format === "datetime" ? detectDateOrder(table.rows.map((r) => r[i] ?? "")) : "mdy"));
   const columns: ColumnReport[] = keep.map(({ s, i }) => ({
@@ -429,6 +444,7 @@ export function cleanTable(table: Table, specs: ColumnSpec[], options: CleanOpti
   const issues: Issue[] = [];
   const rows: string[][] = [];
   const changed: boolean[][] = [];
+  const sources: number[] = [];
   const seen = new Set<string>();
   let emptyRows = 0;
   let duplicates = 0;
@@ -436,7 +452,12 @@ export function cleanTable(table: Table, specs: ColumnSpec[], options: CleanOpti
   table.rows.forEach((source, r) => {
     const results = keep.map(({ s, i }) => {
       const raw = source[i] ?? "";
-      return { raw, original: raw.trim(), res: cleanValue(s.format, raw, s, options, orders[i]!) };
+      const decided = overrides?.get(`${i}${collapse(raw)}`);
+      return {
+        raw,
+        original: raw.trim(),
+        res: decided ? { value: decided.value, note: decided.how } : cleanValue(s.format, raw, s, options, orders[i]!),
+      };
     });
     const out = results.map((x) => x.res.value);
     if (out.every((c) => c === "")) {
@@ -462,6 +483,7 @@ export function cleanTable(table: Table, specs: ColumnSpec[], options: CleanOpti
       }
     });
     rows.push(out);
+    sources.push(r + 2);
     changed.push(results.map((x) => x.res.value !== x.original));
   });
 
@@ -469,6 +491,7 @@ export function cleanTable(table: Table, specs: ColumnSpec[], options: CleanOpti
     headers: keep.map(({ s }) => s.name.trim() || "Column"),
     rows,
     changed,
+    sources,
     columns,
     issues,
     stats: {

@@ -12,7 +12,9 @@
     "check:api": "openapi-typescript ../api/openapi.json --output src/lib/api-types.ts --check"
   },
   "dependencies": {
+    "docx": "9.10.0",
     "framer-motion": "^14.1.0",
+    "jspdf": "4.2.1",
     "next": "^16.4.2",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
