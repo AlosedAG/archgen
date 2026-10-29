@@ -6,7 +6,7 @@
  * any of them are grouped and shown side by side, with the columns that match
  * and the ones that differ. Each group is merged into one row (blanks filled
  * from the others, notes combined), reduced to its main row, or marked as not
- * duplicates. Undecided groups keep every row.
+ * duplicates. Groups are merged unless the user chooses otherwise.
  */
 
 import { useState } from "react";
@@ -60,13 +60,13 @@ export function DataDuplicates({
         </h2>
         {groups.length > 0 && (
           <span className="t-caption">
-            {done} of {groups.length} decided
+            {done} of {groups.length} checked
           </span>
         )}
       </div>
       <p className="t-caption">
         The same person, company or booking entered more than once. HubSpot would update one record with each row in turn, so the
-        last row wins and details in the others are lost. Choose the columns that identify a record: rows that share a value in any
+        last row wins and details in the others are lost. Each group is merged into one row unless you choose otherwise. Choose the columns that identify a record: rows that share a value in any
         of them are grouped.
       </p>
       <div className="field">
@@ -105,7 +105,7 @@ export function DataDuplicates({
             {groups.length} {groups.length === 1 ? "group" : "groups"} of rows look like the same record ({extra} extra{" "}
             {extra === 1 ? "row" : "rows"}).
           </p>
-          <div className="dm-progress" role="progressbar" aria-label="Groups decided" aria-valuemin={0} aria-valuemax={groups.length} aria-valuenow={done}>
+          <div className="dm-progress" role="progressbar" aria-label="Groups checked" aria-valuemin={0} aria-valuemax={groups.length} aria-valuenow={done}>
             <span style={{ width: `${(done / groups.length) * 100}%` }} />
           </div>
           <div className="dm-filters">
@@ -120,8 +120,8 @@ export function DataDuplicates({
                 }}
               >
                 <option value="all">Every group</option>
-                <option value="open">Not decided yet ({groups.length - done})</option>
-                <option value="done">Decided ({done})</option>
+                <option value="open">Not checked yet ({groups.length - done})</option>
+                <option value="done">Checked ({done})</option>
               </select>
             </label>
             <button
@@ -130,7 +130,7 @@ export function DataDuplicates({
               disabled={!open.length}
               onClick={() => onDecide(Object.fromEntries(open.map((g) => [g.key, { action: "merge" as const }])))}
             >
-              {open.length ? `Merge the ${open.length === 1 ? "group" : `${open.length} groups`} shown` : "All shown groups are decided"}
+              {open.length ? `Mark the ${open.length === 1 ? "group" : `${open.length} groups`} shown as checked` : "All shown groups are checked"}
             </button>
           </div>
           <ol className="dm-dups">
@@ -193,9 +193,9 @@ function Group({
               key={a.id}
               type="button"
               role="radio"
-              aria-checked={action === a.id}
+              aria-checked={(action ?? "merge") === a.id}
               title={a.title}
-              className={`dm-choice-btn${!action && a.id === "merge" ? " dm-choice-suggested" : ""}`}
+              className="dm-choice-btn"
               onClick={() => onDecide({ action: a.id, main })}
             >
               {a.label}
@@ -228,7 +228,7 @@ function Group({
           ...(merged
             ? [
                 {
-                  row: <span className="dm-kinds">{action ? "Merged row" : "If merged"}</span>,
+                  row: <span className="dm-kinds">Merged row</span>,
                   ...Object.fromEntries(cols.map((c) => [String(c), <b key={c}>{cell(merged[c] ?? "", c, false)}</b>])),
                 },
               ]

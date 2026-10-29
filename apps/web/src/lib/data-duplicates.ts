@@ -7,7 +7,7 @@
  * Rows match when any of the chosen columns match, and matches chain: A and B
  * share an email, B and C a phone, so A, B and C are one group. For each group
  * the user merges the rows into one, keeps only the main row, or says they
- * aren't duplicates. Undecided groups keep every row.
+ * aren't duplicates. Undecided groups are merged, the suggested action.
  */
 
 import { fold, type CleanResult, type FormatId, type Issue } from "./data-cleaner";
@@ -110,7 +110,7 @@ export function mergeRows(result: CleanResult, group: DupGroup, main: number, no
 
 export type DupOutcome = { merged: number; removed: number; separate: number; pending: number };
 
-/** The cleaned file with the decided groups merged or reduced to their main row. */
+/** The cleaned file with each group merged, reduced to its main row, or left as it is. */
 export function applyDuplicates(
   result: CleanResult,
   groups: DupGroup[],
@@ -122,10 +122,11 @@ export function applyDuplicates(
   const issues: Issue[] = [];
   const dups: DupOutcome = { merged: 0, removed: 0, separate: 0, pending: 0 };
   for (const g of groups) {
-    const d = decisions[g.key];
-    if (!d) dups.pending++;
-    if (!d || d.action === "separate") {
-      if (d) dups.separate++;
+    // Undecided groups are merged: the suggested action, shown selected.
+    const d = decisions[g.key] ?? { action: "merge" };
+    if (!decisions[g.key]) dups.pending++;
+    if (d.action === "separate") {
+      dups.separate++;
       continue;
     }
     const main = d.main !== undefined && g.rows.includes(d.main) ? d.main : g.main;

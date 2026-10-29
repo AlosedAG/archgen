@@ -47,7 +47,7 @@ const short = (v: string) => (v ? (v.length > 34 ? `${v.slice(0, 33)}…` : v) :
 
 /** The value an entry ends up as, given the user's decision. */
 function used(it: ReviewItem, d: Decision | undefined): string {
-  if (!d) return it.review ? it.found : it.recommended;
+  if (!d) return it.recommended;
   return d.choice === "rec" ? it.recommended : d.choice === "mine" ? d.mine.trim() : it.found;
 }
 
@@ -68,7 +68,7 @@ export function buildReport(input: ReportInput): Report {
       ["Rows ready to import", n(final.rows.length)],
       ["Columns imported", `${n(cleaned.headers.length)} of ${n(cleaned.headers.length + input.skipped.length)}`],
       ["Cells fixed automatically", n(autoCells)],
-      ["Values reviewed", `${n(decided.length)} of ${n(review.length)}`],
+      ["Values checked by hand", `${n(decided.length)} of ${n(review.length)}`],
       ["Duplicate rows merged or removed", n(dupRows + cleaned.stats.duplicates)],
     ],
   });
@@ -119,13 +119,13 @@ export function buildReport(input: ReportInput): Report {
           [count("rec"), "recommended fix"],
           [count("mine"), "own value"],
           [count("keep"), "kept as written"],
-          [count(undefined), "not reviewed"],
+          [count(undefined), "recommended fix, not checked"],
         ]
           .filter(([v]) => v)
           .map(([v, label]) => `${v} ${label}`)
           .join(", ");
         const ex = list.find((i) => decisions[i.key]) ?? list[0]!;
-        const example = decisions[ex.key] ? `${short(ex.found)} → ${short(used(ex, decisions[ex.key]))}` : `${short(ex.found)} → ${short(ex.recommended)} (suggested)`;
+        const example = `${short(ex.found)} → ${short(used(ex, decisions[ex.key]))}`;
         return [kind, n(list.length), n(list.reduce((t, i) => t + i.rows.length, 0)), resolved, example];
       }),
     });
@@ -141,7 +141,7 @@ export function buildReport(input: ReportInput): Report {
       final.dups.merged && `${plural(final.dups.merged, "row was", "rows were")} merged into the matching record (blanks filled in, notes combined)`,
       final.dups.removed && `${plural(final.dups.removed, "row was", "rows were")} dropped in favour of the main row`,
       final.dups.separate && `${plural(final.dups.separate, "group was", "groups were")} confirmed as different records`,
-      final.dups.pending && `${plural(final.dups.pending, "group was", "groups were")} not reviewed and kept every row`,
+      final.dups.pending && `${plural(final.dups.pending, "group was", "groups were")} merged as suggested without being checked`,
     ].filter(Boolean);
     blocks.push({
       kind: "text",
@@ -155,14 +155,14 @@ export function buildReport(input: ReportInput): Report {
   ).length;
   const notesRemoved = review.filter((i) => i.kinds.includes("Note in brackets") && decisions[i.key]?.choice === "rec").length;
   const todo = [
-    pending && `${plural(pending, "value was", "values were")} not reviewed and kept as written; HubSpot may reject or misread them.`,
+    pending && `${plural(pending, "value uses", "values use")} the recommended fix without being checked by hand.`,
     riskyKept && `${plural(riskyKept, "value", "values")} HubSpot may reject ${riskyKept === 1 ? "was" : "were"} kept as written on purpose.`,
-    final.dups.pending && `${plural(final.dups.pending, "possible duplicate group was", "possible duplicate groups were")} not reviewed.`,
+    final.dups.pending && `${plural(final.dups.pending, "possible duplicate group was", "possible duplicate groups were")} merged without being checked by hand.`,
     notesRemoved && `Notes in brackets were removed from ${plural(notesRemoved, "value")}; check whether any belong in a notes property.`,
     final.stats.blanked && `${plural(final.stats.blanked, "cell was", "cells were")} left blank (placeholders such as N/A or TBD, and values HubSpot would reject).`,
   ].filter((t): t is string => Boolean(t));
   blocks.push({ kind: "heading", text: "Still to check" });
-  blocks.push(todo.length ? { kind: "bullets", items: todo } : { kind: "text", text: "Nothing outstanding: every value and possible duplicate was reviewed." });
+  blocks.push(todo.length ? { kind: "bullets", items: todo } : { kind: "text", text: "Nothing outstanding: every value and possible duplicate was checked." });
 
   return {
     title: "Data cleanup report",

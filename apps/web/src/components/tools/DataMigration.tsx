@@ -418,14 +418,13 @@ export function DataMigration() {
                 ]}
               />
               {pending > 0 && (
-                <Callout tone="warning" title={`${pending} ${pending === 1 ? "value hasn't" : "values haven't"} been reviewed`}>
-                  They keep their original value in the download, which HubSpot may reject or read wrongly. Review them in step 3, or
-                  accept the recommendations there in one click.
+                <Callout tone="info" title={`${pending} ${pending === 1 ? "value uses" : "values use"} the recommended fix without being checked`}>
+                  They&apos;re in the download as recommended. Look through them in step 3 (filter “Not checked yet”) if you want to be sure.
                 </Callout>
               )}
               {pendingDups > 0 && (
-                <Callout tone="warning" title={`${pendingDups} possible ${pendingDups === 1 ? "duplicate hasn't" : "duplicates haven't"} been reviewed`}>
-                  Their rows all stay in the download, so HubSpot would update the same record with each. Decide them in step 4.
+                <Callout tone="info" title={`${pendingDups} possible ${pendingDups === 1 ? "duplicate was" : "duplicates were"} merged without being checked`}>
+                  Each group became one row, as suggested. Check them in step 4 and choose “Not duplicates” for any that aren&apos;t.
                 </Callout>
               )}
               {final.stats.blanked > 0 && (

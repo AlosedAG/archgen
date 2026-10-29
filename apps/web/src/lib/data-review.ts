@@ -11,8 +11,8 @@
  * Fixes that need no judgement (phone formatting, lower-case emails, currency
  * symbols) are listed as automatic so any of them can be undone.
  *
- * The user accepts the recommendation, types their own value or keeps the
- * original; overridesFor() turns those choices into the values cleanTable uses.
+ * The recommendation applies unless the user types their own value or keeps
+ * the original; overridesFor() turns those choices into the values cleanTable uses.
  */
 
 import {
@@ -434,14 +434,14 @@ export function findItems(table: Table, specs: ColumnSpec[], options: CleanOptio
   return items;
 }
 
-/** The values cleanTable uses for the reviewed entries. Undecided entries keep the original value. */
+/** The values cleanTable uses for each entry: the user's choice, else the recommended fix. */
 export function overridesFor(items: ReviewItem[], decisions: Record<string, Decision>): Map<string, Override> {
   const map = new Map<string, Override>();
   for (const it of items) {
     const d = decisions[it.key];
     const what = it.kinds.join(", ");
     if (!d) {
-      map.set(it.key, it.review ? { value: it.found, how: `Not reviewed yet, original kept (${what})` } : { value: it.recommended, how: it.issue });
+      map.set(it.key, { value: it.recommended, how: it.review ? `Recommended fix, not checked (${what})` : it.issue });
     } else if (d.choice === "keep") {
       map.set(it.key, { value: it.found, how: it.review ? `Original kept (${what})` : "Automatic fix undone, original kept" });
     } else if (d.choice === "mine") {

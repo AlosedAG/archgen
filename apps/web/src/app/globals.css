@@ -4940,12 +4940,6 @@ textarea {
   outline-offset: -2px;
 }
 
-/* Not decided yet: the recommendation is the suggested choice, one click to confirm. */
-.dm-choice-suggested {
-  background: var(--indigo-tint);
-  color: var(--indigo);
-}
-
 .dm-choice-btn[aria-checked="true"] {
   background: var(--indigo);
   color: #fff;

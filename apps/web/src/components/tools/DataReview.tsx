@@ -3,8 +3,8 @@
 /**
  * Data Migration step 3: the values that need a decision (lib/data-review), one
  * row per distinct value with every row it appears on. Each has a recommended
- * value and a box for the user's own; the user picks the recommendation, their
- * value or the original. Automatic fixes are listed underneath, collapsed, so
+ * value, used unless the user types their own or keeps the original. "Checked"
+ * only tracks which ones someone has looked at. Automatic fixes are listed underneath, collapsed, so
  * any of them can be undone.
  */
 
@@ -79,7 +79,7 @@ export function DataReview({
         </h2>
         {review.length > 0 && (
           <span className="t-caption">
-            {done} of {review.length} reviewed
+            {done} of {review.length} checked
           </span>
         )}
       </div>
@@ -89,10 +89,10 @@ export function DataReview({
       ) : (
         <>
           <p className="t-caption">
-            Each row is one value as written in the file, decided once for every row it appears on. Use the recommended value, type
-            your own, or keep the original. Values you haven&apos;t reviewed keep their original value in the download.
+            Each row is one value as written in the file, decided once for every row it appears on. The recommended value is used
+            unless you type your own or choose the original. Clicking a choice marks the row as checked.
           </p>
-          <div className="dm-progress" role="progressbar" aria-label="Values reviewed" aria-valuemin={0} aria-valuemax={review.length} aria-valuenow={done}>
+          <div className="dm-progress" role="progressbar" aria-label="Values checked" aria-valuemin={0} aria-valuemax={review.length} aria-valuenow={done}>
             <span style={{ width: `${(done / review.length) * 100}%` }} />
           </div>
           <div className="dm-filters">
@@ -122,8 +122,8 @@ export function DataReview({
               <span className="field-label">Show</span>
               <select className="input" value={show} onChange={(e) => filter(() => setShow(e.target.value as Show))}>
                 <option value="all">Everything</option>
-                <option value="open">Not reviewed yet ({review.length - done})</option>
-                <option value="done">Reviewed ({done})</option>
+                <option value="open">Not checked yet ({review.length - done})</option>
+                <option value="done">Checked ({done})</option>
               </select>
             </label>
             <button
@@ -132,7 +132,7 @@ export function DataReview({
               disabled={!open.length}
               onClick={() => onDecide(Object.fromEntries(open.map((i) => [i.key, { choice: "rec" as const, mine: "" }])))}
             >
-              {open.length ? `Accept the ${open.length === 1 ? "recommendation" : `${open.length} recommendations`} shown` : "All shown values are reviewed"}
+              {open.length ? `Mark the ${open.length === 1 ? "value" : `${open.length} values`} shown as checked` : "All shown values are checked"}
             </button>
           </div>
           <DataTable
@@ -179,9 +179,9 @@ export function DataReview({
                         key={c.id}
                         type="button"
                         role="radio"
-                        aria-checked={d?.choice === c.id}
+                        aria-checked={(d?.choice ?? "rec") === c.id}
                         title={c.title}
-                        className={`dm-choice-btn${!d && c.id === "rec" ? " dm-choice-suggested" : ""}`}
+                        className="dm-choice-btn"
                         onClick={() => decide(it, c.id)}
                       >
                         {c.label}
